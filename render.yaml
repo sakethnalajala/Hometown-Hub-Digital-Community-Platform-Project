@@ -16,8 +16,10 @@ services:
     envVars:
       - key: NODE_ENV
         value: production
+      # Node 22.12+ required: firebase-admin → jwks-rsa does require('jose'),
+      # and jose@6 is ESM-only — require(ESM) is only supported on Node 22.12+.
       - key: NODE_VERSION
-        value: "20.18.0"
+        value: "22.12.0"
       # Signing secrets for demo JWTs — generated once by Render.
       - key: JWT_SECRET
         generateValue: true
