@@ -156,8 +156,9 @@ async function main() {
     // Initialize Firebase Admin
     initFirebaseAdmin();
 
-    httpServer.listen(PORT, () => {
-      console.log(`🚀 Server running on http://localhost:${PORT}`);
+    // Bind to 0.0.0.0 so the service is reachable on Render (and other PaaS).
+    httpServer.listen(PORT, '0.0.0.0', () => {
+      console.log(`🚀 Server running on port ${PORT}`);
       console.log(`📡 Socket.io ready`);
       console.log(`🌍 Environment: ${process.env.NODE_ENV}`);
       console.log(`✓ Backend is fully operational`);

@@ -7,13 +7,17 @@ services:
     runtime: node
     rootDir: backend
     plan: free
-    buildCommand: npm install && npm run build
+    # --include=dev forces devDependencies (typescript, prisma) to install even
+    # though NODE_ENV=production — they are required for `prisma generate` + tsc.
+    buildCommand: npm install --include=dev && npm run build
     startCommand: npm start
     healthCheckPath: /health
     autoDeploy: true
     envVars:
       - key: NODE_ENV
         value: production
+      - key: NODE_VERSION
+        value: "20.18.0"
       # Signing secrets for demo JWTs — generated once by Render.
       - key: JWT_SECRET
         generateValue: true
