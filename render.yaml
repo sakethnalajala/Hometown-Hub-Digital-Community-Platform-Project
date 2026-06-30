@@ -1,0 +1,25 @@
+# Render Blueprint — deploys the Hometown Hub backend (Express + Socket.io)
+# in self-contained demo mode (in-memory data, no external DB/Firebase needed).
+# Docs: https://render.com/docs/blueprint-spec
+services:
+  - type: web
+    name: hometown-hub-backend
+    runtime: node
+    rootDir: backend
+    plan: free
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: production
+      # Signing secrets for demo JWTs — generated once by Render.
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_REFRESH_SECRET
+        generateValue: true
+      # Allowed CORS origin (the deployed frontend). Any *.vercel.app is also
+      # permitted in code, so preview deployments work too.
+      - key: FRONTEND_URL
+        value: https://hometown-hub-virid.vercel.app

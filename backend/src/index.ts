@@ -35,10 +35,35 @@ import { initFirebaseAdmin } from './lib/firebase';
 const app = express();
 const httpServer = http.createServer(app);
 
+// CORS origin policy — allow the configured frontend, localhost (dev), and any
+// Vercel deployment (production alias + preview URLs). Requests with no Origin
+// header (curl, server-to-server, health checks) are allowed through.
+const allowedOrigins = [process.env.FRONTEND_URL, 'http://localhost:3000'].filter(
+  Boolean
+) as string[];
+
+const isAllowedOrigin = (origin?: string): boolean => {
+  if (!origin) return true;
+  if (allowedOrigins.includes(origin)) return true;
+  try {
+    return /\.vercel\.app$/.test(new URL(origin).hostname);
+  } catch {
+    return false;
+  }
+};
+
+const corsOrigin = (
+  origin: string | undefined,
+  callback: (err: Error | null, allow?: boolean) => void
+) => {
+  if (isAllowedOrigin(origin)) callback(null, true);
+  else callback(new Error(`Origin ${origin} not allowed by CORS`));
+};
+
 // Socket.io
 const io = new SocketServer(httpServer, {
   cors: {
-    origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+    origin: corsOrigin,
     methods: ['GET', 'POST'],
     credentials: true,
   },
@@ -56,7 +81,7 @@ app.use(helmet({
 
 // CORS
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+  origin: corsOrigin,
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
