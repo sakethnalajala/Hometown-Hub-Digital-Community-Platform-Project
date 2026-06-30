@@ -1,6 +1,8 @@
 import { ApiResponse, PaginatedResponse } from '@/types'
 
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'
+// Falls back to the deployed Render backend so production works even if
+// NEXT_PUBLIC_API_URL isn't set on Vercel. Local dev uses .env.local (localhost).
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://hometown-hub-backend-un1i.onrender.com/api'
 
 class ApiClient {
   private getHeaders(): HeadersInit {
