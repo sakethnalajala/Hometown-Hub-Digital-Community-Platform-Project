@@ -1,0 +1,616 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================================
+// ENUMS
+// ============================================================
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// ============================================================
+// USER
+// ============================================================
+
+model User {
+  id            String   @id @default(cuid())
+  email         String   @unique
+  passwordHash  String
+  name          String
+  username      String   @unique
+  phone         String?
+  profileImage  String?
+  coverImage    String?
+  bio           String?
+  hometown      String?
+  currentCity   String?
+  interests     String   @default("[]")
+  role String @default("USER")
+  isVerified    Boolean  @default(false)
+  isActive      Boolean  @default(true)
+  lastSeen      DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relations
+  ownedCommunities    Community[]          @relation("CommunityOwner")
+  communityMemberships CommunityMember[]
+  posts               Post[]
+  postLikes           PostLike[]
+  comments            Comment[]
+  commentLikes        CommentLike[]
+  organizedEvents     Event[]
+  eventParticipations EventParticipant[]
+  sentNotifications   Notification[]       @relation("NotificationSender")
+  receivedNotifications Notification[]     @relation("NotificationReceiver")
+  reports             Report[]             @relation("ReportedBy")
+  reportedContent     Report[]             @relation("ReportedUser")
+  refreshTokens       RefreshToken[]
+  auditLogs           AuditLog[]
+  passwordResets      PasswordReset[]
+  jobs                Job[]
+  newsArticles        NewsArticle[]
+  products            Product[]
+  productReviews      ProductReview[]
+  bookmarks           Bookmark[]
+
+  @@index([email])
+  @@index([username])
+  @@index([hometown])
+  @@index([currentCity])
+  @@map("users")
+}
+
+// ============================================================
+// CATEGORY
+// ============================================================
+
+model Category {
+  id          String      @id @default(cuid())
+  name        String      @unique
+  slug        String      @unique
+  description String?
+  icon        String?
+  color       String?
+  isActive    Boolean     @default(true)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  communities Community[]
+
+  @@index([slug])
+  @@map("categories")
+}
+
+// ============================================================
+// COMMUNITY
+// ============================================================
+
+model Community {
+  id          String          @id @default(cuid())
+  name        String
+  slug        String          @unique
+  description String
+  city        String
+  state       String?
+  country     String          @default("India")
+  bannerImage String?
+  logoImage   String?
+  rules       String   @default("[]")
+  status String @default("PENDING")
+  isPrivate   Boolean         @default(false)
+  memberCount Int             @default(0)
+  postCount   Int             @default(0)
+  categoryId  String? 
+  createdById String 
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  // Relations
+  category    Category?        @relation(fields: [categoryId], references: [id])
+  createdBy   User             @relation("CommunityOwner", fields: [createdById], references: [id])
+  members     CommunityMember[]
+  posts       Post[]
+  events      Event[]
+  tags        CommunityTag[]
+
+  @@index([slug])
+  @@index([city])
+  @@index([status])
+  @@index([createdById])
+  @@map("communities")
+}
+
+// ============================================================
+// COMMUNITY MEMBER
+// ============================================================
+
+model CommunityMember {
+  id          String       @id @default(cuid())
+  userId      String 
+  communityId String 
+  role String @default("MEMBER")
+  status String @default("APPROVED")
+  joinedAt    DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  community   Community    @relation(fields: [communityId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, communityId])
+  @@index([userId])
+  @@index([communityId])
+  @@index([status])
+  @@map("community_members")
+}
+
+// ============================================================
+// TAG
+// ============================================================
+
+model Tag {
+  id        String         @id @default(cuid())
+  name      String         @unique
+  slug      String         @unique
+  createdAt DateTime       @default(now())
+
+  communities CommunityTag[]
+  posts       PostTag[]
+
+  @@index([slug])
+  @@map("tags")
+}
+
+model CommunityTag {
+  communityId String 
+  tagId       String 
+
+  community   Community @relation(fields: [communityId], references: [id], onDelete: Cascade)
+  tag         Tag       @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([communityId, tagId])
+  @@map("community_tags")
+}
+
+model PostTag {
+  postId String 
+  tagId  String 
+
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+  tag  Tag  @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([postId, tagId])
+  @@map("post_tags")
+}
+
+// ============================================================
+// POST
+// ============================================================
+
+model Post {
+  id          String   @id @default(cuid())
+  content     String
+  images      String   @default("[]")
+  type String @default("TEXT")
+  isPinned    Boolean  @default(false)
+  isEdited    Boolean  @default(false)
+  likeCount   Int      @default(0)
+  commentCount Int     @default(0)
+  shareCount  Int      @default(0)
+  authorId    String 
+  communityId String? 
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  author    User       @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  community Community? @relation(fields: [communityId], references: [id], onDelete: SetNull)
+  likes     PostLike[]
+  comments  Comment[]
+  tags      PostTag[]
+
+  @@index([authorId])
+  @@index([communityId])
+  @@index([type])
+  @@index([isPinned])
+  @@index([createdAt(sort: Desc)])
+  @@map("posts")
+}
+
+// ============================================================
+// POST LIKE
+// ============================================================
+
+model PostLike {
+  userId    String 
+  postId    String 
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@id([userId, postId])
+  @@index([postId])
+  @@map("post_likes")
+}
+
+// ============================================================
+// COMMENT
+// ============================================================
+
+model Comment {
+  id          String   @id @default(cuid())
+  content     String
+  isEdited    Boolean  @default(false)
+  likeCount   Int      @default(0)
+  authorId    String 
+  postId      String 
+  parentId    String? 
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  author   User          @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  post     Post          @relation(fields: [postId], references: [id], onDelete: Cascade)
+  parent   Comment?      @relation("CommentReplies", fields: [parentId], references: [id])
+  replies  Comment[]     @relation("CommentReplies")
+  likes    CommentLike[]
+
+  @@index([postId])
+  @@index([authorId])
+  @@index([parentId])
+  @@index([createdAt(sort: Desc)])
+  @@map("comments")
+}
+
+// ============================================================
+// COMMENT LIKE
+// ============================================================
+
+model CommentLike {
+  userId    String 
+  commentId String 
+  createdAt DateTime @default(now())
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  comment Comment @relation(fields: [commentId], references: [id], onDelete: Cascade)
+
+  @@id([userId, commentId])
+  @@index([commentId])
+  @@map("comment_likes")
+}
+
+// ============================================================
+// EVENT
+// ============================================================
+
+model Event {
+  id              String      @id @default(cuid())
+  title           String
+  description     String
+  location        String
+  address         String?
+  date            DateTime
+  endDate         DateTime?
+  bannerImage     String?
+  isOnline        Boolean     @default(false)
+  meetingLink     String?
+  maxParticipants Int?
+  status String @default("UPCOMING")
+  organizerId     String 
+  communityId     String? 
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  // Relations
+  organizer    User               @relation(fields: [organizerId], references: [id], onDelete: Cascade)
+  community    Community?         @relation(fields: [communityId], references: [id], onDelete: SetNull)
+  participants EventParticipant[]
+
+  @@index([organizerId])
+  @@index([communityId])
+  @@index([date])
+  @@index([status])
+  @@map("events")
+}
+
+// ============================================================
+// EVENT PARTICIPANT
+// ============================================================
+
+model EventParticipant {
+  id        String     @id @default(cuid())
+  userId    String 
+  eventId   String 
+  status String @default("GOING")
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, eventId])
+  @@index([eventId])
+  @@index([status])
+  @@map("event_participants")
+}
+
+// ============================================================
+// NOTIFICATION
+// ============================================================
+
+model Notification {
+  id         String           @id @default(cuid())
+  type String
+  title      String
+  body       String
+  isRead     Boolean          @default(false)
+  actionUrl  String?
+  imageUrl   String?
+  receiverId String 
+  senderId   String? 
+  relatedId  String? 
+  relatedType String?
+  createdAt  DateTime         @default(now())
+
+  receiver User  @relation("NotificationReceiver", fields: [receiverId], references: [id], onDelete: Cascade)
+  sender   User? @relation("NotificationSender", fields: [senderId], references: [id], onDelete: SetNull)
+
+  @@index([receiverId])
+  @@index([isRead])
+  @@index([createdAt(sort: Desc)])
+  @@map("notifications")
+}
+
+// ============================================================
+// REPORT
+// ============================================================
+
+model Report {
+  id          String            @id @default(cuid())
+  reason      String
+  description String?
+  status String @default("PENDING")
+  contentType String
+  contentId   String 
+  reporterId  String 
+  reportedUserId String? 
+  adminNote   String?
+  reviewedAt  DateTime?
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+
+  reporter     User  @relation("ReportedBy", fields: [reporterId], references: [id], onDelete: Cascade)
+  reportedUser User? @relation("ReportedUser", fields: [reportedUserId], references: [id], onDelete: SetNull)
+
+  @@index([reporterId])
+  @@index([status])
+  @@index([contentType])
+  @@map("reports")
+}
+
+// ============================================================
+// REFRESH TOKEN
+// ============================================================
+
+model RefreshToken {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  userId    String 
+  expiresAt DateTime
+  isRevoked Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([token])
+  @@index([userId])
+  @@map("refresh_tokens")
+}
+
+// ============================================================
+// PASSWORD RESET
+// ============================================================
+
+model PasswordReset {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  userId    String 
+  expiresAt DateTime
+  isUsed    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([token])
+  @@map("password_resets")
+}
+
+// ============================================================
+// AUDIT LOG
+// ============================================================
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  action     String
+  targetType String?
+  targetId   String? 
+  metadata   String?
+  ipAddress  String?
+  userAgent  String?
+  actorId    String? 
+  createdAt  DateTime @default(now())
+
+  actor User? @relation(fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@index([actorId])
+  @@index([action])
+  @@index([createdAt(sort: Desc)])
+  @@map("audit_logs")
+}
+
+// ============================================================
+// JOB
+// ============================================================
+
+model Job {
+  id          String   @id @default(cuid())
+  title       String
+  company     String
+  companyLogo String?
+  salary      String?
+  location    String
+  description String
+  skills      String   @default("[]")
+  authorId    String 
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  author      User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@index([authorId])
+  @@index([createdAt(sort: Desc)])
+  @@map("jobs")
+}
+
+// ============================================================
+// NEWS ARTICLE
+// ============================================================
+
+model NewsArticle {
+  id          String   @id @default(cuid())
+  title       String
+  content     String
+  category    String
+  image       String?
+  authorId    String 
+  views       Int      @default(0)
+  likes       Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  author      User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@index([authorId])
+  @@index([category])
+  @@index([createdAt(sort: Desc)])
+  @@map("news_articles")
+}
+
+// ============================================================
+// TOURISM PLACE
+// ============================================================
+
+model TourismPlace {
+  id          String   @id @default(cuid())
+  name        String
+  type        String   // e.g. "HOTEL", "RESTAURANT", "MONUMENT", "PARK"
+  description String
+  location    String
+  rating      Float    @default(0.0)
+  images      String   @default("[]")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([type])
+  @@map("tourism_places")
+}
+
+// ============================================================
+// GOVERNMENT SERVICE
+// ============================================================
+
+model GovService {
+  id          String   @id @default(cuid())
+  name        String
+  category    String
+  description String
+  link        String?
+  icon        String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([category])
+  @@map("gov_services")
+}
+
+// ============================================================
+// PRODUCT (MARKETPLACE)
+// ============================================================
+
+model Product {
+  id          String   @id @default(cuid())
+  name        String
+  description String
+  price       Float
+  category    String
+  images      String   @default("[]")
+  sellerId    String 
+  rating      Float    @default(0.0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  seller      User     @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+  reviews     ProductReview[]
+
+  @@index([sellerId])
+  @@index([category])
+  @@map("products")
+}
+
+model ProductReview {
+  id          String   @id @default(cuid())
+  content     String
+  rating      Int
+  productId   String 
+  authorId    String 
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  product     Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  author      User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@index([productId])
+  @@index([authorId])
+  @@map("product_reviews")
+}
+
+model Bookmark {
+  id         String   @id @default(cuid())
+  userId     String
+  targetType String
+  targetId   String
+  createdAt  DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, targetType, targetId])
+  @@index([userId])
+  @@map("bookmarks")
+}
