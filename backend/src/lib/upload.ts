@@ -30,7 +30,7 @@ if (!fs.existsSync(uploadsDir)) {
     fs.mkdirSync(uploadsDir, { recursive: true });
   } catch (err) {
     // If mkdir fails in a read-only environment, log and continue (Cloudinary may be used).
-    console.warn('Could not create uploads directory:', err?.message || err);
+    console.warn('Could not create uploads directory:', (err as any)?.message || err);
   }
 }
 
