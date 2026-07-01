@@ -8,6 +8,9 @@ import { Button } from '@/components/ui/button'
 import { healthcareApi } from '@/lib/api'
 import { ImageWithFallback } from '@/components/ui/ImageWithFallback'
 import { toast } from 'sonner'
+import { triggerAppNotification, downloadTextAsPdf } from '@/lib/appHelpers'
+import { AppointmentModal } from '@/components/ui/AppointmentModal'
+import { PortalBackground } from '@/components/ui/PortalBackground'
 
 const emergencyContacts = [
   { label: 'Ambulance', number: '108', icon: Ambulance, color: 'text-red-400' },
@@ -28,6 +31,9 @@ export default function HealthcarePage() {
   const [hospitals, setHospitals] = useState<any[]>([])
   const [healthSchemes, setHealthSchemes] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
+  const [bookingState, setBookingState] = useState(false)
+  const [selectedHospital, setSelectedHospital] = useState<any | null>(null)
+  const [appointmentOpen, setAppointmentOpen] = useState(false)
 
   useEffect(() => {
     Promise.all([healthcareApi.getHospitals(), healthcareApi.getSchemes()])
@@ -41,6 +47,22 @@ export default function HealthcarePage() {
 
   const types = ['All', 'Multi-specialty', 'Primary Care', 'Pediatric', 'Alternative Medicine']
 
+  const handleBookAppointment = (hospital: any) => {
+    setSelectedHospital(hospital)
+    setAppointmentOpen(true)
+  }
+
+  const handleAppointmentSubmit = (payload: any) => {
+    const appointmentId = `APT-${Math.floor(1000 + Math.random() * 9000)}`
+    const confirmation = `Appointment Confirmation\nAppointment ID: ${appointmentId}\nHospital: ${selectedHospital?.name}\nDepartment: ${payload.department}\nPatient: ${payload.fullName}\nAge: ${payload.age}\nGender: ${payload.gender}\nMobile: ${payload.mobile}\nEmail: ${payload.email}\nAddress: ${payload.address}\nBlood Group: ${payload.bloodGroup}\nHealth Problem: ${payload.medicalProblem}\nSymptoms: ${payload.symptoms}\nPreferred Doctor: ${payload.doctor}\nDate: ${payload.appointmentDate}\nTime: ${payload.appointmentTime}`
+
+    setBookingState(true)
+    downloadTextAsPdf(`${appointmentId}.pdf`, confirmation)
+    triggerAppNotification('Appointment booked', `Your appointment request was saved with ID ${appointmentId}.`)
+    toast.success(`Appointment confirmed for ${selectedHospital?.name}`)
+    setBookingState(false)
+  }
+
   const filtered = hospitals.filter(h => {
     const matchType = activeType === 'All' || h.type === activeType
     const matchSearch = !search || h.name.toLowerCase().includes(search.toLowerCase()) || (h.type || '').toLowerCase().includes(search.toLowerCase())
@@ -48,6 +70,7 @@ export default function HealthcarePage() {
   })
 
   return (
+    <PortalBackground portal="healthcare">
     <motion.div variants={containerVariants} initial="hidden" animate="show" className="space-y-8">
       {/* Emergency Banner */}
       <motion.div variants={itemVariants} className="bg-red-500/10 border border-red-500/30 rounded-2xl p-4 flex items-center justify-between flex-wrap gap-4">
@@ -161,8 +184,8 @@ export default function HealthcarePage() {
                         <span className="flex items-center gap-1.5"><Stethoscope className="w-3.5 h-3.5 text-blue-400" /> {hospital.beds} beds</span>
                       </div>
                       <div className="flex gap-3 mt-4">
-                        <Button size="sm" className="bg-rose-600 hover:bg-rose-500 text-white rounded-xl" onClick={() => toast.success(`Appointment request sent to ${hospital.name}`)}>
-                          Book Appointment
+                        <Button size="sm" className="bg-rose-600 hover:bg-rose-500 text-white rounded-xl" onClick={() => handleBookAppointment(hospital)} disabled={bookingState}>
+                          {bookingState ? 'Booking...' : 'Book Appointment'}
                         </Button>
                         <a href={`tel:${hospital.phone}`}>
                           <Button size="sm" variant="outline" className="border-white/10 text-gray-300 hover:bg-white/10 rounded-xl">
@@ -213,6 +236,8 @@ export default function HealthcarePage() {
           </div>
         </motion.div>
       </div>
+      <AppointmentModal open={appointmentOpen} onOpenChange={setAppointmentOpen} hospital={selectedHospital} onSubmit={handleAppointmentSubmit} />
     </motion.div>
+    </PortalBackground>
   )
 }

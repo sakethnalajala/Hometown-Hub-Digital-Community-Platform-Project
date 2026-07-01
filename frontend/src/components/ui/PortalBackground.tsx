@@ -3,7 +3,7 @@
 import { ReactNode } from 'react'
 import { motion } from 'framer-motion'
 
-type PortalType = 'communities' | 'jobs' | 'events' | 'news' | 'tourism' | 'education' | 'marketplace' | 'government' | 'healthcare'
+type PortalType = 'communities' | 'jobs' | 'events' | 'news' | 'tourism' | 'education' | 'marketplace' | 'government' | 'healthcare' | 'notifications'
 
 interface PortalBackgroundProps {
   portal: PortalType
@@ -55,6 +55,11 @@ const portalThemes = {
   healthcare: {
     gradient: 'from-green-900/30 via-emerald-900/20 to-teal-900/30',
     meshColors: ['#22c55e', '#10b981', '#14b8a6'],
+    particles: true,
+  },
+  notifications: {
+    gradient: 'from-slate-900/40 via-indigo-900/30 to-slate-900/40',
+    meshColors: ['#6366f1', '#8b5cf6', '#0ea5e9'],
     particles: true,
   },
 }

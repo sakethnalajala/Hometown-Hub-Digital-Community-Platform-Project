@@ -1,0 +1,23 @@
+{
+  "name": "hometown-hub",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "backend",
+    "frontend"
+  ],
+  "scripts": {
+    "setup": "npm install && npm run db:generate",
+    "dev:backend": "npm run dev --workspace=backend",
+    "dev:frontend": "npm run dev --workspace=frontend",
+    "db:push": "npm run db:push --workspace=backend",
+    "db:studio": "npm run db:studio --workspace=backend",
+    "db:seed": "npm run db:seed --workspace=backend",
+    "db:generate": "npm run db:generate --workspace=backend",
+    "open:browser": "node scripts/open-browser.js",
+    "dev": "concurrently -n backend,frontend,browser -c blue,green,yellow \"npm run dev:backend\" \"npm run dev:frontend\" \"npm run open:browser\""
+  },
+  "devDependencies": {
+    "concurrently": "^10.0.3"
+  }
+}

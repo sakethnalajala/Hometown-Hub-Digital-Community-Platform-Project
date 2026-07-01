@@ -16,45 +16,81 @@ interface NotificationState {
   incrementUnread: () => void
 }
 
-export const useNotificationStore = create<NotificationState>((set) => ({
-  notifications: [],
-  unreadCount: 0,
-  isOpen: false,
+const STORAGE_KEY = 'hometown-hub-notifications-store'
 
-  addNotification: (notification) =>
-    set((state) => ({
-      notifications: [notification, ...state.notifications],
-      unreadCount: state.unreadCount + 1,
-    })),
+const readStoredNotifications = (): Notification[] => {
+  if (typeof window === 'undefined') return []
+  try {
+    const raw = window.localStorage.getItem(STORAGE_KEY)
+    if (!raw) return []
+    const parsed = JSON.parse(raw)
+    return Array.isArray(parsed) ? parsed : []
+  } catch {
+    return []
+  }
+}
 
-  setNotifications: (notifications, unreadCount) =>
-    set({ notifications, unreadCount }),
+const persistNotifications = (notifications: Notification[], unreadCount: number) => {
+  if (typeof window === 'undefined') return
+  window.localStorage.setItem(STORAGE_KEY, JSON.stringify(notifications))
+  window.localStorage.setItem('hometown-hub-notifications', JSON.stringify(notifications))
+  window.localStorage.setItem('hometown-hub-unread-count', String(unreadCount))
+}
 
-  markRead: (id) =>
-    set((state) => ({
-      notifications: state.notifications.map((n) =>
-        n.id === id ? { ...n, isRead: true } : n
-      ),
-      unreadCount: Math.max(0, state.unreadCount - 1),
-    })),
+export const useNotificationStore = create<NotificationState>((set) => {
+  const initialNotifications = readStoredNotifications()
+  const initialUnreadCount = initialNotifications.filter((n) => !n.isRead).length
 
-  markAllRead: () =>
-    set((state) => ({
-      notifications: state.notifications.map((n) => ({ ...n, isRead: true })),
-      unreadCount: 0,
-    })),
+  return {
+    notifications: initialNotifications,
+    unreadCount: initialUnreadCount,
+    isOpen: false,
 
-  removeNotification: (id) =>
-    set((state) => ({
-      notifications: state.notifications.filter((n) => n.id !== id),
-      unreadCount: state.notifications.find(n => n.id === id && !n.isRead)
-        ? Math.max(0, state.unreadCount - 1)
-        : state.unreadCount,
-    })),
+    addNotification: (notification) =>
+      set((state) => {
+        const notifications = [notification, ...state.notifications]
+        const unreadCount = notifications.filter((n) => !n.isRead).length
+        persistNotifications(notifications, unreadCount)
+        return { notifications, unreadCount }
+      }),
 
-  clearAll: () => set({ notifications: [], unreadCount: 0 }),
+    setNotifications: (notifications, unreadCount) => {
+      persistNotifications(notifications, unreadCount)
+      set({ notifications, unreadCount })
+    },
 
-  toggleOpen: () => set((state) => ({ isOpen: !state.isOpen })),
-  setOpen: (open) => set({ isOpen: open }),
-  incrementUnread: () => set((state) => ({ unreadCount: state.unreadCount + 1 })),
-}))
+    markRead: (id) =>
+      set((state) => {
+        const notifications = state.notifications.map((n) =>
+          n.id === id ? { ...n, isRead: true } : n
+        )
+        const unreadCount = notifications.filter((n) => !n.isRead).length
+        persistNotifications(notifications, unreadCount)
+        return { notifications, unreadCount }
+      }),
+
+    markAllRead: () =>
+      set((state) => {
+        const notifications = state.notifications.map((n) => ({ ...n, isRead: true }))
+        persistNotifications(notifications, 0)
+        return { notifications, unreadCount: 0 }
+      }),
+
+    removeNotification: (id) =>
+      set((state) => {
+        const notifications = state.notifications.filter((n) => n.id !== id)
+        const unreadCount = notifications.filter((n) => !n.isRead).length
+        persistNotifications(notifications, unreadCount)
+        return { notifications, unreadCount }
+      }),
+
+    clearAll: () => {
+      persistNotifications([], 0)
+      set({ notifications: [], unreadCount: 0 })
+    },
+
+    toggleOpen: () => set((state) => ({ isOpen: !state.isOpen })),
+    setOpen: (open) => set({ isOpen: open }),
+    incrementUnread: () => set((state) => ({ unreadCount: state.unreadCount + 1 })),
+  }
+})

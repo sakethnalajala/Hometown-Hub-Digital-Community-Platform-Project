@@ -78,19 +78,15 @@ const httpServer = http_1.default.createServer(app);
 app.set('trust proxy', 1);
 // CORS origin policy
 // Allow:
-// - specific deployed frontend origin
+// - the single public frontend origin
 // - all Vercel preview/prod origins: *.vercel.app
-// - localhost dev
-// - Requests with no Origin header (server-to-server, curl, health checks)
+// - requests with no Origin header (server-to-server, curl, health checks)
 const ALLOWED_FRONTEND_ORIGIN = process.env.FRONTEND_URL || 'https://hometown-hub-virid.vercel.app';
 const isAllowedOrigin = (origin) => {
     if (!origin)
         return true;
     // Exact allowlist for the main deployed frontend
     if (origin === ALLOWED_FRONTEND_ORIGIN)
-        return true;
-    // Local dev
-    if (origin === 'http://localhost:3000')
         return true;
     // Vercel deployments (production + preview)
     try {

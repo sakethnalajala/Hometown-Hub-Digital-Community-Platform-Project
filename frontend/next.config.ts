@@ -18,6 +18,8 @@ const BACKEND_ORIGIN = (() => {
   return origin
 })()
 
+const SINGLE_URL_FRONTEND = process.env.NEXT_PUBLIC_APP_URL || process.env.FRONTEND_URL || 'https://hometown-hub-virid.vercel.app'
+
 const nextConfig: NextConfig = {
   images: {
     remotePatterns: [
@@ -38,6 +40,21 @@ const nextConfig: NextConfig = {
       // User-uploaded static files served by the backend.
       { source: '/uploads/:path*', destination: `${BACKEND_ORIGIN}/uploads/:path*` },
     ]
+  },
+  async headers() {
+    return [
+      {
+        source: '/(.*)',
+        headers: [
+          { key: 'X-Content-Type-Options', value: 'nosniff' },
+          { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
+          { key: 'Strict-Transport-Security', value: 'max-age=31536000; includeSubDomains' },
+        ],
+      },
+    ]
+  },
+  env: {
+    NEXT_PUBLIC_APP_URL: SINGLE_URL_FRONTEND,
   },
 }
 

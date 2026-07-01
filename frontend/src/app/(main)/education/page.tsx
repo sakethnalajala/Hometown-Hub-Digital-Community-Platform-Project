@@ -1,59 +1,150 @@
 'use client'
 
+import { useMemo, useState } from 'react'
 import { motion } from 'framer-motion'
 import {
   GraduationCap, BrainCircuit, Code2, Cloud, ShieldCheck, BarChart3, Sparkles,
-  ArrowUpRight, type LucideIcon,
+  ArrowUpRight, Trash2, BookOpen, Database, Cpu, Palette, Rocket, Microscope, type LucideIcon,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { ImageWithFallback } from '@/components/ui/ImageWithFallback'
 import { toast } from 'sonner'
 import { PortalBackground } from '@/components/ui/PortalBackground'
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
+import { triggerAppNotification, openExternalLink } from '@/lib/appHelpers'
 
 interface EduItem {
   title: string
   provider: string
   description: string
+  duration: string
+  difficulty: string
   icon: LucideIcon
   image: string
+  url: string
 }
 
-/** Five curated, high-quality educational resources. */
-const EDUCATION_ITEMS: EduItem[] = [
-  {
-    title: 'AI & Machine Learning Academy',
-    provider: 'DeepMind Institute',
-    description: 'Master neural networks, deep learning and model deployment through hands-on, industry-led projects.',
-    icon: BrainCircuit,
-    image: 'https://images.unsplash.com/photo-1620712943543-bcc4688e7485?w=600&h=400&fit=crop&auto=format&q=70',
-  },
+/** A broader, high-quality set of educational resources with direct links to trusted learning platforms. */
+const INITIAL_EDUCATION_ITEMS: EduItem[] = [
   {
     title: 'Full Stack Web Development',
-    provider: 'CodeCraft Academy',
-    description: 'Build complete web apps end-to-end with React, Node.js and databases — from first commit to deployment.',
+    provider: 'The Odin Project',
+    description: 'Build complete web apps end-to-end with HTML, CSS, JavaScript, React and Node.js.',
+    duration: '12 Weeks',
+    difficulty: 'Intermediate',
     icon: Code2,
     image: 'https://images.unsplash.com/photo-1593720219276-0b1eacd0aef4?w=600&h=400&fit=crop&auto=format&q=70',
+    url: 'https://www.theodinproject.com/',
   },
   {
-    title: 'Cloud Computing Essentials',
-    provider: 'CloudPro Training',
-    description: 'Learn AWS, Azure and DevOps fundamentals to design, scale and secure modern cloud infrastructure.',
-    icon: Cloud,
-    image: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=600&h=400&fit=crop&auto=format&q=70',
+    title: 'Python Programming',
+    provider: 'Python.org',
+    description: 'Master Python fundamentals with real-world scripting, automation and data workflows.',
+    duration: '8 Weeks',
+    difficulty: 'Beginner',
+    icon: BrainCircuit,
+    image: 'https://images.unsplash.com/photo-1526379095098-d400fd0bf935?w=600&h=400&fit=crop&auto=format&q=70',
+    url: 'https://www.python.org/about/gettingstarted/',
   },
   {
-    title: 'Cybersecurity Training',
-    provider: 'SecureNet Labs',
-    description: 'Defend systems against real-world threats with ethical hacking, network security and incident response.',
-    icon: ShieldCheck,
-    image: 'https://images.unsplash.com/photo-1550751827-4bd374c3f58b?w=600&h=400&fit=crop&auto=format&q=70',
+    title: 'Artificial Intelligence',
+    provider: 'Elements of AI',
+    description: 'Explore AI foundations, neural networks and practical model building projects.',
+    duration: '10 Weeks',
+    difficulty: 'Intermediate',
+    icon: BrainCircuit,
+    image: 'https://images.unsplash.com/photo-1620712943543-bcc4688e7485?w=600&h=400&fit=crop&auto=format&q=70',
+    url: 'https://www.elementsofai.com/',
   },
   {
-    title: 'Data Science Masterclass',
-    provider: 'DataWiz Institute',
-    description: 'Turn raw data into insight with Python, statistics, visualisation and predictive analytics.',
+    title: 'Data Science',
+    provider: 'Khan Academy',
+    description: 'Turn raw data into insight with statistics, probability and visualisation.',
+    duration: '10 Weeks',
+    difficulty: 'Intermediate',
     icon: BarChart3,
     image: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=600&h=400&fit=crop&auto=format&q=70',
+    url: 'https://www.khanacademy.org/math/statistics-probability',
+  },
+  {
+    title: 'Cloud Computing',
+    provider: 'AWS Training',
+    description: 'Learn the basics of cloud architecture, deployment and infrastructure services.',
+    duration: '6 Weeks',
+    difficulty: 'Beginner',
+    icon: Cloud,
+    image: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=600&h=400&fit=crop&auto=format&q=70',
+    url: 'https://aws.amazon.com/training/digital/',
+  },
+  {
+    title: 'Cybersecurity Basics',
+    provider: 'Cisco Networking Academy',
+    description: 'Understand online safety, threat detection and secure digital habits.',
+    duration: '7 Weeks',
+    difficulty: 'Beginner',
+    icon: ShieldCheck,
+    image: 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=600&h=400&fit=crop&auto=format&q=70',
+    url: 'https://skillsforall.com/',
+  },
+  {
+    title: 'UI/UX Design',
+    provider: 'Google UX Design',
+    description: 'Create polished interfaces and user journeys grounded in real research.',
+    duration: '8 Weeks',
+    difficulty: 'Beginner',
+    icon: Palette,
+    image: 'https://images.unsplash.com/photo-1516321497487-e288fb19713f?w=600&h=400&fit=crop&auto=format&q=70',
+    url: 'https://www.coursera.org/professional-certificates/google-ux-design',
+  },
+  {
+    title: 'Product Management',
+    provider: 'Coursera',
+    description: 'Learn how to shape ideas, prioritize features and launch successful products.',
+    duration: '9 Weeks',
+    difficulty: 'Intermediate',
+    icon: Rocket,
+    image: 'https://images.unsplash.com/photo-1552664730-d307ca884978?w=600&h=400&fit=crop&auto=format&q=70',
+    url: 'https://www.coursera.org/specializations/product-management',
+  },
+  {
+    title: 'Database Design',
+    provider: 'MongoDB University',
+    description: 'Understand data models, indexing and scalable database architecture.',
+    duration: '6 Weeks',
+    difficulty: 'Intermediate',
+    icon: Database,
+    image: 'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=600&h=400&fit=crop&auto=format&q=70',
+    url: 'https://learn.mongodb.com/',
+  },
+  {
+    title: 'Machine Learning',
+    provider: 'Fast.ai',
+    description: 'Build practical machine learning systems with modern tools and approachable lessons.',
+    duration: '8 Weeks',
+    difficulty: 'Intermediate',
+    icon: Cpu,
+    image: 'https://images.unsplash.com/photo-1531746790731-6c087fecd65a?w=600&h=400&fit=crop&auto=format&q=70',
+    url: 'https://course.fast.ai/',
+  },
+  {
+    title: 'Research Skills',
+    provider: 'NPTEL',
+    description: 'Strengthen academic writing, evidence gathering and critical thinking skills.',
+    duration: '5 Weeks',
+    difficulty: 'Beginner',
+    icon: Microscope,
+    image: 'https://images.unsplash.com/photo-1518152006812-edab29b069ac?w=600&h=400&fit=crop&auto=format&q=70',
+    url: 'https://archive.nptel.ac.in/',
+  },
+  {
+    title: 'Communication & Presentation',
+    provider: 'LinkedIn Learning',
+    description: 'Explore storytelling, speaking and presentation techniques for everyday impact.',
+    duration: '4 Weeks',
+    difficulty: 'Beginner',
+    icon: BookOpen,
+    image: 'https://images.unsplash.com/photo-1517048676732-d65bc937f952?w=600&h=400&fit=crop&auto=format&q=70',
+    url: 'https://www.linkedin.com/learning/',
   },
 ]
 
@@ -64,11 +155,26 @@ const containerVariants = {
 const itemVariants = { hidden: { opacity: 0, y: 24 }, show: { opacity: 1, y: 0, transition: { duration: 0.45 } } }
 
 export default function EducationPage() {
-  const openResource = (title: string) => {
-    toast.success(`${title} opened successfully.`, {
-      description: 'More educational resources are being added soon.',
-    })
+  const [educationItems, setEducationItems] = useState(INITIAL_EDUCATION_ITEMS)
+  const [itemToDelete, setItemToDelete] = useState<EduItem | null>(null)
+
+  const openResource = (item: EduItem) => {
+    triggerAppNotification('Course opened', `${item.title} opened successfully.`)
+    openExternalLink(item.url)
   }
+
+  const deleteResource = (item: EduItem) => {
+    setItemToDelete(item)
+  }
+
+  const confirmDelete = () => {
+    if (!itemToDelete) return
+    setEducationItems((current) => current.filter((resource) => resource.title !== itemToDelete.title))
+    triggerAppNotification('Course deleted', `${itemToDelete.title} was removed from the education hub.`)
+    setItemToDelete(null)
+  }
+
+  const visibleItems = useMemo(() => educationItems, [educationItems])
 
   return (
     <PortalBackground portal="education">
@@ -117,7 +223,7 @@ export default function EducationPage() {
 
         {/* Resource Grid */}
         <motion.div variants={containerVariants} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {EDUCATION_ITEMS.map((item) => {
+          {visibleItems.map((item) => {
             const Icon = item.icon
             return (
               <motion.div
@@ -147,21 +253,39 @@ export default function EducationPage() {
                     <GraduationCap className="w-3.5 h-3.5" />
                     {item.provider}
                   </p>
-                  <p className="text-sm text-gray-300 leading-relaxed mb-5 flex-1">
+                  <p className="text-sm text-gray-300 leading-relaxed mb-3 flex-1">
                     {item.description}
                   </p>
-                  <Button
-                    onClick={() => openResource(item.title)}
-                    className="w-full bg-gradient-to-r from-teal-500 to-sky-500 hover:from-teal-600 hover:to-sky-600 text-white rounded-xl font-bold shadow-lg"
-                  >
-                    Open Course <ArrowUpRight className="w-4 h-4 ml-1.5" />
-                  </Button>
+                  <div className="flex items-center gap-2 text-xs text-teal-200 mb-4">
+                    <span className="rounded-full bg-white/10 px-2 py-1">{item.duration}</span>
+                    <span className="rounded-full bg-white/10 px-2 py-1">{item.difficulty}</span>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      onClick={() => openResource(item)}
+                      className="flex-1 bg-gradient-to-r from-teal-500 to-sky-500 hover:from-teal-600 hover:to-sky-600 text-white rounded-xl font-bold shadow-lg"
+                    >
+                      Open Course <ArrowUpRight className="w-4 h-4 ml-1.5" />
+                    </Button>
+                    <Button variant="destructive" onClick={() => deleteResource(item)} className="rounded-xl">
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
                 </div>
               </motion.div>
             )
           })}
         </motion.div>
       </motion.div>
+      <ConfirmDialog
+        open={Boolean(itemToDelete)}
+        onOpenChange={(open) => !open && setItemToDelete(null)}
+        title="Delete course"
+        description={`Delete ${itemToDelete?.title || 'this course'}? This action cannot be undone.`}
+        confirmLabel="Delete"
+        confirmVariant="destructive"
+        onConfirm={confirmDelete}
+      />
     </PortalBackground>
   )
 }

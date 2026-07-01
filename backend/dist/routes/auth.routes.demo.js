@@ -300,7 +300,7 @@ exports.authRouter.post('/forgot-password', (0, validate_middleware_1.validate)(
                 await prisma.passwordReset.create({
                     data: { token, userId: user.id, expiresAt: new Date(Date.now() + 60 * 60 * 1000) },
                 });
-                const resetUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/reset-password?token=${token}`;
+                const resetUrl = `${process.env.FRONTEND_URL || 'https://hometown-hub-virid.vercel.app'}/reset-password?token=${token}`;
                 if ((0, db_1.isDemoMode)()) {
                     res.json({ success: true, message: successMsg, data: { resetUrl } });
                     return;

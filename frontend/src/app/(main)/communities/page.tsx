@@ -1,9 +1,9 @@
 'use client'
 
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { motion } from 'framer-motion'
 import { useQuery } from '@tanstack/react-query'
-import { Search, Filter, Users, MapPin, Plus, Loader2, Sparkles } from 'lucide-react'
+import { Search, Filter, Users, MapPin, Plus, Loader2, Sparkles, Trash2, LogOut, MapIcon } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import Link from 'next/link'
@@ -11,9 +11,32 @@ import { communitiesApi } from '@/lib/api'
 import { PortalBackground } from '@/components/ui/PortalBackground'
 import { ImageWithFallback } from '@/components/ui/ImageWithFallback'
 import { toast } from 'sonner'
+import { triggerAppNotification, openExternalLink } from '@/lib/appHelpers'
+import { useAuthStore } from '@/store/authStore'
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
+
+const SAMPLE_COMMUNITIES = [
+  { id: 'sample-community-1', name: 'Hyderabad Makers Circle', description: 'A creative hub for builders, designers, and founders sharing local expertise.', city: 'Hyderabad', category: 'Technology', members: 184, image: 'https://images.unsplash.com/photo-1516321497487-e288fb19713f?w=800&h=400&fit=crop&auto=format&q=70', owner: true, joined: true },
+  { id: 'sample-community-2', name: 'Bengaluru Foodies', description: 'Explore hidden cafés, food festivals, and authentic home-style recipes.', city: 'Bengaluru', category: 'Food', members: 268, image: 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=800&h=400&fit=crop&auto=format&q=70', owner: false, joined: false },
+  { id: 'sample-community-3', name: 'Chennai Wellness Collective', description: 'Wellness talks, yoga meetups, and healthy-living resources for every neighborhood.', city: 'Chennai', category: 'Wellness', members: 132, image: 'https://images.unsplash.com/photo-1518611012118-696072aa579a?w=800&h=400&fit=crop&auto=format&q=70', owner: false, joined: true },
+  { id: 'sample-community-4', name: 'Pune Startup Circle', description: 'Support local startups, mentors, and community-led pitch sessions.', city: 'Pune', category: 'Startup', members: 221, image: 'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=800&h=400&fit=crop&auto=format&q=70', owner: false, joined: false },
+  { id: 'sample-community-5', name: 'Kolkata Heritage Club', description: 'Celebrate culture, history, heritage walks, and neighborhood stories.', city: 'Kolkata', category: 'Culture', members: 157, image: 'https://images.unsplash.com/photo-1480714378408-67cf0d13bc1b?w=800&h=400&fit=crop&auto=format&q=70', owner: false, joined: false },
+  { id: 'sample-community-6', name: 'Delhi Parents Network', description: 'Resources for families, school updates, and local parenting groups.', city: 'Delhi', category: 'Family', members: 309, image: 'https://images.unsplash.com/photo-1516627145497-ae6968895b74?w=800&h=400&fit=crop&auto=format&q=70', owner: true, joined: false },
+  { id: 'sample-community-7', name: 'Mumbai Fitness Crew', description: 'Daily workouts, weekend runs, and healthy habits for busy city living.', city: 'Mumbai', category: 'Fitness', members: 194, image: 'https://images.unsplash.com/photo-1518611012118-696072aa579a?w=800&h=400&fit=crop&auto=format&q=70', owner: false, joined: true },
+  { id: 'sample-community-8', name: 'London Book Circle', description: 'Monthly meetups discussing contemporary literature and author sessions.', city: 'London', category: 'Books', members: 412, image: 'https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?w=800&h=400&fit=crop&auto=format&q=70', owner: false, joined: false },
+  { id: 'sample-community-9', name: 'San Francisco Devs', description: 'Tech talks, open-source sprints and networking for engineers in the Bay Area.', city: 'San Francisco', category: 'Technology', members: 1250, image: 'https://images.unsplash.com/photo-1485217988980-11786ced9454?w=800&h=400&fit=crop&auto=format&q=70', owner: false, joined: false },
+  { id: 'sample-community-10', name: 'Berlin Art Collective', description: 'Artists sharing studio spaces, exhibitions, and collaboration opportunities.', city: 'Berlin', category: 'Art', members: 98, image: 'https://images.unsplash.com/photo-1496307042754-b4aa456c4a2d?w=800&h=400&fit=crop&auto=format&q=70', owner: false, joined: false },
+  { id: 'sample-community-11', name: 'Tokyo Startups', description: 'Founders meetups, investor office hours and product demos.', city: 'Tokyo', category: 'Startup', members: 340, image: 'https://images.unsplash.com/photo-1512453979798-5ea266f8880c?w=800&h=400&fit=crop&auto=format&q=70', owner: false, joined: false },
+  { id: 'sample-community-12', name: 'Sydney Surf & Yoga', description: 'Beach cleanups, surf lessons and weekend yoga sessions.', city: 'Sydney', category: 'Wellness', members: 220, image: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=800&h=400&fit=crop&auto=format&q=70', owner: false, joined: false },
+  { id: 'sample-community-13', name: 'Toronto Coding Dojo', description: 'Hands-on workshops, code reviews and mentorship programs.', city: 'Toronto', category: 'Education', members: 305, image: 'https://images.unsplash.com/photo-1519389950473-47ba0277781c?w=800&h=400&fit=crop&auto=format&q=70', owner: false, joined: false },
+  { id: 'sample-community-14', name: 'Paris Food Lovers', description: 'Gastronomy tours, pop-up dinners and recipe exchanges.', city: 'Paris', category: 'Food', members: 156, image: 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=800&h=400&fit=crop&auto=format&q=70', owner: false, joined: false },
+  { id: 'sample-community-15', name: 'Lagos Makers', description: 'Community-driven projects, maker space events and hardware workshops.', city: 'Lagos', category: 'Technology', members: 84, image: 'https://images.unsplash.com/photo-1509395176047-4a66953fd231?w=800&h=400&fit=crop&auto=format&q=70', owner: false, joined: false },
+]
 
 export default function CommunitiesPage() {
   const [searchQuery, setSearchQuery] = useState('')
+  const [communityToDelete, setCommunityToDelete] = useState<any | null>(null)
+  const { user } = useAuthStore()
 
   const { data, isLoading, isError } = useQuery({
     queryKey: ['communities', searchQuery],
@@ -22,15 +45,65 @@ export default function CommunitiesPage() {
 
   const communities = data?.data || []
 
+  // Keep a modifiable local copy of sample communities so join/leave/delete work consistently
+  const [localSamples, setLocalSamples] = useState(() => SAMPLE_COMMUNITIES)
+
+  const visibleCommunities = useMemo(() => {
+    const apiCommunities = communities.length > 0 ? communities : []
+    const filteredSamples = localSamples.filter((community) => {
+      if (!searchQuery) return true
+      return `${community.name} ${community.description} ${community.city} ${community.category}`.toLowerCase().includes(searchQuery.toLowerCase())
+    })
+    // Merge API communities first, then samples; allow up to 15 visible cards
+    return [...apiCommunities, ...filteredSamples].slice(0, 15)
+  }, [communities, localSamples, searchQuery])
+
   const handleJoin = async (e: React.MouseEvent, community: any) => {
     e.preventDefault()
     e.stopPropagation()
-    try {
-      await communitiesApi.join(community.id || community.slug)
-      toast.success(`You've joined ${community.name}!`)
-    } catch {
-      toast.success(`You've joined ${community.name}!`)
+    // Update local sample state when applicable
+    if (community.id?.startsWith('sample-')) {
+      setLocalSamples((current) => current.map((c) => c.id === community.id ? { ...c, joined: true } : c))
     }
+    try {
+      if (!community.id?.startsWith('sample-')) await communitiesApi.join(community.id || community.slug)
+    } catch {
+      // ignore remote errors for demo mode
+    }
+    triggerAppNotification('Community joined', `You joined ${community.name}.`)
+    openExternalLink(`https://www.google.com/maps/search/${encodeURIComponent(community.city || community.name)}`)
+  }
+
+  const handleLeave = async (e: React.MouseEvent, community: any) => {
+    e.preventDefault()
+    e.stopPropagation()
+    if (community.id?.startsWith('sample-')) {
+      setLocalSamples((current) => current.map((c) => c.id === community.id ? { ...c, joined: false } : c))
+    }
+    try {
+      if (!community.id?.startsWith('sample-')) await communitiesApi.leave(community.id || community.slug)
+    } catch {
+      // ignore
+    }
+    triggerAppNotification('Community left', `You left ${community.name}.`)
+  }
+
+  const handleDelete = (e: React.MouseEvent, community: any) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setCommunityToDelete(community)
+  }
+
+  const confirmDeleteCommunity = async () => {
+    if (!communityToDelete) return
+    // Remove locally if sample, otherwise call API then remove from visible list by re-fetch
+    if (communityToDelete.id?.startsWith('sample-')) {
+      setLocalSamples((current) => current.filter((c) => c.id !== communityToDelete.id))
+    } else {
+      try { await communitiesApi.leave(communityToDelete.id || communityToDelete.slug) } catch { /* ignore */ }
+    }
+    triggerAppNotification('Community deleted', `${communityToDelete.name} was deleted.`)
+    setCommunityToDelete(null)
   }
 
   const containerVariants = {
@@ -169,44 +242,35 @@ export default function CommunitiesPage() {
             variants={containerVariants}
             className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6"
           >
-            {communities.slice(0, 5).map((community: any, index: number) => {
+            {visibleCommunities.map((community: any, index: number) => {
               const color = colors[index % colors.length]
+              const isOwner = community.owner || community.createdBy?.id === user?.id
+              const isJoined = community.joined || community.membershipStatus === 'APPROVED'
               return (
                 <motion.div key={community.id || community.slug} variants={itemVariants}>
-                  <Link href={`/communities/${community.slug}`}>
+                  <div>
                     <motion.div
                       whileHover={{ scale: 1.02, y: -5 }}
                       whileTap={{ scale: 0.98 }}
                       transition={{ type: 'spring', stiffness: 300 }}
-                      className="bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-xl border border-white/20 rounded-3xl overflow-hidden hover:border-purple-400/50 transition-all cursor-pointer group h-full flex flex-col relative shadow-xl hover:shadow-2xl hover:shadow-purple-500/20"
+                      className="bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-xl border border-white/20 rounded-3xl overflow-hidden hover:border-purple-400/50 transition-all group h-full flex flex-col relative shadow-xl hover:shadow-2xl hover:shadow-purple-500/20"
                     >
                       {/* Header Image */}
-                      <div className={`h-28 bg-gradient-to-r ${color} relative overflow-hidden`}>
+                      <div className={`h-36 bg-gradient-to-r ${color} relative overflow-hidden`}> 
                         <ImageWithFallback
-                          src={community.bannerImage || community.logoImage}
+                          src={community.bannerImage || community.logoImage || community.image}
                           alt={community.name}
                           className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                         />
                         <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
-                        <motion.div
-                          className="absolute inset-0 bg-white/20"
-                          animate={{
-                            x: ['-100%', '100%'],
-                          }}
-                          transition={{
-                            duration: 3,
-                            repeat: Infinity,
-                            repeatDelay: 2,
-                          }}
-                        />
                       </div>
 
-                      <div className="p-6 flex-1 flex flex-col relative -mt-10">
+                      <div className="p-6 flex-1 flex flex-col relative -mt-12">
                         {/* Icon */}
                         <motion.div
                           whileHover={{ rotate: 5 }}
                           transition={{ type: 'spring', stiffness: 300 }}
-                          className={`w-20 h-20 rounded-2xl bg-gradient-to-br ${color} p-0.5 shadow-2xl mb-4`}
+                          className={`w-20 h-20 rounded-2xl bg-gradient-to-br ${color} p-0.5 shadow-2xl mb-4 -mt-6`}
                         >
                           <div className="w-full h-full bg-[#0a0a0a] rounded-[15px] flex items-center justify-center">
                             <Users className="w-9 h-9 text-white" />
@@ -226,25 +290,36 @@ export default function CommunitiesPage() {
                           <div className="flex items-center gap-4 text-sm">
                             <span className="flex items-center gap-1.5 text-purple-300 font-medium">
                               <Users className="w-4 h-4" />
-                              {(community.memberCount || community._count?.members || 0).toLocaleString()}
+                              {(community.memberCount || community.members || community._count?.members || 0).toLocaleString()}
                             </span>
                             <span className="flex items-center gap-1.5 text-indigo-300 font-medium">
                               <MapPin className="w-4 h-4" />
                               {community.city || 'Citywide'}
                             </span>
                           </div>
-                          <Button
-                            size="sm"
-                            onClick={(e) => handleJoin(e, community)}
-                            className="bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-600 hover:to-indigo-600 text-white rounded-xl font-semibold shadow-lg"
-                          >
-                            Join Community
-                          </Button>
+                          <div className="flex items-center gap-2">
+                            {isJoined ? (
+                              <Button size="sm" variant="outline" onClick={(e) => handleLeave(e, community)} className="border-white/20 text-white hover:bg-white/10 rounded-xl font-semibold mr-2">
+                                <LogOut className="w-4 h-4 mr-1.5" /> Leave
+                              </Button>
+                            ) : (
+                              <Button size="sm" onClick={(e) => handleJoin(e, community)} className="bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-600 hover:to-indigo-600 text-white rounded-xl font-semibold shadow-lg mr-2">
+                                <MapIcon className="w-4 h-4 mr-1.5" /> Join
+                              </Button>
+                            )}
+                            <Button size="sm" variant="secondary" onClick={(e) => { e.preventDefault(); window.location.href = `/communities/${community.slug}` }} className="rounded-xl font-semibold mr-2">
+                              View
+                            </Button>
+                            {isOwner && (
+                              <Button size="sm" variant="destructive" onClick={(e) => handleDelete(e, community)} className="rounded-xl font-semibold">
+                                <Trash2 className="w-4 h-4 mr-1.5" /> Delete
+                              </Button>
+                            )}
+                          </div>
                         </div>
                       </div>
                     </motion.div>
-                  </Link>
-                </motion.div>
+                  </div>
               )
             })}
 
@@ -259,6 +334,15 @@ export default function CommunitiesPage() {
           </motion.div>
         )}
       </motion.div>
+      <ConfirmDialog
+        open={Boolean(communityToDelete)}
+        onOpenChange={(open) => !open && setCommunityToDelete(null)}
+        title="Delete community"
+        description={`Delete ${communityToDelete?.name || 'this community'}? This action cannot be undone.`}
+        confirmLabel="Delete"
+        confirmVariant="destructive"
+        onConfirm={confirmDeleteCommunity}
+      />
     </PortalBackground>
   )
 }

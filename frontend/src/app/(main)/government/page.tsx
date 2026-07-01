@@ -8,20 +8,22 @@ import {
 import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
 import { PortalBackground } from '@/components/ui/PortalBackground'
+import { openExternalLink } from '@/lib/appHelpers'
 
 interface GovService {
   name: string
   description: string
   icon: LucideIcon
+  url: string
 }
 
-/** Five core government services. */
+/** Five core government services with direct official portals. */
 const GOV_SERVICES: GovService[] = [
-  { name: 'Aadhaar Services', description: 'Enrol, update and download your Aadhaar — manage your unique identity online.', icon: ShieldCheck },
-  { name: 'Passport Application', description: 'Apply for a fresh passport or renewal and track your application status online.', icon: FileText },
-  { name: 'PAN Card Services', description: 'Apply for a new PAN, make corrections, and link it with your Aadhaar.', icon: CreditCard },
-  { name: 'Driving Licence Services', description: 'Apply for a learner\'s or permanent driving licence and book your driving test.', icon: Car },
-  { name: 'Property Tax Payment', description: 'View dues, pay your property tax securely and download instant receipts.', icon: Receipt },
+  { name: 'Aadhaar Services', description: 'Enrol, update and download your Aadhaar — manage your unique identity online.', icon: ShieldCheck, url: 'https://myaadhaar.uidai.gov.in/' },
+  { name: 'Passport Application', description: 'Apply for a fresh passport or renewal and track your application status online.', icon: FileText, url: 'https://portal3.passportindia.gov.in/Online/index.html' },
+  { name: 'PAN Card Services', description: 'Apply for a new PAN, make corrections, and link it with your Aadhaar.', icon: CreditCard, url: 'https://www.onlineservices.nsdl.com/paam/endUserRegisterContact.html' },
+  { name: 'Driving Licence Services', description: 'Apply for a learner\'s or permanent driving licence and book your driving test.', icon: Car, url: 'https://parivahan.gov.in/parivahan/' },
+  { name: 'Property Tax Payment', description: 'View dues, pay your property tax securely and download instant receipts.', icon: Receipt, url: 'https://www.ghmc.gov.in/' },
 ]
 
 const importantLinks = [
@@ -38,12 +40,11 @@ const containerVariants = {
 const itemVariants = { hidden: { opacity: 0, y: 24 }, show: { opacity: 1, y: 0, transition: { duration: 0.45 } } }
 
 export default function GovernmentPage() {
-  const openService = (name: string) => {
-    // Professional information notification — the online portal for this service
-    // is being integrated, so we inform the user clearly instead of doing nothing.
-    toast.info(`${name}`, {
-      description: 'This service is being integrated and will be available online shortly. Please check back soon.',
+  const openService = (service: GovService) => {
+    toast.success(`Opening ${service.name}`, {
+      description: 'You’re being redirected to the official government portal for this service.',
     })
+    openExternalLink(service.url)
   }
 
   return (
@@ -102,7 +103,7 @@ export default function GovernmentPage() {
                   {service.description}
                 </p>
                 <Button
-                  onClick={() => openService(service.name)}
+                  onClick={() => openService(service)}
                   className="w-full bg-gradient-to-r from-indigo-500 to-blue-600 hover:from-indigo-600 hover:to-blue-700 text-white rounded-xl font-bold shadow-lg"
                 >
                   Access Service <ArrowUpRight className="w-4 h-4 ml-1.5" />

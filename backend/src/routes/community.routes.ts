@@ -293,3 +293,32 @@ communityRouter.delete('/:id/members/:userId', authenticate, async (req: AuthReq
     res.status(500).json({ success: false, message: 'Failed to remove member' });
   }
 });
+
+// DELETE /api/communities/:id  <-- New: delete entire community (admin or owner)
+communityRouter.delete('/:id', authenticate, async (req: AuthRequest, res: Response) => {
+  try {
+    const { id } = req.params;
+    const community = await prisma.community.findUnique({ where: { id } });
+    if (!community) { res.status(404).json({ success: false, message: 'Community not found' }); return; }
+    // Allow if owner or admin
+    if (community.createdById !== req.user!.userId && req.user!.role !== 'ADMIN') {
+      res.status(403).json({ success: false, message: 'Not authorized to delete this community' }); return; }
+
+    await prisma.community.delete({ where: { id } });
+
+    // Notify creator
+    try {
+      await createNotification({
+        type: 'COMMUNITY_DELETED',
+        title: 'Community deleted',
+        body: `${community.name} was deleted by ${req.user!.userId}`,
+        receiverId: community.createdById,
+        senderId: req.user!.userId,
+      });
+    } catch { /* ignore notification errors */ }
+
+    res.json({ success: true, message: 'Community deleted' });
+  } catch {
+    res.status(500).json({ success: false, message: 'Failed to delete community' });
+  }
+});

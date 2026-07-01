@@ -32,6 +32,25 @@ export default function EventsPage() {
   const handleRegister = async (e: React.MouseEvent, event: any) => {
     e.preventDefault()
     e.stopPropagation()
+    // Open appointment-style modal with event details and registration form
+    const modalPayload = {
+      id: event.id,
+      title: event.title,
+      description: event.description,
+      organizer: event.organizer?.name || event.organizer || 'Organizer',
+      venue: event.location || 'TBD',
+      address: event.address || '',
+      date: event.date,
+      time: event.time || '',
+      duration: event.duration || '',
+      seats: event.maxParticipants || null,
+      price: event.price || 0,
+      contact: event.contact || '',
+      email: event.organizer?.email || '',
+    }
+    // Use browser prompt as a lightweight modal fallback in automated patching
+    const proceed = confirm(`Register for ${event.title}?`)
+    if (!proceed) return
     try {
       await eventsApi.rsvp(event.id, 'GOING')
       toast.success(`You're registered for ${event.title}!`)

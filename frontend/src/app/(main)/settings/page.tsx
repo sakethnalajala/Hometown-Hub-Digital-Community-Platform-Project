@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import { Settings, User, Bell, Lock, Eye, EyeOff, Palette, Globe, Shield, LogOut, ChevronRight, Save, Moon, Sun, Monitor } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input'
 import { useAuthStore } from '@/store/authStore'
 import { usersApi, authApi } from '@/lib/api'
 import { toast } from 'sonner'
+import { applyAppTheme, getStoredTheme } from '@/lib/appHelpers'
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -23,7 +24,7 @@ export default function SettingsPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [passwordForm, setPasswordForm] = useState({ current: '', newPass: '', confirm: '' })
   const [changingPassword, setChangingPassword] = useState(false)
-  const [theme, setTheme] = useState<'dark' | 'light' | 'system'>('dark')
+  const [theme, setTheme] = useState<'dark' | 'light' | 'system'>(getStoredTheme())
   const [notifications, setNotifications] = useState({
     emailDigest: true,
     communityUpdates: true,
@@ -41,6 +42,10 @@ export default function SettingsPage() {
     hometown: user?.hometown || '',
     currentCity: user?.currentCity || '',
   })
+
+  useEffect(() => {
+    applyAppTheme(theme)
+  }, [theme])
 
   const tabs = [
     { id: 'profile' as TabId, label: 'Profile', icon: User },
@@ -287,7 +292,7 @@ export default function SettingsPage() {
                   ].map(t => (
                     <button
                       key={t.value}
-                      onClick={() => { setTheme(t.value); toast.success(`Theme set to ${t.label}`) }}
+                      onClick={() => { setTheme(t.value); applyAppTheme(t.value); toast.success(`Theme set to ${t.label}`) }}
                       className={`p-4 rounded-xl border flex flex-col items-center gap-2 transition-all ${
                         theme === t.value ? 'border-purple-500 bg-purple-500/10' : 'border-white/10 bg-white/3 hover:bg-white/10'
                       }`}

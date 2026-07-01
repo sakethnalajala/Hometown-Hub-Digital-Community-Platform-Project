@@ -3,13 +3,29 @@
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import Link from 'next/link'
-import { Briefcase, MapPin, Clock, DollarSign, Search, Filter, Building2, Star, ExternalLink, BookmarkPlus, Loader2, Sparkles, TrendingUp } from 'lucide-react'
+import { Briefcase, MapPin, Clock, DollarSign, Search, Filter, Building2, Star, ExternalLink, BookmarkPlus, Loader2, Sparkles, TrendingUp, Trash2, FileText } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { jobsApi, bookmarksApi } from '@/lib/api'
 import { toast } from 'sonner'
 import { PortalBackground } from '@/components/ui/PortalBackground'
 import { GradientButton } from '@/components/ui/GradientButton'
+import { ApplicationModal } from '@/components/ui/ApplicationModal'
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
+import { triggerAppNotification, openExternalLink, downloadTextAsPdf } from '@/lib/appHelpers'
+
+const SAMPLE_JOBS = [
+  { id: 'sample-job-1', title: 'Frontend Developer', company: 'TechNova', location: 'Hyderabad', type: 'Full-time', salary: '₹14 LPA', description: 'Build polished dashboards and delightful user interfaces for fast-growing teams.', category: 'Engineering', website: 'https://careers.microsoft.com/' },
+  { id: 'sample-job-2', title: 'Data Analyst', company: 'DataSphere', location: 'Bengaluru', type: 'Full-time', salary: '₹10 LPA', description: 'Analyze product and business metrics to support smarter decisions.', category: 'Data', website: 'https://careers.google.com/' },
+  { id: 'sample-job-3', title: 'Product Designer', company: 'PixeLab', location: 'Delhi', type: 'Remote', salary: '₹12 LPA', description: 'Craft thoughtful design systems and customer journeys.', category: 'Design', website: 'https://careers.atlassian.com/' },
+  { id: 'sample-job-4', title: 'Software Engineer', company: 'CloudBridge', location: 'Pune', type: 'Full-time', salary: '₹16 LPA', description: 'Work on cloud-native products that scale across regions.', category: 'Engineering', website: 'https://careers.amazon.com/' },
+  { id: 'sample-job-5', title: 'Operations Manager', company: 'LocalWorks', location: 'Mumbai', type: 'Contract', salary: '₹8 LPA', description: 'Coordinate field operations and drive execution quality.', category: 'Operations', website: 'https://jobs.netflix.com/' },
+  { id: 'sample-job-6', title: 'AI Research Intern', company: 'NeuroLabs', location: 'Chennai', type: 'Internship', salary: '₹4 LPA', description: 'Support research and prototyping for next-wave AI products.', category: 'Research', website: 'https://careers.meta.com/' },
+  { id: 'sample-job-7', title: 'Sales Executive', company: 'MarketMint', location: 'Kolkata', type: 'Full-time', salary: '₹7 LPA', description: 'Drive partnerships and expand outreach across local markets.', category: 'Sales', website: 'https://careers.salesforce.com/' },
+  { id: 'sample-job-8', title: 'HR Generalist', company: 'PeopleFirst', location: 'Ahmedabad', type: 'Full-time', salary: '₹9 LPA', description: 'Support hiring, onboarding, and employee experience programs.', category: 'HR', website: 'https://careers.microsoft.com/' },
+  { id: 'sample-job-9', title: 'Mobile Developer', company: 'AppForge', location: 'Jaipur', type: 'Full-time', salary: '₹13 LPA', description: 'Ship polished mobile products with a strong customer focus.', category: 'Engineering', website: 'https://careers.apple.com/' },
+  { id: 'sample-job-10', title: 'Customer Success Lead', company: 'SupportHub', location: 'Bengaluru', type: 'Full-time', salary: '₹11 LPA', description: 'Guide clients and build lasting relationships with success programs.', category: 'Customer Success', website: 'https://careers.oracle.com/' },
+]
 
 const jobTypes = ['All', 'Full-time', 'Part-time', 'Remote', 'Internship', 'Contract']
 
@@ -26,8 +42,11 @@ export default function JobsPage() {
   const [search, setSearch] = useState('')
   const [activeType, setActiveType] = useState('All')
   const [saved, setSaved] = useState<string[]>([])
-  const [jobs, setJobs] = useState<any[]>([])
+  const [jobs, setJobs] = useState<any[]>(SAMPLE_JOBS)
   const [loading, setLoading] = useState(true)
+  const [applicationOpen, setApplicationOpen] = useState(false)
+  const [selectedJob, setSelectedJob] = useState<any | null>(null)
+  const [jobToDelete, setJobToDelete] = useState<{ id: string; title: string } | null>(null)
 
   useEffect(() => {
     jobsApi.getAll({ limit: 100 })
@@ -53,13 +72,34 @@ export default function JobsPage() {
     }
   }
 
-  const handleApply = async (jobId: string, title: string) => {
-    try {
-      await jobsApi.apply(jobId)
-      toast.success(`Applied for ${title}!`)
-    } catch {
-      toast.error('Application failed. Please try again.')
+  const handleApply = (jobId: string) => {
+    // Navigate to the full-page application route
+    // Ensure job id exists and open application modal if job details are loaded
+    const target = jobs.find(j => j.id === jobId) || null
+    if (!target) {
+      alert('Unable to load job details. Please try again.')
+      return
     }
+    // open application page
+    window.location.href = `/jobs/apply/${jobId}`
+  }
+
+  const handleApplicationSubmit = (payload: any) => {
+    const confirmation = `Application Confirmation\nApplicant: ${payload.fullName}\nEmail: ${payload.email}\nPhone: ${payload.phone}\nCollege: ${payload.college}\nCourse: ${payload.course}\nResume: ${payload.resume}\nJob: ${payload.jobTitle}`
+    triggerAppNotification('Application submitted', `${payload.jobTitle} application received.`)
+    downloadTextAsPdf(`${payload.jobTitle.replace(/\s+/g, '-').toLowerCase()}-application.pdf`, confirmation)
+    openExternalLink(SAMPLE_JOBS.find((job) => job.id === selectedJob?.id)?.website || 'https://www.google.com')
+  }
+
+  const handleDelete = (jobId: string, title: string) => {
+    setJobToDelete({ id: jobId, title })
+  }
+
+  const confirmDelete = () => {
+    if (!jobToDelete) return
+    setJobs((current) => current.filter((job) => job.id !== jobToDelete.id))
+    triggerAppNotification('Job deleted', `${jobToDelete.title} was removed from the list.`)
+    setJobToDelete(null)
   }
 
   const filtered = jobs.filter(job => {
@@ -281,7 +321,7 @@ export default function JobsPage() {
                     <div className="flex gap-3">
                       <Button
                         className="flex-1 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500 text-white rounded-xl font-bold shadow-lg"
-                        onClick={(e) => { e.preventDefault(); handleApply(job.id, job.title) }}
+                        onClick={(e) => { e.preventDefault(); handleApply(job.id) }}
                       >
                         Apply Now <ExternalLink className="w-4 h-4 ml-2" />
                       </Button>
@@ -314,6 +354,16 @@ export default function JobsPage() {
           </Link>
         </motion.div>
       </motion.div>
+      <ApplicationModal open={applicationOpen} onOpenChange={setApplicationOpen} job={selectedJob} onSubmit={handleApplicationSubmit} />
+      <ConfirmDialog
+        open={Boolean(jobToDelete)}
+        onOpenChange={(open) => !open && setJobToDelete(null)}
+        title="Delete job"
+        description={`Delete ${jobToDelete?.title || 'this job'}? This action cannot be undone.`}
+        confirmLabel="Delete"
+        confirmVariant="destructive"
+        onConfirm={confirmDelete}
+      />
     </PortalBackground>
   )
 }

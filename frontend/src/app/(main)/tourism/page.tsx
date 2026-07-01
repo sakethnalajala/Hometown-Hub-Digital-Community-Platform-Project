@@ -3,13 +3,23 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
-import { Map, Search, Star, MapPin, Camera, Clock, Compass, Mountain, TreePine, Landmark, Loader2, Sparkles, Navigation } from 'lucide-react'
+import { Map, Search, Star, MapPin, Camera, Clock, Compass, Mountain, TreePine, Landmark, Loader2, Sparkles, Navigation, Trash2 } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { tourismApi } from '@/lib/api'
 import { ImageWithFallback } from '@/components/ui/ImageWithFallback'
 import { toast } from 'sonner'
 import { PortalBackground } from '@/components/ui/PortalBackground'
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
+import { triggerAppNotification, openExternalLink } from '@/lib/appHelpers'
+
+const SAMPLE_DESTINATIONS = [
+  { id: 'sample-destination-1', name: 'Gol Gumbaz', description: 'A striking 17th-century mausoleum and one of the most iconic heritage sites in Karnataka.', rating: 4.9, location: 'Bijapur', category: 'Heritage', image: 'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=800&h=600&fit=crop&auto=format&q=70' },
+  { id: 'sample-destination-2', name: 'Munnar Hills', description: 'A misty hill station famous for tea plantations, viewpoints, and peaceful trails.', rating: 4.8, location: 'Kerala', category: 'Hill Station', image: 'https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=800&h=600&fit=crop&auto=format&q=70' },
+  { id: 'sample-destination-3', name: 'Rishikesh Riverside', description: 'A spiritual destination with yoga, adventure sports, and riverfront serenity.', rating: 4.7, location: 'Uttarakhand', category: 'Adventure', image: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=800&h=600&fit=crop&auto=format&q=70' },
+  { id: 'sample-destination-4', name: 'Hampi Ruins', description: 'A UNESCO heritage site filled with dramatic boulders and ancient temples.', rating: 4.9, location: 'Karnataka', category: 'Heritage', image: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=800&h=600&fit=crop&auto=format&q=70' },
+  { id: 'sample-destination-5', name: 'Alleppey Backwaters', description: 'Relaxing houseboat cruises through tranquil canals and lush landscapes.', rating: 4.8, location: 'Kerala', category: 'Nature', image: 'https://images.unsplash.com/photo-1500375592092-40eb2168fd21?w=800&h=600&fit=crop&auto=format&q=70' },
+]
 
 function parseImages(images: unknown): string[] {
   if (Array.isArray(images)) return images
@@ -30,8 +40,9 @@ const itemVariants = { hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0, 
 export default function TourismPage() {
   const [search, setSearch] = useState('')
   const [activeType, setActiveType] = useState('All')
-  const [destinations, setDestinations] = useState<any[]>([])
+  const [destinations, setDestinations] = useState<any[]>(SAMPLE_DESTINATIONS)
   const [loading, setLoading] = useState(true)
+  const [destinationToDelete, setDestinationToDelete] = useState<any | null>(null)
 
   useEffect(() => {
     tourismApi.getAll()
@@ -44,6 +55,26 @@ export default function TourismPage() {
         setLoading(false)
       })
   }, [])
+
+  const handleExplore = (destination: any) => {
+    const city = destination.location || destination.city || destination.name
+    const mapsUrl = `https://www.google.com/maps/search/${encodeURIComponent(destination.name || city)}`
+    const stayUrl = `https://www.booking.com/searchresults.html?ss=${encodeURIComponent(city)}`
+    triggerAppNotification('Tourism explored', `${destination.name} opened with maps and stay options.`)
+    openExternalLink(mapsUrl)
+    window.open(stayUrl, '_blank', 'noopener,noreferrer')
+  }
+
+  const handleDelete = (destination: any) => {
+    setDestinationToDelete(destination)
+  }
+
+  const confirmDelete = () => {
+    if (!destinationToDelete) return
+    setDestinations((current) => current.filter((item) => item.id !== destinationToDelete.id))
+    triggerAppNotification('Destination deleted', `${destinationToDelete.name} was removed.`)
+    setDestinationToDelete(null)
+  }
 
   const filtered = destinations.filter(d => {
     const matchType = activeType === 'All' || d.type === activeType || d.category === activeType
@@ -203,9 +234,14 @@ export default function TourismPage() {
                           <span className="text-sm text-teal-300 font-semibold">
                             {dest.bestTime || 'Year Round'}
                           </span>
-                          <Button size="sm" className="bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white rounded-xl font-bold shadow-lg">
-                            Explore
-                          </Button>
+                          <div className="flex gap-2">
+                            <Button size="sm" className="bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white rounded-xl font-bold shadow-lg" onClick={(e) => { e.preventDefault(); handleExplore(dest) }}>
+                              Explore
+                            </Button>
+                            <Button size="sm" variant="destructive" className="rounded-xl font-bold shadow-lg" onClick={(e) => { e.preventDefault(); handleDelete(dest) }}>
+                              <Trash2 className="w-4 h-4 mr-1.5" /> Delete
+                            </Button>
+                          </div>
                         </div>
                       </div>
                     </motion.div>
@@ -216,6 +252,15 @@ export default function TourismPage() {
           </motion.div>
         )}
       </motion.div>
+      <ConfirmDialog
+        open={Boolean(destinationToDelete)}
+        onOpenChange={(open) => !open && setDestinationToDelete(null)}
+        title="Delete destination"
+        description={`Delete ${destinationToDelete?.name || 'this destination'}? This action cannot be undone.`}
+        confirmLabel="Delete"
+        confirmVariant="destructive"
+        onConfirm={confirmDelete}
+      />
     </PortalBackground>
   )
 }
