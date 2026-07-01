@@ -7,6 +7,7 @@ import morgan from 'morgan';
 import rateLimit from 'express-rate-limit';
 import { Server as SocketServer } from 'socket.io';
 import path from 'path';
+import { uploadsDir } from './lib/upload';
 
 import { authRouter } from './routes/auth.routes.demo';
 import { userRouter } from './routes/user.routes';
@@ -43,19 +44,15 @@ app.set('trust proxy', 1);
 
 // CORS origin policy
 // Allow:
-// - specific deployed frontend origin
+// - the single public frontend origin
 // - all Vercel preview/prod origins: *.vercel.app
-// - localhost dev
-// - Requests with no Origin header (server-to-server, curl, health checks)
+// - requests with no Origin header (server-to-server, curl, health checks)
 const ALLOWED_FRONTEND_ORIGIN = process.env.FRONTEND_URL || 'https://hometown-hub-virid.vercel.app';
 const isAllowedOrigin = (origin?: string): boolean => {
   if (!origin) return true;
 
   // Exact allowlist for the main deployed frontend
   if (origin === ALLOWED_FRONTEND_ORIGIN) return true;
-
-  // Local dev
-  if (origin === 'http://localhost:3000') return true;
 
   // Vercel deployments (production + preview)
   try {
@@ -121,8 +118,8 @@ if (process.env.NODE_ENV !== 'test') {
   app.use(morgan('dev'));
 }
 
-// Static files for uploads
-app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
+// Static files for uploads (use uploadsDir which may be a temp folder on Vercel)
+app.use('/uploads', express.static(uploadsDir));
 
 // Health check
 app.get('/health', (_req, res) => {

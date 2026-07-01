@@ -22,7 +22,7 @@ if (hasCloudinary) {
 // Local storage config
 // Use a writable temp directory in serverless environments (Vercel),
 // otherwise use the repository `uploads` folder for local development.
-const uploadsDir = process.env.VERCEL === '1'
+export const uploadsDir = process.env.VERCEL === '1'
   ? path.join(os.tmpdir(), 'hometown-hub-uploads')
   : path.join(__dirname, '../../uploads');
 if (!fs.existsSync(uploadsDir)) {
