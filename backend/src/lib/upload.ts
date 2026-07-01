@@ -2,6 +2,7 @@ import { v2 as cloudinary } from 'cloudinary';
 import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
+import os from 'os';
 
 // Configure Cloudinary if credentials exist
 const hasCloudinary = !!(
@@ -19,9 +20,18 @@ if (hasCloudinary) {
 }
 
 // Local storage config
-const uploadsDir = path.join(__dirname, '../../uploads');
+// Use a writable temp directory in serverless environments (Vercel),
+// otherwise use the repository `uploads` folder for local development.
+const uploadsDir = process.env.VERCEL === '1'
+  ? path.join(os.tmpdir(), 'hometown-hub-uploads')
+  : path.join(__dirname, '../../uploads');
 if (!fs.existsSync(uploadsDir)) {
-  fs.mkdirSync(uploadsDir, { recursive: true });
+  try {
+    fs.mkdirSync(uploadsDir, { recursive: true });
+  } catch (err) {
+    // If mkdir fails in a read-only environment, log and continue (Cloudinary may be used).
+    console.warn('Could not create uploads directory:', err?.message || err);
+  }
 }
 
 const localStorage = multer.diskStorage({
