@@ -26,10 +26,10 @@ exports.postRouter.get('/', auth_middleware_1.authenticate, async (req, res) => 
         if (communityId) {
             where.communityId = communityId;
         }
-        else {
+        else if (communityIds.length > 0) {
             where.OR = [
-                { communityId: null }, // Public posts
-                { communityId: { in: communityIds } }, // Posts from joined communities
+                { communityId: null },
+                { communityId: { in: communityIds } },
             ];
         }
         if (type)
@@ -54,6 +54,7 @@ exports.postRouter.get('/', auth_middleware_1.authenticate, async (req, res) => 
         ]);
         const postsWithLikeStatus = posts.map(post => ({
             ...post,
+            images: JSON.parse(post.images || '[]'),
             isLiked: post.likes.length > 0,
             likes: undefined,
         }));
@@ -128,7 +129,7 @@ exports.postRouter.get('/:id', auth_middleware_1.authenticate, async (req, res) 
         }
         res.json({
             success: true,
-            data: { ...post, isLiked: post.likes.length > 0, likes: undefined },
+            data: { ...post, images: JSON.parse(post.images || '[]'), isLiked: post.likes.length > 0, likes: undefined },
         });
     }
     catch {
@@ -318,6 +319,21 @@ exports.postRouter.post('/:id/comments', auth_middleware_1.authenticate, async (
     }
     catch {
         res.status(500).json({ success: false, message: 'Failed to add comment' });
+    }
+});
+// POST /api/posts/:id/share
+exports.postRouter.post('/:id/share', auth_middleware_1.authenticate, async (req, res) => {
+    try {
+        const post = await prisma_1.prisma.post.findUnique({ where: { id: req.params.id } });
+        if (!post) {
+            res.status(404).json({ success: false, message: 'Post not found' });
+            return;
+        }
+        await prisma_1.prisma.post.update({ where: { id: req.params.id }, data: { shareCount: { increment: 1 } } });
+        res.json({ success: true, message: 'Post shared successfully' });
+    }
+    catch {
+        res.status(500).json({ success: false, message: 'Failed to share post' });
     }
 });
 // POST /api/posts/:id/pin (moderator only)

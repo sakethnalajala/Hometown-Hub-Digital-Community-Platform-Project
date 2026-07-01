@@ -39,29 +39,52 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.authRouter = void 0;
 const express_1 = require("express");
 const bcryptjs_1 = __importDefault(require("bcryptjs"));
+const crypto_1 = __importDefault(require("crypto"));
 const jwt_1 = require("../lib/jwt");
+const email_1 = require("../lib/email");
 const validate_middleware_1 = require("../middleware/validate.middleware");
 const auth_middleware_1 = require("../middleware/auth.middleware");
 const schemas_1 = require("../validators/schemas");
 const db_1 = require("../lib/db");
 const demoData_1 = require("../lib/demoData");
 exports.authRouter = (0, express_1.Router)();
-// Helper function to get user data
+// Helper function to get user data — Prisma → in-memory demo → Mongoose
 async function getUserByEmail(email) {
-    if ((0, db_1.isDemoMode)()) {
-        return (0, demoData_1.getDemoUserByEmail)(email);
+    const normalized = email.toLowerCase();
+    const demoUser = (0, demoData_1.getDemoUserByEmail)(normalized);
+    if (process.env.DATABASE_URL) {
+        try {
+            const { prisma } = await Promise.resolve().then(() => __importStar(require('../lib/prisma')));
+            const user = await prisma.user.findUnique({ where: { email: normalized } });
+            if (user)
+                return user;
+        }
+        catch { /* fall through */ }
     }
+    if ((0, db_1.isDemoMode)() && demoUser)
+        return demoUser;
+    if (demoUser)
+        return demoUser;
     try {
         const { User } = await Promise.resolve().then(() => __importStar(require('../models/User')));
-        return await User.findOne({ email });
+        return await User.findOne({ email: normalized });
     }
     catch {
         return null;
     }
 }
 async function getUserById(id) {
-    if ((0, db_1.isDemoMode)()) {
-        return (0, demoData_1.getDemoUserById)(id);
+    const demoUser = (0, demoData_1.getDemoUserById)(id);
+    if (demoUser)
+        return demoUser;
+    if (process.env.DATABASE_URL) {
+        try {
+            const { prisma } = await Promise.resolve().then(() => __importStar(require('../lib/prisma')));
+            const user = await prisma.user.findUnique({ where: { id } });
+            if (user)
+                return user;
+        }
+        catch { /* fall through */ }
     }
     try {
         const { User } = await Promise.resolve().then(() => __importStar(require('../models/User')));
@@ -264,23 +287,70 @@ exports.authRouter.post('/logout', auth_middleware_1.authenticate, async (req, r
 exports.authRouter.post('/forgot-password', (0, validate_middleware_1.validate)(schemas_1.forgotPasswordSchema), async (req, res) => {
     try {
         const { email } = req.body;
-        if ((0, db_1.isDemoMode)()) {
-            res.json({
-                success: true,
-                message: 'If that email exists, a reset link would be sent. In demo mode, use demo@hometownhub.com with password Demo@12345',
-            });
-            return;
-        }
         const user = await getUserByEmail(email);
         const successMsg = 'If that email exists, a reset link has been sent';
         if (!user) {
             res.json({ success: true, message: successMsg });
             return;
         }
-        res.json({ success: true, message: successMsg });
+        if (process.env.DATABASE_URL) {
+            try {
+                const { prisma } = await Promise.resolve().then(() => __importStar(require('../lib/prisma')));
+                const token = crypto_1.default.randomBytes(32).toString('hex');
+                await prisma.passwordReset.create({
+                    data: { token, userId: user.id, expiresAt: new Date(Date.now() + 60 * 60 * 1000) },
+                });
+                const resetUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/reset-password?token=${token}`;
+                if ((0, db_1.isDemoMode)()) {
+                    res.json({ success: true, message: successMsg, data: { resetUrl } });
+                    return;
+                }
+                await (0, email_1.sendEmail)({
+                    to: email,
+                    subject: 'Reset your Hometown Hub password',
+                    html: (0, email_1.getPasswordResetEmail)(user.name, resetUrl),
+                });
+            }
+            catch { /* fall through */ }
+        }
+        res.json({
+            success: true,
+            message: (0, db_1.isDemoMode)()
+                ? 'If that email exists, a reset link would be sent. In demo mode, use demo@hometownhub.com / Demo@12345'
+                : successMsg,
+        });
     }
-    catch (error) {
+    catch {
         res.status(500).json({ success: false, message: 'Failed to process request' });
+    }
+});
+// POST /api/auth/reset-password
+exports.authRouter.post('/reset-password', (0, validate_middleware_1.validate)(schemas_1.resetPasswordSchema), async (req, res) => {
+    try {
+        const { token, password } = req.body;
+        if (!process.env.DATABASE_URL) {
+            res.status(400).json({ success: false, message: 'Password reset requires database configuration' });
+            return;
+        }
+        const { prisma } = await Promise.resolve().then(() => __importStar(require('../lib/prisma')));
+        const reset = await prisma.passwordReset.findUnique({
+            where: { token },
+            include: { user: true },
+        });
+        if (!reset || reset.isUsed || reset.expiresAt < new Date()) {
+            res.status(400).json({ success: false, message: 'Invalid or expired reset token' });
+            return;
+        }
+        const passwordHash = await bcryptjs_1.default.hash(password, 12);
+        await prisma.$transaction([
+            prisma.user.update({ where: { id: reset.userId }, data: { passwordHash } }),
+            prisma.passwordReset.update({ where: { id: reset.id }, data: { isUsed: true } }),
+            prisma.refreshToken.updateMany({ where: { userId: reset.userId }, data: { isRevoked: true } }),
+        ]);
+        res.json({ success: true, message: 'Password reset successfully. You can now log in.' });
+    }
+    catch {
+        res.status(500).json({ success: false, message: 'Failed to reset password' });
     }
 });
 // POST /api/auth/firebase — Google / Firebase sign-in (demo mode simulates demo account)
@@ -323,6 +393,39 @@ exports.authRouter.post('/firebase', async (req, res) => {
     }
     catch (error) {
         res.status(500).json({ success: false, message: 'Firebase authentication failed' });
+    }
+});
+// POST /api/auth/change-password
+exports.authRouter.post('/change-password', auth_middleware_1.authenticate, async (req, res) => {
+    try {
+        const { currentPassword, newPassword } = req.body;
+        if (!currentPassword || !newPassword) {
+            res.status(400).json({ success: false, message: 'Current and new password are required' });
+            return;
+        }
+        if (newPassword.length < 8) {
+            res.status(400).json({ success: false, message: 'New password must be at least 8 characters' });
+            return;
+        }
+        const { prisma } = await Promise.resolve().then(() => __importStar(require('../lib/prisma')));
+        const user = await prisma.user.findUnique({ where: { id: req.user.userId } });
+        if (!user) {
+            res.status(404).json({ success: false, message: 'User not found' });
+            return;
+        }
+        const valid = await bcryptjs_1.default.compare(currentPassword, user.passwordHash);
+        if (!valid) {
+            res.status(400).json({ success: false, message: 'Current password is incorrect' });
+            return;
+        }
+        await prisma.user.update({
+            where: { id: user.id },
+            data: { passwordHash: await bcryptjs_1.default.hash(newPassword, 12) },
+        });
+        res.json({ success: true, message: 'Password updated successfully' });
+    }
+    catch {
+        res.status(500).json({ success: false, message: 'Failed to change password' });
     }
 });
 // GET /api/auth/me

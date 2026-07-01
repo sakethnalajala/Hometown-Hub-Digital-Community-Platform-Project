@@ -2,7 +2,10 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.demoMockMiddleware = void 0;
 const demoData_1 = require("../lib/demoData");
+const demoContent_1 = require("../lib/demoContent");
+const demoStore_1 = require("../lib/demoStore");
 const demoMockData_1 = require("../lib/demoMockData");
+const demoUsers_1 = require("../lib/demoUsers");
 const jwt_1 = require("../lib/jwt");
 function paginate(items, page = 1, limit = 20) {
     const total = items.length;
@@ -19,268 +22,402 @@ function getUserId(req) {
             const payload = (0, jwt_1.verifyAccessToken)(authHeader.split(' ')[1]);
             return payload.userId;
         }
-        catch {
-            // fall through
-        }
+        catch { /* fall through */ }
     }
     return 'demo-user-001';
 }
 const demoMockMiddleware = (req, res, next) => {
-    if (process.env.DATABASE_URL) {
+    // Serve rich, STATEFUL demo data. Creates/updates/deletes persist for the
+    // server's lifetime via demoStore, so the app behaves like a real backend.
+    // Auth routes still pass through to the real auth handlers.
+    if (req.path.startsWith('/auth'))
         return next();
-    }
-    // Mounted at /api — paths are relative (e.g. /auth/login, /posts)
-    if (req.path.startsWith('/auth')) {
-        return next();
-    }
     const userId = getUserId(req);
     const demoUser = (0, demoData_1.getDemoUserById)(userId) || (0, demoData_1.getDemoUserById)('demo-user-001');
     const path = req.path;
     const method = req.method;
-    // GET /users/me
+    const page = Number(req.query.page) || 1;
+    const limit = Number(req.query.limit) || 20;
+    // ── Dashboard ──
+    if (path === '/dashboard/analytics' && method === 'GET') {
+        res.json({ success: true, data: demoContent_1.dashboardAnalytics });
+        return;
+    }
+    // ── Bookmarks ──
+    if (path === '/bookmarks' && method === 'GET') {
+        res.json({ success: true, data: (0, demoContent_1.getBookmarks)(userId, req.query.type) });
+        return;
+    }
+    if (path === '/bookmarks' && method === 'POST') {
+        const { targetType, targetId } = req.body;
+        const saved = (0, demoContent_1.toggleBookmark)(userId, targetType, targetId);
+        res.json({ success: true, message: saved ? 'Saved successfully' : 'Removed from saved', data: { saved } });
+        return;
+    }
+    if (path.match(/^\/bookmarks\/[^/]+\/[^/]+$/) && method === 'DELETE') {
+        const [, , type, id] = path.split('/');
+        (0, demoContent_1.toggleBookmark)(userId, type, id);
+        res.json({ success: true, message: 'Removed from saved' });
+        return;
+    }
+    // ── Users ──
     if (path === '/users/me' && method === 'GET') {
         res.json({ success: true, data: (0, demoMockData_1.buildDemoProfile)(userId) });
         return;
     }
-    // PUT /users/me
     if (path === '/users/me' && method === 'PUT') {
         res.json({ success: true, message: 'Profile updated', data: { ...(0, demoMockData_1.buildDemoProfile)(userId), ...req.body } });
         return;
     }
-    // POST /users/me/avatar or /cover
     if ((path === '/users/me/avatar' || path === '/users/me/cover') && method === 'POST') {
-        res.json({
-            success: true,
-            message: 'Upload simulated in demo mode',
-            data: { profileImage: demoUser?.profileImage, coverImage: demoUser?.coverImage },
-        });
+        res.json({ success: true, message: 'Upload simulated', data: { profileImage: demoUser?.profileImage, coverImage: demoUser?.coverImage } });
         return;
     }
-    // GET /users/:id
+    if (path === '/users/me/bookmarks' && method === 'GET') {
+        res.json({ success: true, data: (0, demoContent_1.getBookmarks)(userId, req.query.type) });
+        return;
+    }
     const userByIdMatch = path.match(/^\/users\/([^/]+)$/);
-    if (userByIdMatch && method === 'GET' && userByIdMatch[1] !== 'search') {
-        const profile = (0, demoMockData_1.buildDemoProfile)(userByIdMatch[1]);
-        res.json({ success: true, data: profile });
+    if (userByIdMatch && method === 'GET' && !['search', 'me'].includes(userByIdMatch[1])) {
+        res.json({ success: true, data: (0, demoMockData_1.buildDemoProfile)(userByIdMatch[1]) });
         return;
     }
-    // GET /users/:id/posts
     const userPostsMatch = path.match(/^\/users\/([^/]+)\/posts$/);
     if (userPostsMatch && method === 'GET') {
-        const posts = (0, demoMockData_1.buildDemoPosts)(demoUser).filter((p) => p.authorId === userPostsMatch[1]);
-        const page = Number(req.query.page) || 1;
-        const limit = Number(req.query.limit) || 20;
-        const result = paginate(posts.length ? posts : (0, demoMockData_1.buildDemoPosts)(demoUser).slice(0, 2), page, limit);
-        res.json({ success: true, ...result });
+        const all = demoStore_1.postStore.list(userId);
+        const filtered = all.filter((p) => p.authorId === userPostsMatch[1]);
+        res.json({ success: true, ...paginate(filtered.length ? filtered : all.slice(0, 5), page, limit) });
         return;
     }
-    // GET /users/:id/communities
     const userCommunitiesMatch = path.match(/^\/users\/([^/]+)\/communities$/);
     if (userCommunitiesMatch && method === 'GET') {
-        res.json({ success: true, data: demoMockData_1.demoCommunities.slice(0, 3) });
+        res.json({ success: true, data: demoStore_1.communityStore.list(userId).slice(0, 5) });
         return;
     }
-    // GET /users/search/users
     if (path === '/users/search/users' && method === 'GET') {
-        res.json({
-            success: true,
-            data: [
-                { id: 'user-002', name: 'Sarah Chen', username: 'sarahc', profileImage: 'https://api.dicebear.com/7.x/avataaars/svg?seed=sarah' },
-                { id: 'user-003', name: 'Mike Johnson', username: 'mikej', profileImage: 'https://api.dicebear.com/7.x/avataaars/svg?seed=mike' },
-            ],
-        });
+        res.json({ success: true, data: demoUsers_1.demoPeople.slice(0, 10) });
         return;
     }
-    // GET /posts (feed)
+    // ── Posts ──
     if (path === '/posts' && method === 'GET') {
-        const type = req.query.type;
-        let posts = (0, demoMockData_1.buildDemoPosts)(demoUser);
-        if (type === 'ANNOUNCEMENT') {
-            posts = posts.filter((p) => p.type === 'ANNOUNCEMENT');
-        }
-        const page = Number(req.query.page) || 1;
-        const limit = Number(req.query.limit) || 20;
-        const result = paginate(posts, page, limit);
-        res.json({ success: true, ...result });
+        const list = demoStore_1.postStore.list(userId, { type: req.query.type });
+        res.json({ success: true, ...paginate(list, page, limit) });
         return;
     }
-    // GET /posts/:id
+    if (path === '/posts' && method === 'POST') {
+        const post = demoStore_1.postStore.create(userId, req.body);
+        res.status(201).json({ success: true, message: 'Post created', data: post });
+        return;
+    }
     const postMatch = path.match(/^\/posts\/([^/]+)$/);
     if (postMatch && method === 'GET') {
-        const post = (0, demoMockData_1.buildDemoPosts)(demoUser).find((p) => p.id === postMatch[1]) || (0, demoMockData_1.buildDemoPosts)(demoUser)[0];
+        const post = demoStore_1.postStore.get(userId, postMatch[1]);
+        if (!post) {
+            res.status(404).json({ success: false, message: 'Post not found' });
+            return;
+        }
         res.json({ success: true, data: post });
         return;
     }
-    // POST /posts/:id/like, comments, etc.
-    if (path.match(/^\/posts\/[^/]+\/(like|comments|pin)$/) && method === 'POST') {
-        res.json({ success: true, message: 'Action simulated in demo mode.', data: {} });
+    if (postMatch && method === 'DELETE') {
+        demoStore_1.postStore.remove(postMatch[1]);
+        res.json({ success: true, message: 'Post deleted' });
         return;
     }
-    // GET /posts/:id/comments
+    if (path.match(/^\/posts\/[^/]+\/like$/) && method === 'POST') {
+        res.json({ success: true, message: 'Post updated', data: demoStore_1.postStore.like(userId, path.split('/')[2]) });
+        return;
+    }
+    if (path.match(/^\/posts\/[^/]+\/share$/) && method === 'POST') {
+        res.json({ success: true, message: 'Post shared successfully' });
+        return;
+    }
     if (path.match(/^\/posts\/[^/]+\/comments$/) && method === 'GET') {
-        res.json({
-            success: true,
-            data: [
-                {
-                    id: 'comment-001',
-                    content: 'Great post! Looking forward to the festival.',
-                    authorId: 'user-002',
-                    author: { id: 'user-002', name: 'Sarah Chen', username: 'sarahc', profileImage: 'https://api.dicebear.com/7.x/avataaars/svg?seed=sarah' },
-                    createdAt: new Date().toISOString(),
-                    likeCount: 3,
-                },
-            ],
-        });
+        res.json({ success: true, data: demoStore_1.postStore.getComments(path.split('/')[2]) });
         return;
     }
-    // GET /communities
+    if (path.match(/^\/posts\/[^/]+\/comments$/) && method === 'POST') {
+        const comment = demoStore_1.postStore.addComment(userId, path.split('/')[2], req.body?.content);
+        res.status(201).json({ success: true, message: 'Comment added', data: comment });
+        return;
+    }
+    if (path.match(/^\/posts\/[^/]+\/(pin)$/) && method === 'POST') {
+        res.json({ success: true, message: 'Post pinned' });
+        return;
+    }
+    // ── Communities ──
     if (path === '/communities' && method === 'GET') {
-        let communities = [...demoMockData_1.demoCommunities];
-        const search = req.query.search?.toLowerCase();
-        if (search) {
-            communities = communities.filter((c) => c.name.toLowerCase().includes(search) || c.description.toLowerCase().includes(search));
-        }
-        const page = Number(req.query.page) || 1;
-        const limit = Number(req.query.limit) || 20;
-        const result = paginate(communities, page, limit);
-        res.json({ success: true, ...result });
+        const list = demoStore_1.communityStore.list(userId, req.query.search);
+        res.json({ success: true, ...paginate(list, page, limit) });
         return;
     }
-    // POST /communities
     if (path === '/communities' && method === 'POST') {
-        res.json({
-            success: true,
-            message: 'Community created in demo mode',
-            data: { id: 'community-new', slug: 'new-community', ...req.body, memberCount: 1 },
-        });
+        const community = demoStore_1.communityStore.create(userId, req.body);
+        res.status(201).json({ success: true, message: 'Community created', data: community });
         return;
     }
-    // GET /communities/:slug
     const communitySlugMatch = path.match(/^\/communities\/([^/]+)$/);
     if (communitySlugMatch && method === 'GET') {
-        const community = (0, demoMockData_1.getCommunityBySlug)(communitySlugMatch[1]);
-        if (community) {
-            res.json({ success: true, data: community });
+        const comm = demoStore_1.communityStore.get(userId, communitySlugMatch[1]);
+        if (!comm) {
+            res.status(404).json({ success: false, message: 'Community not found' });
             return;
         }
+        res.json({ success: true, data: comm });
+        return;
     }
-    // GET /communities/:id/posts
+    if (communitySlugMatch && method === 'PUT') {
+        const updated = demoStore_1.communityStore.update(communitySlugMatch[1], req.body);
+        if (!updated) {
+            res.status(404).json({ success: false, message: 'Community not found' });
+            return;
+        }
+        res.json({ success: true, message: 'Community updated', data: updated });
+        return;
+    }
+    if (communitySlugMatch && method === 'DELETE') {
+        demoStore_1.communityStore.remove(communitySlugMatch[1]);
+        res.json({ success: true, message: 'Community deleted' });
+        return;
+    }
     const communityPostsMatch = path.match(/^\/communities\/([^/]+)\/posts$/);
     if (communityPostsMatch && method === 'GET') {
-        const posts = (0, demoMockData_1.buildDemoPosts)(demoUser).filter((p) => p.communityId === communityPostsMatch[1]);
-        const page = Number(req.query.page) || 1;
-        const limit = Number(req.query.limit) || 20;
-        const result = paginate(posts.length ? posts : (0, demoMockData_1.buildDemoPosts)(demoUser).slice(0, 2), page, limit);
-        res.json({ success: true, ...result });
+        const comm = demoStore_1.communityStore.get(userId, communityPostsMatch[1]);
+        const list = comm ? demoStore_1.postStore.list(userId, { communityId: comm.id }) : [];
+        res.json({ success: true, ...paginate(list, page, limit) });
         return;
     }
-    // Community join/leave/members
-    if (path.match(/^\/communities\/[^/]+\/(join|leave|banner|members)/)) {
-        if (method === 'GET') {
-            res.json({
-                success: true,
-                data: [{ id: demoUser?.id, name: demoUser?.name, username: demoUser?.username, role: 'MEMBER', profileImage: demoUser?.profileImage }],
-            });
-            return;
-        }
-        res.json({ success: true, message: 'Action simulated in demo mode.', data: {} });
+    if (path.match(/^\/communities\/[^/]+\/join$/) && method === 'POST') {
+        const comm = demoStore_1.communityStore.join(userId, path.split('/')[2]);
+        res.json({ success: true, message: 'Joined community successfully', data: comm });
         return;
     }
-    // GET /events
+    if (path.match(/^\/communities\/[^/]+\/leave$/) && method === 'DELETE') {
+        demoStore_1.communityStore.leave(userId, path.split('/')[2]);
+        res.json({ success: true, message: 'Left community' });
+        return;
+    }
+    if (path.match(/^\/communities\/[^/]+\/members$/) && method === 'GET') {
+        const comm = demoStore_1.communityStore.get(userId, path.split('/')[2]);
+        res.json({ success: true, data: comm?.moderators || demoUsers_1.demoPeople.slice(0, 5).map((p) => ({ ...p, role: 'MEMBER' })) });
+        return;
+    }
+    // ── Events ──
     if (path === '/events' && method === 'GET') {
-        let events = [...demoMockData_1.demoEvents];
-        if (req.query.upcoming === 'true') {
-            events = events.filter((e) => new Date(e.date) > new Date());
-        }
-        const page = Number(req.query.page) || 1;
-        const limit = Number(req.query.limit) || 20;
-        const result = paginate(events, page, limit);
-        res.json({ success: true, ...result });
+        const list = demoStore_1.eventStore.list({ upcoming: req.query.upcoming === 'true', communityId: req.query.communityId });
+        res.json({ success: true, ...paginate(list, page, limit) });
         return;
     }
-    // POST /events
     if (path === '/events' && method === 'POST') {
-        res.json({ success: true, message: 'Event created in demo mode', data: { id: 'event-new', ...req.body } });
+        const event = demoStore_1.eventStore.create(userId, req.body);
+        res.status(201).json({ success: true, message: 'Event created', data: event });
         return;
     }
-    // GET /events/:id
     const eventMatch = path.match(/^\/events\/([^/]+)$/);
     if (eventMatch && method === 'GET') {
-        const event = (0, demoMockData_1.getEventById)(eventMatch[1]) || demoMockData_1.demoEvents[0];
+        const event = demoStore_1.eventStore.get(eventMatch[1]);
+        if (!event) {
+            res.status(404).json({ success: false, message: 'Event not found' });
+            return;
+        }
         res.json({ success: true, data: event });
         return;
     }
-    // Event RSVP, participants, banner
-    if (path.match(/^\/events\/[^/]+\/(rsvp|participants|banner)/)) {
-        if (method === 'GET') {
-            res.json({
-                success: true,
-                data: [{ id: demoUser?.id, name: demoUser?.name, username: demoUser?.username, status: 'GOING', profileImage: demoUser?.profileImage }],
-            });
+    if (eventMatch && method === 'PUT') {
+        const updated = demoStore_1.eventStore.update(eventMatch[1], req.body);
+        if (!updated) {
+            res.status(404).json({ success: false, message: 'Event not found' });
             return;
         }
-        res.json({ success: true, message: 'Action simulated in demo mode.', data: {} });
+        res.json({ success: true, message: 'Event updated', data: updated });
         return;
     }
-    // GET /notifications
+    if (eventMatch && method === 'DELETE') {
+        demoStore_1.eventStore.remove(eventMatch[1]);
+        res.json({ success: true, message: 'Event deleted' });
+        return;
+    }
+    if (path.match(/^\/events\/[^/]+\/rsvp$/) && method === 'POST') {
+        const result = demoStore_1.eventStore.rsvp(userId, path.split('/')[2], req.body?.status || 'GOING');
+        res.json({ success: true, message: 'RSVP confirmed! You are registered for this event.', data: result });
+        return;
+    }
+    if (path.match(/^\/events\/[^/]+\/participants$/) && method === 'GET') {
+        res.json({ success: true, data: demoUsers_1.demoPeople.slice(0, 8).map((p) => ({ ...p, status: 'GOING' })) });
+        return;
+    }
+    // ── Jobs ──
+    if (path === '/jobs' && method === 'GET') {
+        const list = demoStore_1.jobStore.list((req.query.q || req.query.search));
+        res.json({ success: true, ...paginate(list, page, limit) });
+        return;
+    }
+    if (path === '/jobs' && method === 'POST') {
+        const job = demoStore_1.jobStore.create(userId, req.body);
+        res.status(201).json({ success: true, message: 'Job posted', data: job });
+        return;
+    }
+    const jobMatch = path.match(/^\/jobs\/([^/]+)$/);
+    if (jobMatch && method === 'GET') {
+        const job = demoStore_1.jobStore.get(jobMatch[1]);
+        if (!job) {
+            res.status(404).json({ success: false, message: 'Job not found' });
+            return;
+        }
+        res.json({ success: true, data: job });
+        return;
+    }
+    if (path.match(/^\/jobs\/[^/]+\/apply$/) && method === 'POST') {
+        demoStore_1.jobStore.apply(path.split('/')[2]);
+        res.json({ success: true, message: 'Application submitted successfully!' });
+        return;
+    }
+    // ── News (read-only) ──
+    if (path === '/news' && method === 'GET') {
+        let list = [...demoContent_1.allNews];
+        const cat = req.query.category;
+        if (cat)
+            list = list.filter((n) => n.category === cat);
+        res.json({ success: true, ...paginate(list, page, limit) });
+        return;
+    }
+    const newsMatch = path.match(/^\/news\/([^/]+)$/);
+    if (newsMatch && method === 'GET') {
+        const news = (0, demoContent_1.getNewsById)(newsMatch[1]);
+        if (!news) {
+            res.status(404).json({ success: false, message: 'Article not found' });
+            return;
+        }
+        res.json({ success: true, data: news });
+        return;
+    }
+    if (path.match(/^\/news\/[^/]+\/like$/) && method === 'POST') {
+        res.json({ success: true, message: 'Article liked' });
+        return;
+    }
+    if (path.match(/^\/news\/[^/]+\/share$/) && method === 'POST') {
+        res.json({ success: true, message: 'Article shared' });
+        return;
+    }
+    // ── Tourism (read-only) ──
+    if (path === '/tourism' && method === 'GET') {
+        let list = [...demoContent_1.allTourism];
+        const type = req.query.type;
+        if (type)
+            list = list.filter((t) => t.type === type);
+        res.json({ success: true, ...paginate(list, page, limit) });
+        return;
+    }
+    const tourismMatch = path.match(/^\/tourism\/([^/]+)$/);
+    if (tourismMatch && method === 'GET') {
+        const t = (0, demoContent_1.getTourismById)(tourismMatch[1]);
+        if (!t) {
+            res.status(404).json({ success: false, message: 'Destination not found' });
+            return;
+        }
+        res.json({ success: true, data: t });
+        return;
+    }
+    // ── Gov (read-only) ──
+    if (path === '/gov' && method === 'GET') {
+        let list = [...demoContent_1.allGovServices];
+        const cat = req.query.category;
+        if (cat)
+            list = list.filter((g) => g.category === cat);
+        res.json({ success: true, data: list });
+        return;
+    }
+    const govMatch = path.match(/^\/gov\/([^/]+)$/);
+    if (govMatch && method === 'GET') {
+        const g = (0, demoContent_1.getGovById)(govMatch[1]);
+        if (!g) {
+            res.status(404).json({ success: false, message: 'Service not found' });
+            return;
+        }
+        res.json({ success: true, data: g });
+        return;
+    }
+    // ── Marketplace ──
+    if (path === '/marketplace' && method === 'GET') {
+        const list = demoStore_1.productStore.list(req.query.category);
+        res.json({ success: true, ...paginate(list, page, limit) });
+        return;
+    }
+    if (path === '/marketplace' && method === 'POST') {
+        const product = demoStore_1.productStore.create(userId, req.body);
+        res.status(201).json({ success: true, message: 'Product listed', data: product });
+        return;
+    }
+    const productMatch = path.match(/^\/marketplace\/([^/]+)$/);
+    if (productMatch && method === 'GET') {
+        const product = demoStore_1.productStore.get(productMatch[1]);
+        if (!product) {
+            res.status(404).json({ success: false, message: 'Product not found' });
+            return;
+        }
+        res.json({ success: true, data: product });
+        return;
+    }
+    // ── Education (read-only) ──
+    if (path === '/education/courses' && method === 'GET') {
+        res.json({ success: true, data: demoContent_1.allCourses });
+        return;
+    }
+    if (path === '/education/scholarships' && method === 'GET') {
+        res.json({ success: true, data: demoContent_1.allScholarships });
+        return;
+    }
+    // ── Healthcare (read-only) ──
+    if (path === '/healthcare/hospitals' && method === 'GET') {
+        res.json({ success: true, data: demoContent_1.allHospitals });
+        return;
+    }
+    if (path === '/healthcare/schemes' && method === 'GET') {
+        res.json({ success: true, data: demoContent_1.allHealthSchemes });
+        return;
+    }
+    // ── Notifications ──
     if (path === '/notifications' && method === 'GET') {
         res.json({ success: true, data: (0, demoMockData_1.buildDemoNotifications)(userId) });
         return;
     }
-    // Notification mutations
     if (path.startsWith('/notifications') && method !== 'GET') {
-        res.json({ success: true, message: 'Action simulated in demo mode.' });
+        res.json({ success: true, message: 'Done' });
         return;
     }
-    // Admin routes
+    // ── Admin ──
+    if (path === '/admin/analytics' && method === 'GET') {
+        res.json({ success: true, data: demoContent_1.dashboardAnalytics });
+        return;
+    }
     if (path.startsWith('/admin')) {
-        if (path === '/admin/analytics' && method === 'GET') {
-            res.json({
-                success: true,
-                data: {
-                    totalUsers: 1250,
-                    totalCommunities: demoMockData_1.demoCommunities.length,
-                    totalPosts: 42,
-                    totalEvents: demoMockData_1.demoEvents.length,
-                    activeUsers: 890,
-                    newUsersThisWeek: 45,
-                },
-            });
-            return;
-        }
         if (method === 'GET') {
-            const result = paginate([], 1, 20);
-            res.json({ success: true, ...result });
+            res.json({ success: true, ...paginate([], 1, 20) });
             return;
         }
-        res.json({ success: true, message: 'Action simulated in demo mode.', data: {} });
+        res.json({ success: true, message: 'Action simulated' });
         return;
     }
-    // Upload routes
-    if (path.startsWith('/upload')) {
-        res.json({ success: true, message: 'Upload simulated in demo mode', data: { url: demoUser?.profileImage } });
-        return;
-    }
-    // Reports
-    if (path.startsWith('/reports') && method === 'POST') {
-        res.json({ success: true, message: 'Report submitted in demo mode.' });
-        return;
-    }
-    // Comments
+    // ── Comments (top-level) ──
     if (path.startsWith('/comments')) {
         if (method === 'GET') {
             res.json({ success: true, data: [] });
             return;
         }
-        res.json({ success: true, message: 'Action simulated in demo mode.', data: {} });
+        res.json({ success: true, message: 'Done' });
         return;
     }
-    // Generic fallback — prevent Prisma crashes
+    if (path.startsWith('/upload') || path.startsWith('/reports')) {
+        res.json({ success: true, message: 'Done' });
+        return;
+    }
+    // Fallback
     if (method === 'GET') {
         res.json({ success: true, data: [] });
         return;
     }
-    if (method === 'POST' || method === 'PUT' || method === 'DELETE' || method === 'PATCH') {
-        res.json({ success: true, message: 'Action simulated in demo mode.', data: {} });
+    if (['POST', 'PUT', 'DELETE', 'PATCH'].includes(method)) {
+        res.json({ success: true, message: 'Action completed in demo mode.' });
         return;
     }
     next();

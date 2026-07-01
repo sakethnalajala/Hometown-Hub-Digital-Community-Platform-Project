@@ -16,7 +16,7 @@ export const metadata: Metadata = {
   keywords: ['community', 'hometown', 'local', 'social', 'events', 'announcements'],
   authors: [{ name: 'Hometown Hub' }],
   creator: 'Hometown Hub',
-  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'),
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'https://hometown-hub-virid.vercel.app'),
   openGraph: {
     type: 'website',
     locale: 'en_IN',

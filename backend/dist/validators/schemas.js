@@ -124,14 +124,14 @@ exports.createEventSchema = zod_1.z.object({
     body: zod_1.z.object({
         title: zod_1.z.string().min(3).max(150),
         description: zod_1.z.string().min(10).max(2000),
-        location: zod_1.z.string().min(3).max(200),
-        address: zod_1.z.string().optional(),
-        date: zod_1.z.string().datetime(),
-        endDate: zod_1.z.string().datetime().optional(),
+        location: zod_1.z.string().min(1).max(200),
+        address: zod_1.z.string().optional().nullable(),
+        date: zod_1.z.string().min(1, 'Date is required'),
+        endDate: zod_1.z.string().optional().nullable(),
         isOnline: zod_1.z.boolean().default(false),
-        meetingLink: zod_1.z.string().url().optional(),
-        maxParticipants: zod_1.z.number().int().positive().optional(),
-        communityId: zod_1.z.string().optional(),
+        meetingLink: zod_1.z.string().optional().nullable(),
+        maxParticipants: zod_1.z.union([zod_1.z.number(), zod_1.z.string().transform(Number)]).optional().nullable(),
+        communityId: zod_1.z.string().optional().nullable(),
     }),
 });
 exports.rsvpSchema = zod_1.z.object({

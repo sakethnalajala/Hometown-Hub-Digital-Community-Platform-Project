@@ -348,35 +348,35 @@ export declare const createEventSchema: z.ZodObject<{
         title: z.ZodString;
         description: z.ZodString;
         location: z.ZodString;
-        address: z.ZodOptional<z.ZodString>;
+        address: z.ZodNullable<z.ZodOptional<z.ZodString>>;
         date: z.ZodString;
-        endDate: z.ZodOptional<z.ZodString>;
+        endDate: z.ZodNullable<z.ZodOptional<z.ZodString>>;
         isOnline: z.ZodDefault<z.ZodBoolean>;
-        meetingLink: z.ZodOptional<z.ZodString>;
-        maxParticipants: z.ZodOptional<z.ZodNumber>;
-        communityId: z.ZodOptional<z.ZodString>;
+        meetingLink: z.ZodNullable<z.ZodOptional<z.ZodString>>;
+        maxParticipants: z.ZodNullable<z.ZodOptional<z.ZodUnion<[z.ZodNumber, z.ZodEffects<z.ZodString, number, string>]>>>;
+        communityId: z.ZodNullable<z.ZodOptional<z.ZodString>>;
     }, "strip", z.ZodTypeAny, {
         date: string;
         description: string;
         title: string;
         location: string;
         isOnline: boolean;
-        communityId?: string | undefined;
-        address?: string | undefined;
-        endDate?: string | undefined;
-        meetingLink?: string | undefined;
-        maxParticipants?: number | undefined;
+        communityId?: string | null | undefined;
+        address?: string | null | undefined;
+        endDate?: string | null | undefined;
+        meetingLink?: string | null | undefined;
+        maxParticipants?: number | null | undefined;
     }, {
         date: string;
         description: string;
         title: string;
         location: string;
-        communityId?: string | undefined;
-        address?: string | undefined;
-        endDate?: string | undefined;
+        communityId?: string | null | undefined;
+        address?: string | null | undefined;
+        endDate?: string | null | undefined;
         isOnline?: boolean | undefined;
-        meetingLink?: string | undefined;
-        maxParticipants?: number | undefined;
+        meetingLink?: string | null | undefined;
+        maxParticipants?: string | number | null | undefined;
     }>;
 }, "strip", z.ZodTypeAny, {
     body: {
@@ -385,11 +385,11 @@ export declare const createEventSchema: z.ZodObject<{
         title: string;
         location: string;
         isOnline: boolean;
-        communityId?: string | undefined;
-        address?: string | undefined;
-        endDate?: string | undefined;
-        meetingLink?: string | undefined;
-        maxParticipants?: number | undefined;
+        communityId?: string | null | undefined;
+        address?: string | null | undefined;
+        endDate?: string | null | undefined;
+        meetingLink?: string | null | undefined;
+        maxParticipants?: number | null | undefined;
     };
 }, {
     body: {
@@ -397,12 +397,12 @@ export declare const createEventSchema: z.ZodObject<{
         description: string;
         title: string;
         location: string;
-        communityId?: string | undefined;
-        address?: string | undefined;
-        endDate?: string | undefined;
+        communityId?: string | null | undefined;
+        address?: string | null | undefined;
+        endDate?: string | null | undefined;
         isOnline?: boolean | undefined;
-        meetingLink?: string | undefined;
-        maxParticipants?: number | undefined;
+        meetingLink?: string | null | undefined;
+        maxParticipants?: string | number | null | undefined;
     };
 }>;
 export declare const rsvpSchema: z.ZodObject<{

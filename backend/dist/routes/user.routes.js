@@ -21,6 +21,10 @@ exports.userRouter.get('/me', auth_middleware_1.authenticate, async (req, res) =
                 _count: { select: { communityMemberships: true, posts: true, organizedEvents: true } },
             },
         });
+        if (!user) {
+            res.status(404).json({ success: false, message: 'User not found' });
+            return;
+        }
         res.json({ success: true, data: user });
     }
     catch {

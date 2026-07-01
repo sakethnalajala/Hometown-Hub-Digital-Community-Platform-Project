@@ -16,21 +16,21 @@ exports.newsRouter.get('/', async (req, res) => {
             prisma_1.prisma.newsArticle.findMany({
                 where,
                 include: {
-                    author: { select: { id: true, name: true, profileImage: true } }
+                    author: { select: { id: true, name: true, profileImage: true } },
                 },
                 orderBy: { createdAt: 'desc' },
                 skip: (page - 1) * limit,
                 take: limit,
             }),
-            prisma_1.prisma.newsArticle.count({ where })
+            prisma_1.prisma.newsArticle.count({ where }),
         ]);
         res.json({
             success: true,
             data: news,
-            pagination: { page, limit, total, totalPages: Math.ceil(total / limit) }
+            pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
         });
     }
-    catch (error) {
+    catch {
         res.status(500).json({ success: false, message: 'Failed to fetch news' });
     }
 });
@@ -41,8 +41,8 @@ exports.newsRouter.get('/:id', async (req, res) => {
             where: { id: req.params.id },
             data: { views: { increment: 1 } },
             include: {
-                author: { select: { id: true, name: true, profileImage: true } }
-            }
+                author: { select: { id: true, name: true, profileImage: true } },
+            },
         });
         if (!news) {
             res.status(404).json({ success: false, message: 'News not found' });
@@ -50,7 +50,7 @@ exports.newsRouter.get('/:id', async (req, res) => {
         }
         res.json({ success: true, data: news });
     }
-    catch (error) {
+    catch {
         res.status(500).json({ success: false, message: 'Failed to fetch news article' });
     }
 });
@@ -59,12 +59,21 @@ exports.newsRouter.post('/:id/like', auth_middleware_1.authenticate, async (req,
     try {
         const news = await prisma_1.prisma.newsArticle.update({
             where: { id: req.params.id },
-            data: { likes: { increment: 1 } }
+            data: { likes: { increment: 1 } },
         });
         res.json({ success: true, message: 'Liked news article', data: { likes: news.likes } });
     }
-    catch (error) {
+    catch {
         res.status(500).json({ success: false, message: 'Failed to like news article' });
+    }
+});
+// POST /api/news/:id/share
+exports.newsRouter.post('/:id/share', auth_middleware_1.authenticate, async (req, res) => {
+    try {
+        res.json({ success: true, message: 'Article shared successfully' });
+    }
+    catch {
+        res.status(500).json({ success: false, message: 'Failed to share article' });
     }
 });
 //# sourceMappingURL=news.routes.js.map

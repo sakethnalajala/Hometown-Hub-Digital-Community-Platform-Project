@@ -61,16 +61,56 @@ const news_routes_1 = require("./routes/news.routes");
 const tourism_routes_1 = require("./routes/tourism.routes");
 const gov_routes_1 = require("./routes/gov.routes");
 const marketplace_routes_1 = require("./routes/marketplace.routes");
+const dashboard_routes_1 = require("./routes/dashboard.routes");
+const education_routes_1 = require("./routes/education.routes");
+const healthcare_routes_1 = require("./routes/healthcare.routes");
+const bookmark_routes_1 = require("./routes/bookmark.routes");
 const error_middleware_1 = require("./middleware/error.middleware");
 const socket_1 = require("./socket");
 const db_1 = require("./lib/db");
 const firebase_1 = require("./lib/firebase");
 const app = (0, express_1.default)();
 const httpServer = http_1.default.createServer(app);
+// All browser traffic reaches this backend through the frontend's reverse
+// proxy (Next.js rewrites on the single public domain). Trust the first proxy
+// hop so req.ip / rate-limiting use the real client IP from X-Forwarded-For
+// instead of the proxy's edge IP (otherwise every user shares one rate bucket).
+app.set('trust proxy', 1);
+// CORS origin policy
+// Allow:
+// - specific deployed frontend origin
+// - all Vercel preview/prod origins: *.vercel.app
+// - localhost dev
+// - Requests with no Origin header (server-to-server, curl, health checks)
+const ALLOWED_FRONTEND_ORIGIN = process.env.FRONTEND_URL || 'https://hometown-hub-virid.vercel.app';
+const isAllowedOrigin = (origin) => {
+    if (!origin)
+        return true;
+    // Exact allowlist for the main deployed frontend
+    if (origin === ALLOWED_FRONTEND_ORIGIN)
+        return true;
+    // Local dev
+    if (origin === 'http://localhost:3000')
+        return true;
+    // Vercel deployments (production + preview)
+    try {
+        const hostname = new URL(origin).hostname;
+        return hostname.endsWith('.vercel.app');
+    }
+    catch {
+        return false;
+    }
+};
+const corsOrigin = (origin, callback) => {
+    if (isAllowedOrigin(origin))
+        callback(null, true);
+    else
+        callback(new Error(`Origin ${origin} not allowed by CORS`));
+};
 // Socket.io
 const io = new socket_io_1.Server(httpServer, {
     cors: {
-        origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+        origin: corsOrigin,
         methods: ['GET', 'POST'],
         credentials: true,
     },
@@ -83,7 +123,7 @@ app.use((0, helmet_1.default)({
 }));
 // CORS
 app.use((0, cors_1.default)({
-    origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+    origin: corsOrigin,
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
@@ -128,6 +168,10 @@ app.use('/api/news', news_routes_1.newsRouter);
 app.use('/api/tourism', tourism_routes_1.tourismRouter);
 app.use('/api/gov', gov_routes_1.govRouter);
 app.use('/api/marketplace', marketplace_routes_1.marketplaceRouter);
+app.use('/api/dashboard', dashboard_routes_1.dashboardRouter);
+app.use('/api/education', education_routes_1.educationRouter);
+app.use('/api/healthcare', healthcare_routes_1.healthcareRouter);
+app.use('/api/bookmarks', bookmark_routes_1.bookmarkRouter);
 // 404 handler
 app.use((_req, res) => {
     res.status(404).json({ success: false, message: 'Route not found' });
@@ -141,8 +185,9 @@ async function main() {
         await (0, db_1.connectDB)();
         // Initialize Firebase Admin
         (0, firebase_1.initFirebaseAdmin)();
-        httpServer.listen(PORT, () => {
-            console.log(`🚀 Server running on http://localhost:${PORT}`);
+        // Bind to 0.0.0.0 so the service is reachable on Render (and other PaaS).
+        httpServer.listen(PORT, '0.0.0.0', () => {
+            console.log(`🚀 Server running on port ${PORT}`);
             console.log(`📡 Socket.io ready`);
             console.log(`🌍 Environment: ${process.env.NODE_ENV}`);
             console.log(`✓ Backend is fully operational`);

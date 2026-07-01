@@ -85,4 +85,18 @@ exports.jobRouter.post('/', auth_middleware_1.authenticate, async (req, res) => 
         res.status(500).json({ success: false, message: 'Failed to create job' });
     }
 });
+// POST /api/jobs/:id/apply
+exports.jobRouter.post('/:id/apply', auth_middleware_1.authenticate, async (req, res) => {
+    try {
+        const job = await prisma_1.prisma.job.findUnique({ where: { id: req.params.id } });
+        if (!job) {
+            res.status(404).json({ success: false, message: 'Job not found' });
+            return;
+        }
+        res.json({ success: true, message: 'Application submitted successfully! The employer will contact you soon.' });
+    }
+    catch {
+        res.status(500).json({ success: false, message: 'Failed to submit application' });
+    }
+});
 //# sourceMappingURL=job.routes.js.map

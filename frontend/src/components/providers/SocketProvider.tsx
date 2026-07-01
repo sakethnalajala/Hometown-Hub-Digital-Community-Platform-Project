@@ -21,9 +21,21 @@ export function SocketProvider({ children }: { children: React.ReactNode }) {
       return
     }
 
-    const newSocket = io(process.env.NEXT_PUBLIC_SOCKET_URL || 'http://localhost:5000', {
+    // Single-origin: connect to the same domain that served the app. The
+    // `/socket.io` path is reverse-proxied to the backend by Next.js rewrites
+    // (see next.config.ts), so the backend host is never exposed to the browser
+    // and there is no cross-origin handshake. Polling is listed first because
+    // it survives edge reverse-proxying reliably; the client upgrades to a
+    // WebSocket when the environment allows it.
+    const socketUrl =
+      typeof window !== 'undefined'
+        ? window.location.origin
+        : process.env.NEXT_PUBLIC_SOCKET_URL || 'https://hometown-hub-backend-un1i.onrender.com'
+
+    const newSocket = io(socketUrl, {
+      path: '/socket.io',
       auth: { token: accessToken },
-      transports: ['websocket', 'polling'],
+      transports: ['polling', 'websocket'],
       reconnection: true,
       reconnectionDelay: 2000,
       reconnectionAttempts: 5,

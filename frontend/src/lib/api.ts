@@ -1,8 +1,28 @@
 import { ApiResponse, PaginatedResponse } from '@/types'
 
-// Falls back to the deployed Render backend so production works even if
-// NEXT_PUBLIC_API_URL isn't set on Vercel. Local dev uses .env.local (localhost).
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://hometown-hub-backend-un1i.onrender.com/api'
+// Single-origin architecture.
+// The browser ALWAYS talks to the same domain that served the app. Every
+// `/api/*` request is transparently reverse-proxied to the backend by Next.js
+// rewrites (see next.config.ts), so there is no cross-origin request, no CORS,
+// and the backend host is never exposed to the browser. This gives the whole
+// application a single public URL.
+//
+// - In the browser: base URL is the relative path `/api` (same origin).
+// - On the server (SSR / build time): there is no "same origin", so we fall
+//   back to an absolute backend URL. Never localhost in a deployed build.
+const SERVER_FALLBACK =
+  process.env.BACKEND_URL ||
+  process.env.NEXT_PUBLIC_API_URL ||
+  'https://hometown-hub-backend-un1i.onrender.com/api'
+
+function resolveBaseUrl(): string {
+  // Browser → same-origin relative path, proxied by Next.js rewrites.
+  if (typeof window !== 'undefined') return '/api'
+  // Server-side rendering needs an absolute URL.
+  return SERVER_FALLBACK
+}
+
+const BASE_URL = resolveBaseUrl()
 
 class ApiClient {
   private getHeaders(): HeadersInit {
@@ -26,7 +46,12 @@ class ApiClient {
   }
 
   async get<T>(path: string, params?: Record<string, any>): Promise<T> {
-    const url = new URL(`${BASE_URL}${path}`)
+    // BASE_URL is relative (`/api`) in the browser, so anchor it to the current
+    // origin for URL parsing; it is absolute (http...) during SSR.
+    const href = BASE_URL.startsWith('http')
+      ? `${BASE_URL}${path}`
+      : `${window.location.origin}${BASE_URL}${path}`
+    const url = new URL(href)
     if (params) {
       Object.entries(params).forEach(([k, v]) => {
         if (v !== undefined && v !== null) url.searchParams.append(k, String(v))

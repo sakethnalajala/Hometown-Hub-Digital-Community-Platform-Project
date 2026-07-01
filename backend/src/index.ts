@@ -35,18 +35,32 @@ import { initFirebaseAdmin } from './lib/firebase';
 const app = express();
 const httpServer = http.createServer(app);
 
-// CORS origin policy — allow the configured frontend, localhost (dev), and any
-// Vercel deployment (production alias + preview URLs). Requests with no Origin
-// header (curl, server-to-server, health checks) are allowed through.
-const allowedOrigins = [process.env.FRONTEND_URL, 'http://localhost:3000'].filter(
-  Boolean
-) as string[];
+// All browser traffic reaches this backend through the frontend's reverse
+// proxy (Next.js rewrites on the single public domain). Trust the first proxy
+// hop so req.ip / rate-limiting use the real client IP from X-Forwarded-For
+// instead of the proxy's edge IP (otherwise every user shares one rate bucket).
+app.set('trust proxy', 1);
 
+// CORS origin policy
+// Allow:
+// - specific deployed frontend origin
+// - all Vercel preview/prod origins: *.vercel.app
+// - localhost dev
+// - Requests with no Origin header (server-to-server, curl, health checks)
+const ALLOWED_FRONTEND_ORIGIN = process.env.FRONTEND_URL || 'https://hometown-hub-virid.vercel.app';
 const isAllowedOrigin = (origin?: string): boolean => {
   if (!origin) return true;
-  if (allowedOrigins.includes(origin)) return true;
+
+  // Exact allowlist for the main deployed frontend
+  if (origin === ALLOWED_FRONTEND_ORIGIN) return true;
+
+  // Local dev
+  if (origin === 'http://localhost:3000') return true;
+
+  // Vercel deployments (production + preview)
   try {
-    return /\.vercel\.app$/.test(new URL(origin).hostname);
+    const hostname = new URL(origin).hostname;
+    return hostname.endsWith('.vercel.app');
   } catch {
     return false;
   }
@@ -59,6 +73,7 @@ const corsOrigin = (
   if (isAllowedOrigin(origin)) callback(null, true);
   else callback(new Error(`Origin ${origin} not allowed by CORS`));
 };
+
 
 // Socket.io
 const io = new SocketServer(httpServer, {

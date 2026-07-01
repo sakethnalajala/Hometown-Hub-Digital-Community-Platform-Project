@@ -23,13 +23,13 @@ exports.communityRouter.get('/', async (req, res) => {
         const where = { status: 'APPROVED' };
         if (search) {
             where.OR = [
-                { name: { contains: search, mode: 'insensitive' } },
-                { description: { contains: search, mode: 'insensitive' } },
-                { city: { contains: search, mode: 'insensitive' } },
+                { name: { contains: search } },
+                { description: { contains: search } },
+                { city: { contains: search } },
             ];
         }
         if (city)
-            where.city = { contains: city, mode: 'insensitive' };
+            where.city = { contains: city };
         if (categoryId)
             where.categoryId = categoryId;
         const [communities, total] = await Promise.all([
@@ -64,7 +64,7 @@ exports.communityRouter.post('/', auth_middleware_1.authenticate, (0, validate_m
         const community = await prisma_1.prisma.community.create({
             data: {
                 name, slug, description, city, state, country: country || 'India',
-                categoryId, isPrivate, rules: rules || [],
+                categoryId, isPrivate, rules: JSON.stringify(rules || []),
                 createdById: req.user.userId,
                 status: req.user.role === 'ADMIN' ? 'APPROVED' : 'PENDING',
             },
@@ -244,7 +244,11 @@ exports.communityRouter.get('/:id/posts', async (req, res) => {
             skip: (page - 1) * limit,
             take: limit,
         });
-        res.json({ success: true, data: posts });
+        const parsedPosts = posts.map(p => ({
+            ...p,
+            images: JSON.parse(p.images || '[]'),
+        }));
+        res.json({ success: true, data: parsedPosts });
     }
     catch {
         res.status(500).json({ success: false, message: 'Failed to fetch posts' });
