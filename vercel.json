@@ -1,0 +1,8 @@
+{
+  "rewrites": [
+    { "source": "/api/(.*)", "destination": "https://hometown-hub-backend-un1i.onrender.com/api/$1" },
+    { "source": "/socket.io/(.*)", "destination": "https://hometown-hub-backend-un1i.onrender.com/socket.io/$1" },
+    { "source": "/uploads/(.*)", "destination": "https://hometown-hub-backend-un1i.onrender.com/uploads/$1" },
+    { "source": "/(.*)", "destination": "/$1" }
+  ]
+}
