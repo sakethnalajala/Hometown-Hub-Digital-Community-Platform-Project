@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from 'react'
 import { motion } from 'framer-motion'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query'
 import { Search, Filter, Users, MapPin, Plus, Loader2, Sparkles, Trash2, LogOut, MapIcon } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
@@ -38,6 +38,7 @@ export default function CommunitiesPage() {
   const [communityToDelete, setCommunityToDelete] = useState<any | null>(null)
   const { user } = useAuthStore()
 
+  const queryClient = useQueryClient()
   const { data, isLoading, isError } = useQuery({
     queryKey: ['communities', searchQuery],
     queryFn: () => communitiesApi.getAll(searchQuery ? { search: searchQuery } : undefined),
@@ -58,20 +59,34 @@ export default function CommunitiesPage() {
     return [...apiCommunities, ...filteredSamples].slice(0, 15)
   }, [communities, localSamples, searchQuery])
 
+  const joinMutation = useMutation({
+    mutationFn: (communityId: string) => communitiesApi.join(communityId),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['communities'], exact: false }),
+  })
+
+  const leaveMutation = useMutation({
+    mutationFn: (communityId: string) => communitiesApi.leave(communityId),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['communities'], exact: false }),
+  })
+
+  const deleteMutation = useMutation({
+    mutationFn: (communityId: string) => communitiesApi.deleteCommunity(communityId),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['communities'], exact: false }),
+  })
+
   const handleJoin = async (e: React.MouseEvent, community: any) => {
     e.preventDefault()
     e.stopPropagation()
-    // Update local sample state when applicable
     if (community.id?.startsWith('sample-')) {
       setLocalSamples((current) => current.map((c) => c.id === community.id ? { ...c, joined: true } : c))
     }
     try {
-      if (!community.id?.startsWith('sample-')) await communitiesApi.join(community.id || community.slug)
+      if (!community.id?.startsWith('sample-')) await joinMutation.mutateAsync(community.id)
+      triggerAppNotification('Community joined', `You joined ${community.name}.`)
+      openExternalLink(`https://www.google.com/maps/search/${encodeURIComponent(community.city || community.name)}`)
     } catch {
-      // ignore remote errors for demo mode
+      triggerAppNotification('Community joined', `You joined ${community.name}.`)
     }
-    triggerAppNotification('Community joined', `You joined ${community.name}.`)
-    openExternalLink(`https://www.google.com/maps/search/${encodeURIComponent(community.city || community.name)}`)
   }
 
   const handleLeave = async (e: React.MouseEvent, community: any) => {
@@ -81,11 +96,11 @@ export default function CommunitiesPage() {
       setLocalSamples((current) => current.map((c) => c.id === community.id ? { ...c, joined: false } : c))
     }
     try {
-      if (!community.id?.startsWith('sample-')) await communitiesApi.leave(community.id || community.slug)
+      if (!community.id?.startsWith('sample-')) await leaveMutation.mutateAsync(community.id)
+      triggerAppNotification('Community left', `You left ${community.name}.`)
     } catch {
-      // ignore
+      triggerAppNotification('Community left', `You left ${community.name}.`)
     }
-    triggerAppNotification('Community left', `You left ${community.name}.`)
   }
 
   const handleDelete = (e: React.MouseEvent, community: any) => {
@@ -96,11 +111,14 @@ export default function CommunitiesPage() {
 
   const confirmDeleteCommunity = async () => {
     if (!communityToDelete) return
-    // Remove locally if sample, otherwise call API then remove from visible list by re-fetch
     if (communityToDelete.id?.startsWith('sample-')) {
       setLocalSamples((current) => current.filter((c) => c.id !== communityToDelete.id))
     } else {
-      try { await communitiesApi.leave(communityToDelete.id || communityToDelete.slug) } catch { /* ignore */ }
+      try {
+        await deleteMutation.mutateAsync(communityToDelete.id)
+      } catch {
+        // ignore remote errors in demo mode
+      }
     }
     triggerAppNotification('Community deleted', `${communityToDelete.name} was deleted.`)
     setCommunityToDelete(null)
@@ -320,6 +338,7 @@ export default function CommunitiesPage() {
                       </div>
                     </motion.div>
                   </div>
+                </motion.div>
               )
             })}
 

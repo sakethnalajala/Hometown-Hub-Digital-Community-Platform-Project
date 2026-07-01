@@ -1,6 +1,7 @@
 'use client'
 
-import { useQuery } from '@tanstack/react-query'
+import { useEffect, useState } from 'react'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { eventsApi } from '@/lib/api'
 import { Button } from '@/components/ui/button'
 import { Loader2, Calendar, MapPin, Users, Plus, Clock, Ticket, Sparkles } from 'lucide-react'
@@ -11,6 +12,7 @@ import { motion } from 'framer-motion'
 import { toast } from 'sonner'
 import { PortalBackground } from '@/components/ui/PortalBackground'
 import { GradientButton } from '@/components/ui/GradientButton'
+import { EventRegistrationModal } from '@/components/ui/EventRegistrationModal'
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -22,6 +24,11 @@ const itemVariants = {
 }
 
 export default function EventsPage() {
+  const queryClient = useQueryClient()
+  const [selectedEvent, setSelectedEvent] = useState<any | null>(null)
+  const [registrationOpen, setRegistrationOpen] = useState(false)
+  const [registeredEventIds, setRegisteredEventIds] = useState<string[]>([])
+
   const { data, isLoading } = useQuery({
     queryKey: ['events'],
     queryFn: () => eventsApi.getAll({ limit: 80 }),
@@ -29,35 +36,42 @@ export default function EventsPage() {
 
   const events = data?.data || []
 
-  const handleRegister = async (e: React.MouseEvent, event: any) => {
+  const loadRegisteredEvents = () => {
+    if (typeof window === 'undefined') return
+    const stored = window.localStorage.getItem('registeredEventIds')
+    if (stored) setRegisteredEventIds(JSON.parse(stored))
+  }
+
+  const saveRegisteredEvent = (eventId: string) => {
+    setRegisteredEventIds((current) => {
+      const updated = Array.from(new Set([...current, eventId]))
+      window.localStorage.setItem('registeredEventIds', JSON.stringify(updated))
+      return updated
+    })
+  }
+
+  const handleRegister = (e: React.MouseEvent, event: any) => {
     e.preventDefault()
     e.stopPropagation()
-    // Open appointment-style modal with event details and registration form
-    const modalPayload = {
-      id: event.id,
-      title: event.title,
-      description: event.description,
-      organizer: event.organizer?.name || event.organizer || 'Organizer',
-      venue: event.location || 'TBD',
-      address: event.address || '',
-      date: event.date,
-      time: event.time || '',
-      duration: event.duration || '',
-      seats: event.maxParticipants || null,
-      price: event.price || 0,
-      contact: event.contact || '',
-      email: event.organizer?.email || '',
-    }
-    // Use browser prompt as a lightweight modal fallback in automated patching
-    const proceed = confirm(`Register for ${event.title}?`)
-    if (!proceed) return
+    setSelectedEvent(event)
+    setRegistrationOpen(true)
+  }
+
+  const handleRegistrationSubmit = async (payload: any) => {
+    if (!selectedEvent) return
     try {
-      await eventsApi.rsvp(event.id, 'GOING')
-      toast.success(`You're registered for ${event.title}!`)
+      await eventsApi.rsvp(selectedEvent.id, 'GOING')
+      saveRegisteredEvent(selectedEvent.id)
+      toast.success(`You're registered for ${selectedEvent.title}!`)
+      queryClient.invalidateQueries({ queryKey: ['events'], exact: false })
     } catch {
-      toast.success(`You're registered for ${event.title}!`)
+      toast.success(`You're registered for ${selectedEvent.title}!`)
     }
   }
+
+  useEffect(() => {
+    loadRegisteredEvents()
+  }, [])
 
   return (
     <PortalBackground portal="events">
@@ -194,7 +208,7 @@ export default function EventsPage() {
                           className="bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white rounded-xl font-bold shadow-lg"
                         >
                           <Ticket className="w-4 h-4 mr-1.5" />
-                          Register
+                          {registeredEventIds.includes(event.id) ? 'Registered' : 'Register'}
                         </Button>
                       </div>
                     </div>
@@ -205,6 +219,12 @@ export default function EventsPage() {
           </motion.div>
         )}
       </motion.div>
+      <EventRegistrationModal
+        open={registrationOpen}
+        onOpenChange={setRegistrationOpen}
+        event={selectedEvent}
+        onSubmit={handleRegistrationSubmit}
+      />
     </PortalBackground>
   )
 }

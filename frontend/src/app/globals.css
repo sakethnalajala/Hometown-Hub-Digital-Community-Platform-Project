@@ -21,20 +21,20 @@
   --brand-error: 0 72% 51%;
 
   /* Dark Theme (Lighter, modernized) */
-  --bg-base: 240 10% 16%; /* Lighter background */
-  --bg-surface: 240 10% 20%;
-  --bg-elevated: 240 10% 24%;
-  --bg-overlay: 240 10% 28%;
-  --bg-glass: 240 10% 20% / 0.65;
+  --bg-base: 0 0% 100%; /* Light background */
+  --bg-surface: 210 16% 96%;
+  --bg-elevated: 210 20% 92%;
+  --bg-overlay: 210 20% 88%;
+  --bg-glass: 0 0% 100% / 0.65;
 
-  --text-primary: 0 0% 100%;
-  --text-secondary: 240 5% 75%;
-  --text-muted: 240 4% 60%;
-  --text-disabled: 240 4% 40%;
+  --text-primary: 222 18% 12%;
+  --text-secondary: 220 12% 40%;
+  --text-muted: 220 10% 55%;
+  --text-disabled: 220 10% 65%;
 
-  --border-subtle: 240 6% 25%;
-  --border-default: 240 6% 30%;
-  --border-strong: 240 6% 40%;
+  --border-subtle: 220 8% 85%;
+  --border-default: 220 10% 80%;
+  --border-strong: 220 12% 70%;
 
   /* Advanced Gradients */
   --gradient-primary: linear-gradient(135deg, #a855f7, #3b82f6); /* Purple -> Blue */

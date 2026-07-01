@@ -3,13 +3,14 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.upload = void 0;
+exports.upload = exports.uploadsDir = void 0;
 exports.uploadImage = uploadImage;
 exports.deleteImage = deleteImage;
 const cloudinary_1 = require("cloudinary");
 const multer_1 = __importDefault(require("multer"));
 const path_1 = __importDefault(require("path"));
 const fs_1 = __importDefault(require("fs"));
+const os_1 = __importDefault(require("os"));
 // Configure Cloudinary if credentials exist
 const hasCloudinary = !!(process.env.CLOUDINARY_CLOUD_NAME &&
     process.env.CLOUDINARY_API_KEY &&
@@ -22,12 +23,22 @@ if (hasCloudinary) {
     });
 }
 // Local storage config
-const uploadsDir = path_1.default.join(__dirname, '../../uploads');
-if (!fs_1.default.existsSync(uploadsDir)) {
-    fs_1.default.mkdirSync(uploadsDir, { recursive: true });
+// Use a writable temp directory in serverless environments (Vercel),
+// otherwise use the repository `uploads` folder for local development.
+exports.uploadsDir = process.env.VERCEL === '1'
+    ? path_1.default.join(os_1.default.tmpdir(), 'hometown-hub-uploads')
+    : path_1.default.join(__dirname, '../../uploads');
+if (!fs_1.default.existsSync(exports.uploadsDir)) {
+    try {
+        fs_1.default.mkdirSync(exports.uploadsDir, { recursive: true });
+    }
+    catch (err) {
+        // If mkdir fails in a read-only environment, log and continue (Cloudinary may be used).
+        console.warn('Could not create uploads directory:', err?.message || err);
+    }
 }
 const localStorage = multer_1.default.diskStorage({
-    destination: (_req, _file, cb) => cb(null, uploadsDir),
+    destination: (_req, _file, cb) => cb(null, exports.uploadsDir),
     filename: (_req, file, cb) => {
         const ext = path_1.default.extname(file.originalname);
         const uniqueName = `${Date.now()}-${Math.random().toString(36).substring(2)}${ext}`;

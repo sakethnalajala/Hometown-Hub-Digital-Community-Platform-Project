@@ -7,6 +7,7 @@ const auth_middleware_1 = require("../middleware/auth.middleware");
 const validate_middleware_1 = require("../middleware/validate.middleware");
 const schemas_1 = require("../validators/schemas");
 const upload_1 = require("../lib/upload");
+const notification_routes_1 = require("./notification.routes");
 exports.communityRouter = (0, express_1.Router)();
 function generateSlug(name) {
     return name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') + '-' + Date.now();
@@ -295,6 +296,38 @@ exports.communityRouter.delete('/:id/members/:userId', auth_middleware_1.authent
     }
     catch {
         res.status(500).json({ success: false, message: 'Failed to remove member' });
+    }
+});
+// DELETE /api/communities/:id  <-- New: delete entire community (admin or owner)
+exports.communityRouter.delete('/:id', auth_middleware_1.authenticate, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const community = await prisma_1.prisma.community.findUnique({ where: { id } });
+        if (!community) {
+            res.status(404).json({ success: false, message: 'Community not found' });
+            return;
+        }
+        // Allow if owner or admin
+        if (community.createdById !== req.user.userId && req.user.role !== 'ADMIN') {
+            res.status(403).json({ success: false, message: 'Not authorized to delete this community' });
+            return;
+        }
+        await prisma_1.prisma.community.delete({ where: { id } });
+        // Notify creator
+        try {
+            await (0, notification_routes_1.createNotification)({
+                type: 'COMMUNITY_DELETED',
+                title: 'Community deleted',
+                body: `${community.name} was deleted by ${req.user.userId}`,
+                receiverId: community.createdById,
+                senderId: req.user.userId,
+            });
+        }
+        catch { /* ignore notification errors */ }
+        res.json({ success: true, message: 'Community deleted' });
+    }
+    catch {
+        res.status(500).json({ success: false, message: 'Failed to delete community' });
     }
 });
 //# sourceMappingURL=community.routes.js.map

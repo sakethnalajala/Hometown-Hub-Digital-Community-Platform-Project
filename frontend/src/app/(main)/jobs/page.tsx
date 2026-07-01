@@ -73,22 +73,25 @@ export default function JobsPage() {
   }
 
   const handleApply = (jobId: string) => {
-    // Navigate to the full-page application route
-    // Ensure job id exists and open application modal if job details are loaded
     const target = jobs.find(j => j.id === jobId) || null
     if (!target) {
       alert('Unable to load job details. Please try again.')
       return
     }
-    // open application page
-    window.location.href = `/jobs/apply/${jobId}`
+    setSelectedJob(target)
+    setApplicationOpen(true)
   }
 
-  const handleApplicationSubmit = (payload: any) => {
+  const handleApplicationSubmit = async (payload: any) => {
     const confirmation = `Application Confirmation\nApplicant: ${payload.fullName}\nEmail: ${payload.email}\nPhone: ${payload.phone}\nCollege: ${payload.college}\nCourse: ${payload.course}\nResume: ${payload.resume}\nJob: ${payload.jobTitle}`
     triggerAppNotification('Application submitted', `${payload.jobTitle} application received.`)
     downloadTextAsPdf(`${payload.jobTitle.replace(/\s+/g, '-').toLowerCase()}-application.pdf`, confirmation)
-    openExternalLink(SAMPLE_JOBS.find((job) => job.id === selectedJob?.id)?.website || 'https://www.google.com')
+    try {
+      await jobsApi.apply(selectedJob?.id || payload.jobId)
+    } catch {
+      // ignore if the API is not available in demo mode
+    }
+    openExternalLink(selectedJob?.website || 'https://www.google.com')
   }
 
   const handleDelete = (jobId: string, title: string) => {

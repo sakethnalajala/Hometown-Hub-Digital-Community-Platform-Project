@@ -169,6 +169,7 @@ export const communitiesApi = {
   create: (data: any) => api.post<ApiResponse<any>>('/communities', data),
   getBySlug: (slug: string) => api.get<ApiResponse<any>>(`/communities/${slug}`),
   update: (id: string, data: any) => api.put<ApiResponse<any>>(`/communities/${id}`, data),
+  deleteCommunity: (id: string) => api.delete<ApiResponse<any>>(`/communities/${id}`),
   uploadBanner: (id: string, formData: FormData) =>
     api.postForm<ApiResponse<any>>(`/communities/${id}/banner`, formData),
   join: (id: string) => api.post<ApiResponse<any>>(`/communities/${id}/join`),

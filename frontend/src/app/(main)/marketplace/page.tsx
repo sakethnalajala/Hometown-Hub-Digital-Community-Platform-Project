@@ -57,11 +57,29 @@ export default function MarketplacePage() {
   const [search, setSearch] = useState('')
   const [activeCategory, setActiveCategory] = useState('All')
   const [wishlist, setWishlist] = useState<string[]>([])
+  const [removedProductIds, setRemovedProductIds] = useState<string[]>([])
   const [listings, setListings] = useState<any[]>(SAMPLE_PRODUCTS)
   const [loading, setLoading] = useState(true)
   const [itemToDelete, setItemToDelete] = useState<any | null>(null)
 
   useEffect(() => {
+    const storedWishlist = typeof window !== 'undefined' ? window.localStorage.getItem('marketplaceWishlist') : null
+    const storedRemoved = typeof window !== 'undefined' ? window.localStorage.getItem('marketplaceRemovedIds') : null
+    if (storedWishlist) {
+      try {
+        setWishlist(JSON.parse(storedWishlist))
+      } catch {
+        setWishlist([])
+      }
+    }
+    if (storedRemoved) {
+      try {
+        setRemovedProductIds(JSON.parse(storedRemoved))
+      } catch {
+        setRemovedProductIds([])
+      }
+    }
+
     marketplaceApi.getAll()
       .then(res => {
         setListings(res.data || [])
@@ -95,16 +113,24 @@ export default function MarketplacePage() {
 
   const confirmDelete = () => {
     if (!itemToDelete) return
-    setListings((current) => current.filter((listing) => listing.id !== itemToDelete.id))
+    setRemovedProductIds((current) => {
+      const updated = Array.from(new Set([...current, itemToDelete.id]))
+      if (typeof window !== 'undefined') {
+        window.localStorage.setItem('marketplaceRemovedIds', JSON.stringify(updated))
+      }
+      return updated
+    })
     triggerAppNotification('Product deleted', `${itemToDelete.name || itemToDelete.title} was removed.`)
     setItemToDelete(null)
   }
 
-  const filtered = listings.filter(l => {
-    const matchCat = activeCategory === 'All' || l.category === activeCategory
-    const matchSearch = !search || (l.name || l.title || '').toLowerCase().includes(search.toLowerCase())
-    return matchCat && matchSearch
-  })
+  const filtered = listings
+    .filter((l) => !removedProductIds.includes(l.id))
+    .filter((l) => {
+      const matchCat = activeCategory === 'All' || l.category === activeCategory
+      const matchSearch = !search || (l.name || l.title || '').toLowerCase().includes(search.toLowerCase())
+      return matchCat && matchSearch
+    })
 
   return (
     <PortalBackground portal="marketplace">
@@ -252,8 +278,15 @@ export default function MarketplacePage() {
                         <button
                           onClick={(e) => {
                             e.preventDefault()
-                            setWishlist(w => w.includes(item.id) ? w.filter(i => i !== item.id) : [...w, item.id])
-                            toast.success(wishlist.includes(item.id) ? 'Removed from wishlist' : 'Added to wishlist')
+                            e.stopPropagation()
+                            const nextWishlist = wishlist.includes(item.id)
+                              ? wishlist.filter((i) => i !== item.id)
+                              : [...wishlist, item.id]
+                            setWishlist(nextWishlist)
+                            if (typeof window !== 'undefined') {
+                              window.localStorage.setItem('marketplaceWishlist', JSON.stringify(nextWishlist))
+                            }
+                            toast.success(nextWishlist.includes(item.id) ? 'Added to wishlist' : 'Removed from wishlist')
                           }}
                           className="absolute top-3 right-3 p-2 rounded-xl bg-white/90 backdrop-blur-md hover:bg-white transition-all shadow-lg"
                         >

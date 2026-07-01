@@ -45,7 +45,7 @@ const helmet_1 = __importDefault(require("helmet"));
 const morgan_1 = __importDefault(require("morgan"));
 const express_rate_limit_1 = __importDefault(require("express-rate-limit"));
 const socket_io_1 = require("socket.io");
-const path_1 = __importDefault(require("path"));
+const upload_1 = require("./lib/upload");
 const auth_routes_demo_1 = require("./routes/auth.routes.demo");
 const user_routes_1 = require("./routes/user.routes");
 const community_routes_1 = require("./routes/community.routes");
@@ -140,8 +140,8 @@ app.use(express_1.default.urlencoded({ extended: true, limit: '10mb' }));
 if (process.env.NODE_ENV !== 'test') {
     app.use((0, morgan_1.default)('dev'));
 }
-// Static files for uploads
-app.use('/uploads', express_1.default.static(path_1.default.join(__dirname, '../uploads')));
+// Static files for uploads (use uploadsDir which may be a temp folder on Vercel)
+app.use('/uploads', express_1.default.static(upload_1.uploadsDir));
 // Health check
 app.get('/health', (_req, res) => {
     res.json({ status: 'ok', timestamp: new Date().toISOString(), version: '1.0.0' });

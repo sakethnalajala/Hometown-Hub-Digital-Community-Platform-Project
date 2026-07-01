@@ -20,7 +20,7 @@ interface GovService {
 /** Five core government services with direct official portals. */
 const GOV_SERVICES: GovService[] = [
   { name: 'Aadhaar Services', description: 'Enrol, update and download your Aadhaar — manage your unique identity online.', icon: ShieldCheck, url: 'https://myaadhaar.uidai.gov.in/' },
-  { name: 'Passport Application', description: 'Apply for a fresh passport or renewal and track your application status online.', icon: FileText, url: 'https://portal3.passportindia.gov.in/Online/index.html' },
+  { name: 'Passport Application', description: 'Apply for a fresh passport or renewal and track your application status online.', icon: FileText, url: 'https://www.passportindia.gov.in/' },
   { name: 'PAN Card Services', description: 'Apply for a new PAN, make corrections, and link it with your Aadhaar.', icon: CreditCard, url: 'https://www.onlineservices.nsdl.com/paam/endUserRegisterContact.html' },
   { name: 'Driving Licence Services', description: 'Apply for a learner\'s or permanent driving licence and book your driving test.', icon: Car, url: 'https://parivahan.gov.in/parivahan/' },
   { name: 'Property Tax Payment', description: 'View dues, pay your property tax securely and download instant receipts.', icon: Receipt, url: 'https://www.ghmc.gov.in/' },
