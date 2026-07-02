@@ -8,11 +8,28 @@ import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 import { Calendar, MapPin, Mail, Phone, User, Sparkles } from 'lucide-react'
 
+interface EventRegistrationPayload {
+  fullName: string
+  email: string
+  phone: string
+  notes: string
+  eventId?: string
+  eventTitle?: string
+}
+
+interface EventSummary {
+  id?: string
+  title?: string
+  location?: string
+  date?: string | Date
+  description?: string
+}
+
 interface EventRegistrationModalProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  event: any
-  onSubmit: (payload: any) => void
+  event: EventSummary | null | undefined
+  onSubmit: (payload: EventRegistrationPayload) => void
 }
 
 export function EventRegistrationModal({ open, onOpenChange, event, onSubmit }: EventRegistrationModalProps) {
@@ -45,7 +62,7 @@ export function EventRegistrationModal({ open, onOpenChange, event, onSubmit }: 
             <Calendar className="w-5 h-5 text-orange-400" /> Register for {event?.title || 'Event'}
           </DialogTitle>
           <DialogDescription className="text-slate-300">
-            Fill in your details to RSVP. We'll keep your registration saved locally and send a confirmation.
+            Fill in your details to RSVP. We&apos;ll keep your registration saved locally and send a confirmation.
           </DialogDescription>
         </DialogHeader>
 

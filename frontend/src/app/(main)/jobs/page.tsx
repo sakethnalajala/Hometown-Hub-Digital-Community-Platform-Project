@@ -3,14 +3,15 @@
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import Link from 'next/link'
-import { Briefcase, MapPin, Clock, DollarSign, Search, Filter, Building2, Star, ExternalLink, BookmarkPlus, Loader2, Sparkles, TrendingUp, Trash2, FileText } from 'lucide-react'
+import { Briefcase, MapPin, Clock, DollarSign, Search, Filter, Building2, Star, ExternalLink, BookmarkPlus, Loader2, Sparkles, TrendingUp } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { jobsApi, bookmarksApi } from '@/lib/api'
 import { toast } from 'sonner'
 import { PortalBackground } from '@/components/ui/PortalBackground'
 import { GradientButton } from '@/components/ui/GradientButton'
-import { ApplicationModal } from '@/components/ui/ApplicationModal'
+import { ApplicationModal, type JobApplicationPayload } from '@/components/ui/ApplicationModal'
+import type { Job } from '@/types'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { triggerAppNotification, openExternalLink, downloadTextAsPdf } from '@/lib/appHelpers'
 
@@ -42,10 +43,10 @@ export default function JobsPage() {
   const [search, setSearch] = useState('')
   const [activeType, setActiveType] = useState('All')
   const [saved, setSaved] = useState<string[]>([])
-  const [jobs, setJobs] = useState<any[]>(SAMPLE_JOBS)
+  const [jobs, setJobs] = useState<Job[]>(SAMPLE_JOBS)
   const [loading, setLoading] = useState(true)
   const [applicationOpen, setApplicationOpen] = useState(false)
-  const [selectedJob, setSelectedJob] = useState<any | null>(null)
+  const [selectedJob, setSelectedJob] = useState<Job | null>(null)
   const [jobToDelete, setJobToDelete] = useState<{ id: string; title: string } | null>(null)
 
   useEffect(() => {
@@ -60,7 +61,8 @@ export default function JobsPage() {
       })
   }, [])
 
-  const handleSave = async (jobId: string) => {
+  const handleSave = async (jobId?: string) => {
+    if (!jobId) return
     try {
       const res = await bookmarksApi.toggle('jobs', jobId)
       const isSaved = res.data?.saved
@@ -72,7 +74,7 @@ export default function JobsPage() {
     }
   }
 
-  const handleApply = (jobId: string) => {
+  const handleApply = (jobId?: string) => {
     const target = jobs.find(j => j.id === jobId) || null
     if (!target) {
       alert('Unable to load job details. Please try again.')
@@ -82,20 +84,18 @@ export default function JobsPage() {
     setApplicationOpen(true)
   }
 
-  const handleApplicationSubmit = async (payload: any) => {
-    const confirmation = `Application Confirmation\nApplicant: ${payload.fullName}\nEmail: ${payload.email}\nPhone: ${payload.phone}\nCollege: ${payload.college}\nCourse: ${payload.course}\nResume: ${payload.resume}\nJob: ${payload.jobTitle}`
-    triggerAppNotification('Application submitted', `${payload.jobTitle} application received.`)
-    downloadTextAsPdf(`${payload.jobTitle.replace(/\s+/g, '-').toLowerCase()}-application.pdf`, confirmation)
+  const handleApplicationSubmit = async (payload: JobApplicationPayload) => {
+    const jobTitle = payload.jobTitle || 'Job'
+    const confirmation = `Application Confirmation\nApplicant: ${payload.fullName}\nEmail: ${payload.email}\nPhone: ${payload.phone}\nCollege: ${payload.college}\nCourse: ${payload.course}\nJob: ${jobTitle}`
+    triggerAppNotification('Application submitted', `${jobTitle} application received.`)
+    downloadTextAsPdf(`${jobTitle.replace(/\s+/g, '-').toLowerCase()}-application.pdf`, confirmation)
     try {
-      await jobsApi.apply(selectedJob?.id || payload.jobId)
+      const jobId = selectedJob?.id || payload.jobId
+      if (jobId) await jobsApi.apply(jobId)
     } catch {
       // ignore if the API is not available in demo mode
     }
     openExternalLink(selectedJob?.website || 'https://www.google.com')
-  }
-
-  const handleDelete = (jobId: string, title: string) => {
-    setJobToDelete({ id: jobId, title })
   }
 
   const confirmDelete = () => {
@@ -263,7 +263,7 @@ export default function JobsPage() {
           </motion.div>
         ) : (
           <motion.div variants={containerVariants} className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {filtered.slice(0, 6).map((job: any) => (
+            {filtered.slice(0, 6).map((job: Job) => (
               <motion.div key={job.id} variants={itemVariants}>
                 <Link href={`/jobs/${job.id}`}>
                   <motion.div
@@ -292,7 +292,7 @@ export default function JobsPage() {
                         whileTap={{ scale: 0.9 }}
                         onClick={(e) => { e.preventDefault(); handleSave(job.id) }}
                         className={`p-2 rounded-xl transition-all ${
-                          saved.includes(job.id)
+                          Boolean(job.id && saved.includes(job.id))
                             ? 'bg-cyan-500 text-white'
                             : 'bg-white/10 text-gray-300 hover:bg-white/20'
                         }`}
@@ -317,7 +317,7 @@ export default function JobsPage() {
                           <DollarSign className="w-3.5 h-3.5" /> {job.salary}
                         </span>
                       )}
-                      <span className="ml-auto text-gray-400">{new Date(job.createdAt).toLocaleDateString()}</span>
+                      <span className="ml-auto text-gray-400">{job.createdAt ? new Date(job.createdAt).toLocaleDateString() : ''}</span>
                     </div>
 
                     {/* Actions */}

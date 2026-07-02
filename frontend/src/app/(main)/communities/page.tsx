@@ -14,6 +14,18 @@ import { toast } from 'sonner'
 import { triggerAppNotification, openExternalLink } from '@/lib/appHelpers'
 import { useAuthStore } from '@/store/authStore'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
+import type { Community } from '@/types'
+
+import type { Category } from '@/types'
+
+interface CommunityCard extends Omit<Partial<Community>, 'category'> {
+  category?: Category | string
+  members?: number
+  image?: string
+  owner?: boolean
+  joined?: boolean
+  membershipStatus?: string
+}
 
 const SAMPLE_COMMUNITIES = [
   { id: 'sample-community-1', name: 'Hyderabad Makers Circle', description: 'A creative hub for builders, designers, and founders sharing local expertise.', city: 'Hyderabad', category: 'Technology', members: 184, image: 'https://images.unsplash.com/photo-1516321497487-e288fb19713f?w=800&h=400&fit=crop&auto=format&q=70', owner: true, joined: true },
@@ -35,7 +47,7 @@ const SAMPLE_COMMUNITIES = [
 
 export default function CommunitiesPage() {
   const [searchQuery, setSearchQuery] = useState('')
-  const [communityToDelete, setCommunityToDelete] = useState<any | null>(null)
+  const [communityToDelete, setCommunityToDelete] = useState<CommunityCard | null>(null)
   const { user } = useAuthStore()
 
   const queryClient = useQueryClient()
@@ -44,13 +56,13 @@ export default function CommunitiesPage() {
     queryFn: () => communitiesApi.getAll(searchQuery ? { search: searchQuery } : undefined),
   })
 
-  const communities = data?.data || []
+  const communities = useMemo(() => data?.data || [], [data?.data])
 
   // Keep a modifiable local copy of sample communities so join/leave/delete work consistently
   const [localSamples, setLocalSamples] = useState(() => SAMPLE_COMMUNITIES)
 
-  const visibleCommunities = useMemo(() => {
-    const apiCommunities = communities.length > 0 ? communities : []
+  const visibleCommunities = useMemo<CommunityCard[]>(() => {
+    const apiCommunities: CommunityCard[] = communities.length > 0 ? communities : []
     const filteredSamples = localSamples.filter((community) => {
       if (!searchQuery) return true
       return `${community.name} ${community.description} ${community.city} ${community.category}`.toLowerCase().includes(searchQuery.toLowerCase())
@@ -74,36 +86,36 @@ export default function CommunitiesPage() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['communities'], exact: false }),
   })
 
-  const handleJoin = async (e: React.MouseEvent, community: any) => {
+  const handleJoin = async (e: React.MouseEvent, community: CommunityCard) => {
     e.preventDefault()
     e.stopPropagation()
     if (community.id?.startsWith('sample-')) {
       setLocalSamples((current) => current.map((c) => c.id === community.id ? { ...c, joined: true } : c))
     }
     try {
-      if (!community.id?.startsWith('sample-')) await joinMutation.mutateAsync(community.id)
+      if (community.id && !community.id.startsWith('sample-')) await joinMutation.mutateAsync(community.id)
       triggerAppNotification('Community joined', `You joined ${community.name}.`)
-      openExternalLink(`https://www.google.com/maps/search/${encodeURIComponent(community.city || community.name)}`)
+      openExternalLink(`https://www.google.com/maps/search/${encodeURIComponent(community.city || community.name || '')}`)
     } catch {
       triggerAppNotification('Community joined', `You joined ${community.name}.`)
     }
   }
 
-  const handleLeave = async (e: React.MouseEvent, community: any) => {
+  const handleLeave = async (e: React.MouseEvent, community: CommunityCard) => {
     e.preventDefault()
     e.stopPropagation()
     if (community.id?.startsWith('sample-')) {
       setLocalSamples((current) => current.map((c) => c.id === community.id ? { ...c, joined: false } : c))
     }
     try {
-      if (!community.id?.startsWith('sample-')) await leaveMutation.mutateAsync(community.id)
+      if (community.id && !community.id.startsWith('sample-')) await leaveMutation.mutateAsync(community.id)
       triggerAppNotification('Community left', `You left ${community.name}.`)
     } catch {
       triggerAppNotification('Community left', `You left ${community.name}.`)
     }
   }
 
-  const handleDelete = (e: React.MouseEvent, community: any) => {
+  const handleDelete = (e: React.MouseEvent, community: CommunityCard) => {
     e.preventDefault()
     e.stopPropagation()
     setCommunityToDelete(community)
@@ -113,7 +125,7 @@ export default function CommunitiesPage() {
     if (!communityToDelete) return
     if (communityToDelete.id?.startsWith('sample-')) {
       setLocalSamples((current) => current.filter((c) => c.id !== communityToDelete.id))
-    } else {
+    } else if (communityToDelete.id) {
       try {
         await deleteMutation.mutateAsync(communityToDelete.id)
       } catch {
@@ -260,7 +272,7 @@ export default function CommunitiesPage() {
             variants={containerVariants}
             className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6"
           >
-            {visibleCommunities.map((community: any, index: number) => {
+            {visibleCommunities.map((community: CommunityCard, index: number) => {
               const color = colors[index % colors.length]
               const isOwner = community.owner || community.createdBy?.id === user?.id
               const isJoined = community.joined || community.membershipStatus === 'APPROVED'

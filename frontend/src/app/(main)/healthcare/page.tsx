@@ -2,15 +2,16 @@
 
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { HeartPulse, Search, Phone, MapPin, Clock, Star, Stethoscope, Pill, Ambulance, ChevronRight, Shield, Loader2 } from 'lucide-react'
+import { HeartPulse, Search, Phone, MapPin, Clock, Star, Stethoscope, Pill, Ambulance, Shield, Loader2 } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { healthcareApi } from '@/lib/api'
 import { ImageWithFallback } from '@/components/ui/ImageWithFallback'
 import { toast } from 'sonner'
 import { triggerAppNotification, downloadTextAsPdf } from '@/lib/appHelpers'
-import { AppointmentModal } from '@/components/ui/AppointmentModal'
+import { AppointmentModal, type AppointmentPayload } from '@/components/ui/AppointmentModal'
 import { PortalBackground } from '@/components/ui/PortalBackground'
+import type { Hospital, HealthScheme } from '@/types'
 
 const emergencyContacts = [
   { label: 'Ambulance', number: '108', icon: Ambulance, color: 'text-red-400' },
@@ -28,11 +29,11 @@ const itemVariants = { hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0 }
 export default function HealthcarePage() {
   const [search, setSearch] = useState('')
   const [activeType, setActiveType] = useState('All')
-  const [hospitals, setHospitals] = useState<any[]>([])
-  const [healthSchemes, setHealthSchemes] = useState<any[]>([])
+  const [hospitals, setHospitals] = useState<Hospital[]>([])
+  const [healthSchemes, setHealthSchemes] = useState<HealthScheme[]>([])
   const [loading, setLoading] = useState(true)
   const [bookingState, setBookingState] = useState(false)
-  const [selectedHospital, setSelectedHospital] = useState<any | null>(null)
+  const [selectedHospital, setSelectedHospital] = useState<Hospital | null>(null)
   const [appointmentOpen, setAppointmentOpen] = useState(false)
 
   useEffect(() => {
@@ -47,14 +48,14 @@ export default function HealthcarePage() {
 
   const types = ['All', 'Multi-specialty', 'Primary Care', 'Pediatric', 'Alternative Medicine']
 
-  const handleBookAppointment = (hospital: any) => {
+  const handleBookAppointment = (hospital: Hospital) => {
     setSelectedHospital(hospital)
     setAppointmentOpen(true)
   }
 
-  const handleAppointmentSubmit = (payload: any) => {
+  const handleAppointmentSubmit = (payload: AppointmentPayload) => {
     const appointmentId = `APT-${Math.floor(1000 + Math.random() * 9000)}`
-    const confirmation = `Appointment Confirmation\nAppointment ID: ${appointmentId}\nHospital: ${selectedHospital?.name}\nDepartment: ${payload.department}\nPatient: ${payload.fullName}\nAge: ${payload.age}\nGender: ${payload.gender}\nMobile: ${payload.mobile}\nEmail: ${payload.email}\nAddress: ${payload.address}\nBlood Group: ${payload.bloodGroup}\nHealth Problem: ${payload.medicalProblem}\nSymptoms: ${payload.symptoms}\nPreferred Doctor: ${payload.doctor}\nDate: ${payload.appointmentDate}\nTime: ${payload.appointmentTime}`
+    const confirmation = `Appointment Confirmation\nAppointment ID: ${appointmentId}\nHospital: ${selectedHospital?.name}\nPatient: ${payload.fullName}\nAge: ${payload.age}\nGender: ${payload.gender}\nMobile: ${payload.mobile}\nEmail: ${payload.email}\nAddress: ${payload.address}\nBlood Group: ${payload.bloodGroup}\nHealth Problem: ${payload.medicalProblem}\nSymptoms: ${payload.symptoms}\nPreferred Doctor: ${payload.doctor}\nDate: ${payload.appointmentDate}\nTime: ${payload.appointmentTime}`
 
     setBookingState(true)
     downloadTextAsPdf(`${appointmentId}.pdf`, confirmation)
@@ -63,9 +64,9 @@ export default function HealthcarePage() {
     setBookingState(false)
   }
 
-  const filtered = hospitals.filter(h => {
+  const filtered = hospitals.filter((h: Hospital) => {
     const matchType = activeType === 'All' || h.type === activeType
-    const matchSearch = !search || h.name.toLowerCase().includes(search.toLowerCase()) || (h.type || '').toLowerCase().includes(search.toLowerCase())
+    const matchSearch = !search || String(h.name || '').toLowerCase().includes(search.toLowerCase()) || String(h.type || '').toLowerCase().includes(search.toLowerCase())
     return matchType && matchSearch
   })
 
@@ -149,39 +150,39 @@ export default function HealthcarePage() {
                 <p className="text-gray-400">No facilities found.</p>
               </div>
             ) : (
-              filtered.slice(0, 6).map(hospital => (
+              filtered.slice(0, 6).map((hospital: Hospital) => (
                 <motion.div
-                  key={hospital.id}
+                  key={String(hospital.id || hospital.name)}
                   whileHover={{ scale: 1.01 }}
                   className="bg-white/5 border border-white/10 rounded-2xl overflow-hidden hover:bg-white/10 transition-all cursor-pointer group"
                 >
                   <div className="flex flex-col sm:flex-row">
                     <div className="sm:w-40 h-36 sm:h-auto overflow-hidden flex-shrink-0">
-                      <ImageWithFallback src={hospital.image} alt={hospital.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                      <ImageWithFallback src={hospital.image} alt={String(hospital.name || '')} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                     </div>
                     <div className="p-5 flex-1">
                       <div className="flex items-start justify-between gap-3">
                         <div>
                           <div className="flex items-center gap-2">
-                            <h3 className="text-white font-semibold group-hover:text-rose-300 transition-colors">{hospital.name}</h3>
+                            <h3 className="text-white font-semibold group-hover:text-rose-300 transition-colors">{String(hospital.name || '')}</h3>
                             {hospital.emergency && (
                               <span className="text-xs bg-red-500/20 text-red-400 px-2 py-0.5 rounded-full font-semibold">24/7 Emergency</span>
                             )}
                           </div>
-                          <span className="text-xs text-rose-400 font-medium">{hospital.type} Hospital</span>
+                          <span className="text-xs text-rose-400 font-medium">{String(hospital.type || 'General')} Hospital</span>
                         </div>
                         <div className="flex items-center gap-1 text-yellow-400 text-sm font-semibold">
-                          <Star className="w-4 h-4 fill-current" /> {hospital.rating}
+                          <Star className="w-4 h-4 fill-current" /> {Number(hospital.rating || 0)}
                         </div>
                       </div>
                       <div className="flex flex-wrap gap-1.5 mt-3">
-                        {(hospital.specialities || []).map((spec: string) => (
+                        {(Array.isArray(hospital.specialities) ? hospital.specialities : []).map((spec: string) => (
                           <span key={spec} className="text-xs bg-white/5 border border-white/10 px-2.5 py-1 rounded-full text-gray-300">{spec}</span>
                         ))}
                       </div>
                       <div className="flex items-center gap-4 mt-3 text-sm text-gray-400">
-                        <span className="flex items-center gap-1.5"><MapPin className="w-3.5 h-3.5 text-rose-400" /> {hospital.distance || hospital.address || 'Nearby'}</span>
-                        <span className="flex items-center gap-1.5"><Stethoscope className="w-3.5 h-3.5 text-blue-400" /> {hospital.beds} beds</span>
+                        <span className="flex items-center gap-1.5"><MapPin className="w-3.5 h-3.5 text-rose-400" /> {String(hospital.distance || hospital.address || 'Nearby')}</span>
+                        <span className="flex items-center gap-1.5"><Stethoscope className="w-3.5 h-3.5 text-blue-400" /> {Number(hospital.beds || 0)} beds</span>
                       </div>
                       <div className="flex gap-3 mt-4">
                         <Button size="sm" className="bg-rose-600 hover:bg-rose-500 text-white rounded-xl" onClick={() => handleBookAppointment(hospital)} disabled={bookingState}>
@@ -208,10 +209,10 @@ export default function HealthcarePage() {
               <Pill className="w-4 h-4 text-rose-400" /> Health Schemes
             </h3>
             <div className="space-y-3">
-              {healthSchemes.slice(0, 5).map(scheme => (
-                <div key={scheme.id || scheme.name} className={`bg-gradient-to-br ${scheme.color || 'from-rose-600/20 to-red-600/20'} border ${scheme.border || 'border-rose-500/20'} rounded-xl p-4`}>
-                  <h4 className="text-white font-medium text-sm">{scheme.name}</h4>
-                  <p className="text-gray-400 text-xs mt-1">{scheme.description}</p>
+              {healthSchemes.slice(0, 5).map((scheme: HealthScheme) => (
+                <div key={String(scheme.id || scheme.name)} className={`bg-gradient-to-br ${scheme.color || 'from-rose-600/20 to-red-600/20'} border ${scheme.border || 'border-rose-500/20'} rounded-xl p-4`}>
+                  <h4 className="text-white font-medium text-sm">{String(scheme.name || '')}</h4>
+                  <p className="text-gray-400 text-xs mt-1">{String(scheme.description || '')}</p>
                   <Button size="sm" variant="ghost" className="text-white h-7 px-2 mt-2 text-xs hover:bg-white/10" onClick={() => toast.info(scheme.description)}>Learn More →</Button>
                 </div>
               ))}

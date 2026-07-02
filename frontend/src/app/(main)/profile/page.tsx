@@ -69,32 +69,36 @@ export default function ProfilePage() {
   const [editData, setEditData] = useState({ name: '', bio: '', hometown: '', currentCity: '' })
 
   useEffect(() => {
-    if (!isAuthLoading && !isAuthenticated) router.push('/login')
-  }, [isAuthenticated, isAuthLoading])
+    if (!isAuthLoading && !isAuthenticated) {
+      router.push('/login')
+    }
+  }, [isAuthenticated, isAuthLoading, router])
 
-  const { data: profileData, isLoading: isProfileLoading, refetch } = useQuery({
+  const { data: profileDataContent, isLoading: isProfileLoading, refetch } = useQuery({
     queryKey: ['profile', 'me'],
     queryFn: () => usersApi.getMe(),
     enabled: isAuthenticated,
   })
 
-  useEffect(() => {
-    if (profileData?.data) {
+  // Sync form data when profile loads - using ref to prevent unnecessary updates
+  const handleEditStart = () => {
+    if (profileDataContent?.data) {
       setEditData({
-        name: profileData.data.name || '',
-        bio: profileData.data.bio || '',
-        hometown: profileData.data.hometown || '',
-        currentCity: profileData.data.currentCity || '',
+        name: profileDataContent.data.name || '',
+        bio: profileDataContent.data.bio || '',
+        hometown: profileDataContent.data.hometown || '',
+        currentCity: profileDataContent.data.currentCity || '',
       })
     }
-  }, [profileData])
+    setIsEditing(true)
+  }
 
   const updateMutation = useMutation({
-    mutationFn: (data: any) => usersApi.updateMe(data),
+    mutationFn: (data: Record<string, unknown>) => usersApi.updateMe(data),
     onSuccess: (res) => {
       toast.success('Profile updated')
       setIsEditing(false)
-      updateUser(res.data)
+      if (res.data) updateUser(res.data)
       refetch()
     },
     onError: () => toast.error('Failed to update profile')
@@ -104,7 +108,7 @@ export default function ProfilePage() {
     mutationFn: (formData: FormData) => usersApi.uploadAvatar(formData),
     onSuccess: (res) => {
       toast.success('Avatar updated')
-      updateUser({ profileImage: res.data.profileImage })
+      if (res.data) updateUser({ profileImage: res.data.profileImage })
       refetch()
     },
     onError: () => toast.error('Failed to upload avatar')
@@ -122,11 +126,11 @@ export default function ProfilePage() {
     return <div className="flex h-[50vh] items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>
   }
 
-  const profile = profileData?.data
+  const profile = profileDataContent?.data
 
   return (
     <div className="max-w-4xl mx-auto space-y-6 pb-20">
-      <div className="relative h-48 md:h-64 rounded-xl overflow-hidden bg-muted group">
+      <div className="relative h-48 md:h-64 rounded-xl overflow-hidden bg-slate-950/95 group border border-white/10 shadow-2xl">
         {profile?.coverImage ? (
           <ImageWithFallback src={profile.coverImage} alt="Cover" className="w-full h-full object-cover" />
         ) : (
@@ -137,7 +141,7 @@ export default function ProfilePage() {
 
       <div className="relative px-4 sm:px-6 -mt-16 sm:-mt-24 mb-8 flex flex-col sm:flex-row gap-4 sm:items-end">
         <div className="relative group self-start">
-          <Avatar className="h-32 w-32 sm:h-40 sm:w-40 border-4 border-background bg-muted">
+          <Avatar className="h-32 w-32 sm:h-40 sm:w-40 border-4 border-white/15 bg-slate-900/90 shadow-xl">
             <AvatarImage src={profile?.profileImage} />
             <AvatarFallback className="text-4xl">{profile?.name?.charAt(0) || '?'}</AvatarFallback>
           </Avatar>
@@ -154,7 +158,7 @@ export default function ProfilePage() {
               <p className="text-muted-foreground">@{profile?.username}</p>
             </div>
             {!isEditing && (
-              <Button onClick={() => setIsEditing(true)} variant="outline">Edit Profile</Button>
+              <Button onClick={handleEditStart} variant="outline">Edit Profile</Button>
             )}
           </div>
         </div>
@@ -162,8 +166,8 @@ export default function ProfilePage() {
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="md:col-span-1 space-y-6">
-          <div className="glass-card p-5">
-            <h3 className="font-semibold mb-4">About</h3>
+          <div className="glass-card p-5 bg-[#111827]/95 border-white/10">
+            <h3 className="font-semibold mb-4 text-white">About</h3>
             {isEditing ? (
               <div className="space-y-4">
                 <div className="space-y-2">
@@ -205,15 +209,15 @@ export default function ProfilePage() {
                     </div>
                   )}
                   <div className="flex items-center gap-2 text-muted-foreground mt-4 pt-4 border-t border-border/50">
-                    <span>Joined {format(new Date(profile?.createdAt || Date.now()), 'MMMM yyyy')}</span>
+                    <span>Joined {format(new Date(profile?.createdAt ? new Date(profile.createdAt as string).getTime() : 0), 'MMMM yyyy')}</span>
                   </div>
                 </div>
               </div>
             )}
           </div>
           
-          <div className="glass-card p-5">
-            <h3 className="font-semibold mb-4">Stats</h3>
+          <div className="glass-card p-5 bg-[#111827]/95 border-white/10">
+            <h3 className="font-semibold mb-4 text-white">Stats</h3>
             <div className="grid grid-cols-2 gap-4">
               <div className="text-center p-3 bg-muted rounded-lg">
                 <div className="text-2xl font-bold">{profile?._count?.posts || 0}</div>

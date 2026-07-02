@@ -29,13 +29,18 @@ const nextConfig: NextConfig = {
       { protocol: 'https', hostname: 'images.unsplash.com' },
       { protocol: 'https', hostname: 'randomuser.me' },
       { protocol: 'https', hostname: 'api.dicebear.com' },
+      { protocol: 'https', hostname: 'picsum.photos' },
     ],
   },
   async rewrites() {
     return [
       // REST API — same-origin, no CORS.
       { source: '/api/:path*', destination: `${BACKEND_ORIGIN}/api/:path*` },
-      // Socket.io realtime channel.
+      // Socket.io realtime channel. The engine.io client always requests the
+      // bare "/socket.io" (no trailing slash) since Next's default
+      // trailingSlash:false strips it before rewrites run, so the pattern
+      // must match both the bare path and any sub-path.
+      { source: '/socket.io', destination: `${BACKEND_ORIGIN}/socket.io/` },
       { source: '/socket.io/:path*', destination: `${BACKEND_ORIGIN}/socket.io/:path*` },
       // User-uploaded static files served by the backend.
       { source: '/uploads/:path*', destination: `${BACKEND_ORIGIN}/uploads/:path*` },

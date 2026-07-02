@@ -31,7 +31,7 @@ export default function TourismDetailPage() {
   }
 
   const place = data.data
-  const images: string[] = Array.isArray(place.images) ? place.images : []
+  const images: string[] = place.image ? [place.image] : []
 
   return (
     <PageWrapper className="max-w-4xl mx-auto space-y-6">

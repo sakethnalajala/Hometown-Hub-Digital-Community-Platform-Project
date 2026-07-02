@@ -306,6 +306,7 @@ export const jobStore = {
       description: String(data.description || ''),
       skills: Array.isArray(data.skills) ? data.skills : (typeof data.skills === 'string' ? data.skills.split(',').map((s: string) => s.trim()).filter(Boolean) : []),
       authorId: userId,
+      author: authorOf(userId),
       createdAt: new Date().toISOString(),
       applicants: 0,
     };

@@ -26,8 +26,9 @@ export default function ForgotPasswordPage() {
       setSent(true)
       if (res.data?.resetUrl) setResetUrl(res.data.resetUrl)
       toast.success(res.message || 'Check your email for reset instructions')
-    } catch (err: any) {
-      toast.error(err.message || 'Failed to send reset email')
+    } catch (err: unknown) {
+      const error = err instanceof Error ? err : new Error('Unknown error')
+      toast.error(error.message || 'Failed to send reset email')
     } finally {
       setLoading(false)
     }

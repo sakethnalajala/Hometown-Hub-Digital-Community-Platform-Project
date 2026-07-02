@@ -16,7 +16,7 @@ export default function AdminDashboardPage() {
     if (!isAuthLoading && (!isAuthenticated || user?.role !== 'ADMIN')) {
       router.push('/')
     }
-  }, [isAuthenticated, user, isAuthLoading])
+  }, [isAuthenticated, user, isAuthLoading, router])
 
   const { data: analyticsData, isLoading } = useQuery({
     queryKey: ['admin', 'analytics'],
@@ -34,7 +34,7 @@ export default function AdminDashboardPage() {
 
   if (user?.role !== 'ADMIN') return null
 
-  const stats = analyticsData?.data?.stats || {}
+  const stats = (analyticsData?.data?.stats ?? {}) as Record<string, number>
 
   return (
     <div className="space-y-6">

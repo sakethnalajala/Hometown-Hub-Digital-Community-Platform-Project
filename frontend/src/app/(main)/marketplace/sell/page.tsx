@@ -52,7 +52,10 @@ export default function SellItemPage() {
       if (res?.data?.id) router.push(`/marketplace/${res.data.id}`)
       else router.push('/marketplace')
     },
-    onError: (err: any) => toast.error(err?.message || 'Failed to list item'),
+    onError: (err: unknown) => {
+      const error = err instanceof Error ? err : new Error('Failed to list item')
+      toast.error(error.message)
+    },
   })
 
   return (

@@ -8,11 +8,12 @@ import { Button } from '@/components/ui/button'
 import { ImageWithFallback } from '@/components/ui/ImageWithFallback'
 import { PageWrapper, PageSection } from '@/components/ui/PageWrapper'
 import { SkeletonCard } from '@/components/ui/SkeletonCard'
-import { Star, MapPin, ShoppingCart, ArrowLeft, MessageSquare, Check } from 'lucide-react'
+import { Star, ShoppingCart, ArrowLeft, MessageSquare, Check } from 'lucide-react'
 import { toast } from 'sonner'
 import Link from 'next/link'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { isValidImageUrl } from '@/lib/images'
+import type { MarketplaceReview } from '@/types'
 
 /** Normalise the `images` field, which may arrive as an array or a JSON string. */
 function parseImages(images: unknown): string[] {
@@ -125,7 +126,7 @@ export default function MarketplaceDetailPage() {
           <div className="glass-card p-6">
             <h2 className="font-semibold text-white mb-4">Reviews</h2>
             <div className="space-y-4">
-              {reviews.map((r: any) => (
+              {reviews.map((r: MarketplaceReview) => (
                 <div key={r.id} className="flex gap-3 border-b border-white/5 pb-4 last:border-0">
                   <Avatar className="h-8 w-8">
                     <AvatarImage src={r.author?.profileImage} />
@@ -134,7 +135,7 @@ export default function MarketplaceDetailPage() {
                   <div>
                     <div className="flex items-center gap-2">
                       <span className="text-sm font-medium">{r.author?.name}</span>
-                      <span className="text-yellow-400 text-xs">{'★'.repeat(r.rating)}</span>
+                      <span className="text-yellow-400 text-xs">{'★'.repeat(r.rating || 0)}</span>
                     </div>
                     <p className="text-sm text-muted-foreground mt-1">{r.content}</p>
                   </div>

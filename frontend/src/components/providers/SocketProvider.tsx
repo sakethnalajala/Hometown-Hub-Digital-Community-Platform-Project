@@ -1,6 +1,6 @@
 'use client'
 
-import { createContext, useContext, useEffect, useState } from 'react'
+import { createContext, useContext, useEffect, useRef, useState } from 'react'
 import { io, Socket } from 'socket.io-client'
 import { useAuthStore } from '@/store/authStore'
 import { useNotificationStore } from '@/store/notificationStore'
@@ -8,17 +8,19 @@ import { useNotificationStore } from '@/store/notificationStore'
 const SocketContext = createContext<Socket | null>(null)
 
 export function SocketProvider({ children }: { children: React.ReactNode }) {
-  const [socket, setSocket] = useState<Socket | null>(null)
   const { isAuthenticated, accessToken } = useAuthStore()
   const { addNotification } = useNotificationStore()
+  const socketRef = useRef<Socket | null>(null)
+  const [socket, setSocket] = useState<Socket | null>(null)
 
   useEffect(() => {
     if (!isAuthenticated || !accessToken) {
-      if (socket) {
-        socket.disconnect()
+      socketRef.current?.disconnect()
+      socketRef.current = null
+      const timeoutId = window.setTimeout(() => {
         setSocket(null)
-      }
-      return
+      }, 0)
+      return () => window.clearTimeout(timeoutId)
     }
 
     // Single-origin: connect to the same domain that served the app. The
@@ -33,7 +35,11 @@ export function SocketProvider({ children }: { children: React.ReactNode }) {
         : process.env.NEXT_PUBLIC_SOCKET_URL || 'https://hometown-hub-backend-un1i.onrender.com'
 
     const newSocket = io(socketUrl, {
-      path: '/socket.io',
+      // Must match the server's engine.io path exactly, including the
+      // trailing slash (server default is '/socket.io/'); a mismatch here
+      // makes every handshake request fall through Express's catch-all
+      // 404 handler instead of reaching socket.io's own listener.
+      path: '/socket.io/',
       auth: { token: accessToken },
       transports: ['polling', 'websocket'],
       reconnection: true,
@@ -47,7 +53,6 @@ export function SocketProvider({ children }: { children: React.ReactNode }) {
 
     newSocket.on('notification:new', (notification) => {
       addNotification(notification)
-      // Browser notification
       if (Notification.permission === 'granted') {
         new Notification(notification.title, {
           body: notification.body,
@@ -60,12 +65,20 @@ export function SocketProvider({ children }: { children: React.ReactNode }) {
       console.log('❌ Socket disconnected')
     })
 
-    setSocket(newSocket)
+    socketRef.current?.disconnect()
+    socketRef.current = newSocket
+    const timeoutId = window.setTimeout(() => {
+      setSocket(newSocket)
+    }, 0)
 
     return () => {
+      window.clearTimeout(timeoutId)
       newSocket.disconnect()
+      if (socketRef.current === newSocket) {
+        socketRef.current = null
+      }
     }
-  }, [isAuthenticated, accessToken])
+  }, [accessToken, addNotification, isAuthenticated])
 
   return (
     <SocketContext.Provider value={socket}>

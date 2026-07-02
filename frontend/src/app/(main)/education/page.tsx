@@ -8,7 +8,6 @@ import {
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { ImageWithFallback } from '@/components/ui/ImageWithFallback'
-import { toast } from 'sonner'
 import { PortalBackground } from '@/components/ui/PortalBackground'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { triggerAppNotification, openExternalLink } from '@/lib/appHelpers'

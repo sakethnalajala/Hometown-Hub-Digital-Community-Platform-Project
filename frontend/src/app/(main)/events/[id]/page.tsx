@@ -7,11 +7,17 @@ import { Button } from '@/components/ui/button'
 import { ImageWithFallback } from '@/components/ui/ImageWithFallback'
 import { PageWrapper, PageSection } from '@/components/ui/PageWrapper'
 import { SkeletonCard } from '@/components/ui/SkeletonCard'
-import { Calendar, MapPin, Users, Clock, Loader2, ArrowLeft } from 'lucide-react'
+import { Calendar, MapPin, Users, Loader2, ArrowLeft } from 'lucide-react'
 import { format } from 'date-fns'
 import { toast } from 'sonner'
 import Link from 'next/link'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+
+interface EventParticipant {
+  id: string
+  profileImage?: string
+  name?: string
+}
 
 export default function EventDetailPage() {
   const params = useParams()
@@ -88,7 +94,7 @@ export default function EventDetailPage() {
             <div className="glass-card p-6">
               <h2 className="font-semibold text-white mb-4">Attendees ({participants.length || event._count?.participants || 0})</h2>
               <div className="flex flex-wrap gap-3">
-                {participants.slice(0, 8).map((p: any) => (
+                {participants.slice(0, 8).map((p: EventParticipant) => (
                   <div key={p.id} className="flex items-center gap-2 bg-white/5 rounded-full pl-1 pr-3 py-1">
                     <Avatar className="h-7 w-7">
                       <AvatarImage src={p.profileImage} />

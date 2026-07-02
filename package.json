@@ -10,6 +10,8 @@
     "setup": "npm install && npm run db:generate",
     "dev:backend": "npm run dev --workspace=backend",
     "dev:frontend": "npm run dev --workspace=frontend",
+    "build": "npm --workspace=frontend run build",
+    "vercel-build": "npm --workspace=frontend run build",
     "db:push": "npm run db:push --workspace=backend",
     "db:studio": "npm run db:studio --workspace=backend",
     "db:seed": "npm run db:seed --workspace=backend",

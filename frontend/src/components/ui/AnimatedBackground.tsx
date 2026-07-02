@@ -4,23 +4,30 @@ import { motion } from 'framer-motion'
 import { useEffect, useState } from 'react'
 
 export function AnimatedBackground() {
-  const [mounted, setMounted] = useState(false)
+  // Generated client-side only (post-mount) so the server-rendered markup
+  // (no particles) matches the initial client render, avoiding a hydration
+  // mismatch — Math.random() would otherwise differ between SSR and client.
+  const [particles, setParticles] = useState<Array<{
+    id: number
+    x: number
+    y: number
+    size: number
+    duration: number
+    delay: number
+  }>>([])
 
   useEffect(() => {
-    setMounted(true)
+    setParticles(
+      Array.from({ length: 30 }).map((_, i) => ({
+        id: i,
+        x: Math.random() * 100,
+        y: Math.random() * 100,
+        size: Math.random() * 4 + 1,
+        duration: Math.random() * 20 + 10,
+        delay: Math.random() * 5,
+      }))
+    )
   }, [])
-
-  if (!mounted) return null
-
-  // Generate random particles
-  const particles = Array.from({ length: 30 }).map((_, i) => ({
-    id: i,
-    x: Math.random() * 100,
-    y: Math.random() * 100,
-    size: Math.random() * 4 + 1,
-    duration: Math.random() * 20 + 10,
-    delay: Math.random() * 5,
-  }))
 
   return (
     <div className="absolute inset-0 overflow-hidden bg-[hsl(var(--bg-base))]">

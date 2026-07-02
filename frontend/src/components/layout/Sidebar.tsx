@@ -1,12 +1,12 @@
 'use client'
 
-import { useState } from 'react'
+import React from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { 
   Home, Users, Calendar, Newspaper, ShoppingBag, Briefcase, 
   Landmark, Map, GraduationCap, HeartPulse, Bell, 
-  User as UserIcon, Menu, X, LogOut, Settings, LayoutDashboard 
+  User as UserIcon, X, LogOut, Settings, LayoutDashboard 
 } from 'lucide-react'
 import { useAuthStore } from '@/store/authStore'
 import { useNotificationStore } from '@/store/notificationStore'

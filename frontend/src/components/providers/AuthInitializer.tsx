@@ -8,32 +8,35 @@ export function AuthInitializer({ children }: { children: React.ReactNode }) {
   const { login, logout, setLoading } = useAuthStore()
 
   useEffect(() => {
+    const currentLogin = login
+    const currentLogout = logout
+    const currentSetLoading = setLoading
     const initAuth = async () => {
       const accessToken = localStorage.getItem('accessToken')
       const refreshToken = localStorage.getItem('refreshToken')
 
       if (!accessToken || !refreshToken) {
-        setLoading(false)
+        currentSetLoading(false)
         return
       }
 
       try {
         const response = await authApi.me()
-        const user = response.data?.user ?? response.data
+        const user = response.data && 'user' in response.data ? response.data.user : response.data
         if (user?.id && user?.email) {
-          login(user, accessToken, refreshToken)
+          currentLogin(user, accessToken, refreshToken)
         } else {
-          logout()
+          currentLogout()
         }
       } catch {
-        logout()
+        currentLogout()
       } finally {
-        setLoading(false)
+        currentSetLoading(false)
       }
     }
 
     initAuth()
-  }, [])
+  }, [login, logout, setLoading])
 
   return <>{children}</>
 }

@@ -6,16 +6,14 @@ import { QueryClient } from '@tanstack/react-query'
 interface OptimisticUpdateOptions<T> {
   queryKey: string[]
   updater: (old: T) => T
-  rollback?: (old: T) => T
 }
 
 export function setupOptimisticUpdate<T>({
   queryKey,
   updater,
-  rollback,
 }: OptimisticUpdateOptions<T>) {
   return {
-    onMutate: async (variables: any) => {
+    onMutate: async () => {
       // Cancel outgoing refetches
       await queryClient.cancelQueries({ queryKey })
 
@@ -30,8 +28,9 @@ export function setupOptimisticUpdate<T>({
       return { previousData }
     },
 
-    onError: (err: any, variables: any, context: any) => {
+    onError: (err: Error, _context?: unknown) => {
       // Rollback on error
+      const context = _context as { previousData?: T } | undefined
       if (context?.previousData) {
         queryClient.setQueryData(queryKey, context.previousData)
       }

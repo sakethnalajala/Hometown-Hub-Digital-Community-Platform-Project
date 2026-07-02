@@ -90,6 +90,7 @@ export interface Community {
   categoryId?: string;
   category?: Category;
   createdBy?: Pick<User, 'id' | 'name' | 'username' | 'profileImage'>;
+  moderators?: Array<Pick<User, 'id' | 'name' | 'username' | 'profileImage'>>;
   createdAt: string;
   _count?: { members: number; posts: number; events: number };
 }
@@ -154,6 +155,8 @@ export interface Event {
   description: string;
   location: string;
   address?: string;
+  category?: string;
+  time?: string;
   date: string;
   endDate?: string;
   bannerImage?: string;
@@ -203,7 +206,7 @@ export interface Notification {
 // API RESPONSE
 // ============================================================
 
-export interface ApiResponse<T = any> {
+export interface ApiResponse<T = Record<string, unknown>> {
   success: boolean;
   message?: string;
   data?: T;
@@ -217,6 +220,186 @@ export interface PaginatedResponse<T> extends ApiResponse<T[]> {
     total: number;
     totalPages: number;
   };
+}
+
+// ============================================================
+// NEW FEATURE RESOURCES (demo-mode view models — every field optional
+// so that hardcoded SAMPLE_* arrays and API payloads are both assignable)
+// ============================================================
+
+export interface Job {
+  id?: string;
+  title?: string;
+  company?: string;
+  companyLogo?: string;
+  location?: string;
+  type?: string;
+  salary?: string;
+  description?: string;
+  category?: string;
+  website?: string;
+  createdAt?: string;
+  applicants?: number;
+  requirements?: string[] | string;
+  experience?: string;
+  skills?: string[] | string;
+  contactEmail?: string;
+  author?: { id?: string; name?: string; profileImage?: string };
+}
+
+export interface NewsArticle {
+  id?: string;
+  title?: string;
+  category?: string;
+  description?: string;
+  summary?: string;
+  content?: string;
+  image?: string;
+  imageUrl?: string;
+  author?: { name?: string } | string;
+  source?: string;
+  url?: string;
+  views?: number;
+  likeCount?: number;
+  likes?: number;
+  commentCount?: number;
+  isFeatured?: boolean;
+  trending?: boolean;
+  createdAt?: string;
+  publishedAt?: string;
+  readTime?: string;
+  tags?: string[];
+}
+
+export interface MarketplaceSeller {
+  name?: string;
+  profileImage?: string;
+}
+
+export interface MarketplaceReview {
+  id?: string;
+  user?: { name?: string } | string;
+  author?: { name?: string; profileImage?: string };
+  name?: string;
+  rating?: number;
+  comment?: string;
+  content?: string;
+  createdAt?: string;
+}
+
+export interface MarketplaceItem {
+  id?: string;
+  name?: string;
+  title?: string;
+  description?: string;
+  price?: number | string;
+  seller?: MarketplaceSeller;
+  location?: string;
+  rating?: number;
+  category?: string;
+  stock?: number;
+  image?: string;
+  images?: string[] | string;
+  website?: string;
+  condition?: string;
+  reviews?: MarketplaceReview[];
+  createdAt?: string;
+}
+
+export interface TourismSpot {
+  id?: string;
+  name?: string;
+  type?: string;
+  description?: string;
+  image?: string;
+  rating?: number;
+  location?: string;
+  distance?: string;
+  bestTime?: string;
+  entryFee?: string;
+  createdAt?: string;
+}
+
+export interface GovScheme {
+  id?: string;
+  name?: string;
+  title?: string;
+  description?: string;
+  category?: string;
+  eligibility?: string;
+  benefits?: string;
+  website?: string;
+  createdAt?: string;
+}
+
+export interface Course {
+  id?: string;
+  name?: string;
+  title?: string;
+  provider?: string;
+  institution?: string;
+  description?: string;
+  duration?: string;
+  level?: string;
+  category?: string;
+  image?: string;
+  rating?: number;
+  price?: number | string;
+  website?: string;
+  createdAt?: string;
+}
+
+export interface Scholarship {
+  id?: string;
+  name?: string;
+  title?: string;
+  provider?: string;
+  description?: string;
+  amount?: string;
+  eligibility?: string;
+  deadline?: string;
+  category?: string;
+  website?: string;
+  createdAt?: string;
+}
+
+export interface Hospital {
+  id?: string;
+  name?: string;
+  type?: string;
+  image?: string;
+  rating?: number;
+  specialities?: string[];
+  distance?: string;
+  address?: string;
+  beds?: number;
+  phone?: string;
+  emergency?: boolean;
+  createdAt?: string;
+}
+
+export interface HealthScheme {
+  id?: string;
+  name?: string;
+  description?: string;
+  color?: string;
+  border?: string;
+}
+
+export interface DashboardAnalytics {
+  stats?: {
+    activeUsers?: number;
+    totalCommunities?: number;
+    totalJobs?: number;
+    totalEvents?: number;
+  };
+  trendingCommunities?: Community[];
+  trendingNews?: NewsArticle[];
+  trendingJobs?: Job[];
+}
+
+export interface BookmarkToggleResult {
+  saved?: boolean;
 }
 
 // ============================================================

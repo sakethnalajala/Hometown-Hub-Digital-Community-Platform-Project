@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { eventsApi } from '@/lib/api'
 import { Button } from '@/components/ui/button'
-import { Loader2, Calendar, MapPin, Users, Plus, Clock, Ticket, Sparkles } from 'lucide-react'
+import { Loader2, Calendar, MapPin, Users, Plus, Ticket, Sparkles } from 'lucide-react'
 import { format } from 'date-fns'
 import Link from 'next/link'
 import { ImageWithFallback } from '@/components/ui/ImageWithFallback'
@@ -27,7 +27,15 @@ export default function EventsPage() {
   const queryClient = useQueryClient()
   const [selectedEvent, setSelectedEvent] = useState<any | null>(null)
   const [registrationOpen, setRegistrationOpen] = useState(false)
-  const [registeredEventIds, setRegisteredEventIds] = useState<string[]>([])
+  const [registeredEventIds, setRegisteredEventIds] = useState<string[]>(() => {
+    if (typeof window === 'undefined') return []
+    try {
+      const stored = window.localStorage.getItem('registeredEventIds')
+      return stored ? JSON.parse(stored) : []
+    } catch {
+      return []
+    }
+  })
 
   const { data, isLoading } = useQuery({
     queryKey: ['events'],
@@ -35,12 +43,6 @@ export default function EventsPage() {
   })
 
   const events = data?.data || []
-
-  const loadRegisteredEvents = () => {
-    if (typeof window === 'undefined') return
-    const stored = window.localStorage.getItem('registeredEventIds')
-    if (stored) setRegisteredEventIds(JSON.parse(stored))
-  }
 
   const saveRegisteredEvent = (eventId: string) => {
     setRegisteredEventIds((current) => {
@@ -57,7 +59,7 @@ export default function EventsPage() {
     setRegistrationOpen(true)
   }
 
-  const handleRegistrationSubmit = async (payload: any) => {
+  const handleRegistrationSubmit = async () => {
     if (!selectedEvent) return
     try {
       await eventsApi.rsvp(selectedEvent.id, 'GOING')
@@ -70,8 +72,8 @@ export default function EventsPage() {
   }
 
   useEffect(() => {
-    loadRegisteredEvents()
-  }, [])
+    if (selectedEvent && registrationOpen) return
+  }, [selectedEvent, registrationOpen])
 
   return (
     <PortalBackground portal="events">

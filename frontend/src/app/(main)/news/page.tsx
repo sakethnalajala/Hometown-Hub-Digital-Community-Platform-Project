@@ -3,9 +3,9 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
-import { Newspaper, Search, Bookmark, Share2, Clock, Eye, TrendingUp, Tag, Loader2, Sparkles, Zap } from 'lucide-react'
+import { Newspaper, Search, Clock, Eye, TrendingUp, Loader2, Zap } from 'lucide-react'
 import { Input } from '@/components/ui/input'
-import { newsApi, bookmarksApi } from '@/lib/api'
+import { newsApi } from '@/lib/api'
 import { ImageWithFallback } from '@/components/ui/ImageWithFallback'
 import { toast } from 'sonner'
 import { PortalBackground } from '@/components/ui/PortalBackground'
@@ -21,7 +21,6 @@ const itemVariants = { hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0, 
 export default function NewsPage() {
   const [search, setSearch] = useState('')
   const [activeCategory, setActiveCategory] = useState('All')
-  const [saved, setSaved] = useState<string[]>([])
   const [news, setNews] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
 

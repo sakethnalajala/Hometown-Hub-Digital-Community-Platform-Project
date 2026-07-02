@@ -11,7 +11,7 @@ import { PortalBackground } from '@/components/ui/PortalBackground'
 
 export default function NotificationsPage() {
   const { notifications: storeNotifications, setNotifications, markAllRead: storeMarkAllRead, removeNotification, clearAll } = useNotificationStore()
-  const [hydrated, setHydrated] = useState(false)
+  const [hydrated] = useState(true)
 
   const { data, isLoading, isError } = useQuery({
     queryKey: ['notifications'],
@@ -25,20 +25,19 @@ export default function NotificationsPage() {
       try {
         const parsed = JSON.parse(stored)
         if (Array.isArray(parsed) && parsed.length) {
-          const unread = parsed.filter((n: any) => !n.isRead).length
+          const unread = parsed.filter((n: Record<string, unknown>) => !n.isRead).length
           setNotifications(parsed, unread)
         }
       } catch {
         // Ignore malformed stored notifications
       }
     }
-    setHydrated(true)
   }, [setNotifications])
 
   useEffect(() => {
     if (!hydrated) return
     if (data?.data && !storeNotifications.length) {
-      const unread = (data.data as any[]).filter((item) => !item.isRead).length
+      const unread = data.data.filter((item) => !item.isRead).length
       setNotifications(data.data, unread)
     }
   }, [data, hydrated, setNotifications, storeNotifications.length])

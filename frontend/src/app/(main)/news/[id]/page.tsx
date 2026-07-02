@@ -9,18 +9,19 @@ import { newsApi, bookmarksApi } from '@/lib/api'
 import { ImageWithFallback } from '@/components/ui/ImageWithFallback'
 import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
+import type { NewsArticle } from '@/types'
 
 export default function NewsDetailPage() {
   const { id } = useParams<{ id: string }>()
   const router = useRouter()
-  const [article, setArticle] = useState<any>(null)
+  const [article, setArticle] = useState<NewsArticle | null>(null)
   const [loading, setLoading] = useState(true)
   const [saved, setSaved] = useState(false)
 
   useEffect(() => {
     if (!id) return
     newsApi.getById(id)
-      .then(res => setArticle(res.data))
+      .then(res => setArticle(res.data ?? null))
       .catch(() => {
         toast.error('Article not found')
         router.push('/news')
@@ -29,6 +30,7 @@ export default function NewsDetailPage() {
   }, [id, router])
 
   const handleShare = async () => {
+    if (!article?.title) return
     try {
       await newsApi.share(id)
       if (navigator.share) {
@@ -56,7 +58,7 @@ export default function NewsDetailPage() {
   const handleLike = async () => {
     try {
       const res = await newsApi.like(id)
-      setArticle((a: any) => ({ ...a, likes: res.data?.likes ?? (a.likes + 1) }))
+      setArticle((current) => current ? ({ ...current, likes: res.data?.likes ?? ((current.likes ?? 0) + 1) }) : current)
       toast.success('Liked!')
     } catch {
       toast.error('Could not like article')
@@ -80,7 +82,7 @@ export default function NewsDetailPage() {
       </Link>
 
       <div className="relative overflow-hidden rounded-2xl border border-white/10">
-        <ImageWithFallback src={article.image} alt={article.title} className="w-full h-72 object-cover" />
+        <ImageWithFallback src={article.image} alt={article.title || 'Article image'} className="w-full h-72 object-cover" />
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
         <div className="absolute bottom-0 left-0 right-0 p-6">
           <span className="text-xs font-semibold px-3 py-1 rounded-full bg-orange-500/90 text-white">{article.category}</span>
@@ -90,8 +92,8 @@ export default function NewsDetailPage() {
 
       <div className="flex items-center justify-between flex-wrap gap-4 text-sm text-gray-400">
         <div className="flex items-center gap-4">
-          <span>{article.author?.name || 'Hometown Hub'}</span>
-          <span className="flex items-center gap-1"><Clock className="w-3.5 h-3.5" /> {new Date(article.createdAt).toLocaleDateString()}</span>
+          <span>{(typeof article.author === 'string' ? article.author : article.author?.name) || 'Hometown Hub'}</span>
+          <span className="flex items-center gap-1"><Clock className="w-3.5 h-3.5" /> {new Date(String(article.createdAt || Date.now())).toLocaleDateString()}</span>
           <span className="flex items-center gap-1"><Eye className="w-3.5 h-3.5" /> {(article.views || 0).toLocaleString()}</span>
         </div>
         <div className="flex gap-2">
@@ -129,7 +131,7 @@ export default function NewsDetailPage() {
         </div>
         
         {/* Placeholder for actual comments from backend */}
-        {article.commentCount > 0 && (
+        {(article.commentCount || 0) > 0 && (
           <div className="space-y-4">
             <div className="p-4 rounded-xl bg-white/5 border border-white/5">
               <div className="flex items-center gap-3 mb-2">

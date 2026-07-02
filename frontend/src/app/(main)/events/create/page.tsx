@@ -41,9 +41,12 @@ export default function CreateEventPage() {
     },
     onSuccess: (res) => {
       toast.success('Event created!')
-      router.push(`/events/${res.data.id}`)
+      if (res.data) router.push(`/events/${res.data.id}`)
     },
-    onError: (err: any) => toast.error(err.data?.message || err.message || 'Failed to create event'),
+    onError: (err: unknown) => {
+      const error = err instanceof Error ? err : new Error('Failed to create event')
+      toast.error(error.message)
+    },
   })
 
   return (

@@ -32,7 +32,10 @@ export default function CreateJobPage() {
       toast.success('Job posted successfully!')
       router.push('/jobs')
     },
-    onError: (err: any) => toast.error(err.message || 'Failed to post job'),
+    onError: (err: unknown) => {
+      const error = err instanceof Error ? err : new Error('Failed to post job')
+      toast.error(error.message)
+    },
   })
 
   return (

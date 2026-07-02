@@ -14,6 +14,27 @@ import { toast } from 'sonner'
 import { formatDistanceToNow } from 'date-fns'
 import { useState } from 'react'
 
+interface CommunityPost {
+  id: string
+  content: string
+  createdAt: string
+  images?: string[]
+  likeCount: number
+  commentCount: number
+  author?: {
+    profileImage?: string
+    name?: string
+    username?: string
+  }
+}
+
+interface CommunityModerator {
+  id: string
+  profileImage?: string
+  name?: string
+  username?: string
+}
+
 export default function CommunityDetailPage() {
   const params = useParams()
   const slug = params.slug as string
@@ -136,7 +157,9 @@ export default function CommunityDetailPage() {
               <div className="glass-card p-8 text-center text-muted-foreground">No posts yet. Be the first to share!</div>
             ) : (
               <div className="space-y-4">
-                {posts.map((post: any) => (
+                {posts.map((post: CommunityPost) => {
+                  const postImages = Array.isArray(post.images) ? post.images : []
+                  return (
                   <div key={post.id} className="glass-card p-5 hover:border-purple-500/20 transition-all">
                     <div className="flex items-start gap-3 mb-3">
                       <Avatar className="h-10 w-10">
@@ -151,8 +174,8 @@ export default function CommunityDetailPage() {
                       </div>
                     </div>
                     <p className="text-white/90 mb-4">{post.content}</p>
-                    {post.images?.length > 0 && (
-                      <ImageWithFallback src={post.images[0]} alt="" className="w-full h-48 rounded-xl mb-4" />
+                    {postImages.length > 0 && (
+                      <ImageWithFallback src={postImages[0]} alt="" className="w-full h-48 rounded-xl mb-4" />
                     )}
                     <div className="flex items-center gap-4 pt-3 border-t border-white/5">
                       <Button variant="ghost" size="sm" className="gap-2 text-muted-foreground hover:text-primary" onClick={() => likeMutation.mutate(post.id)}>
@@ -163,7 +186,8 @@ export default function CommunityDetailPage() {
                       </Button>
                     </div>
                   </div>
-                ))}
+                  )
+                })}
               </div>
             )}
           </PageSection>
@@ -200,7 +224,7 @@ export default function CommunityDetailPage() {
                   <Shield className="w-4 h-4 text-purple-400" /> Moderators
                 </h3>
                 <div className="space-y-3">
-                  {community.moderators.map((mod: any) => (
+                  {community.moderators.map((mod: CommunityModerator) => (
                     <div key={mod.id} className="flex items-center gap-3">
                       <Avatar className="h-8 w-8">
                         <AvatarImage src={mod.profileImage} />

@@ -1,4 +1,21 @@
-import { ApiResponse, PaginatedResponse } from '@/types'
+import {
+  ApiResponse, AuthUser, User, Community, Post, Comment, Event, Notification, Category,
+  Job, NewsArticle, MarketplaceItem, TourismSpot, GovScheme, Course, Scholarship,
+  Hospital, HealthScheme, DashboardAnalytics, BookmarkToggleResult,
+} from '@/types'
+
+// Auth endpoints return the signed-in user plus a token pair.
+type AuthPayload = ApiResponse<{ user: AuthUser; accessToken: string; refreshToken: string }>
+
+// Event participant rows as returned by the participants endpoint (flat shape).
+interface EventParticipantView {
+  id: string
+  userId?: string
+  status?: string
+  profileImage?: string
+  name?: string
+  hometown?: string
+}
 
 // Single-origin architecture.
 // The browser ALWAYS talks to the same domain that served the app. Every
@@ -35,9 +52,12 @@ class ApiClient {
   }
 
   private async handleResponse<T>(response: Response): Promise<T> {
-    const data = await response.json()
+    const data = await response.json() as T
     if (!response.ok) {
-      const error = new Error(data.message || 'Request failed') as any
+      const message = typeof data === 'object' && data !== null && 'message' in data
+        ? String((data as { message?: unknown }).message)
+        : 'Request failed'
+      const error = new Error(message) as Error & { status?: number; data?: unknown }
       error.status = response.status
       error.data = data
       throw error
@@ -45,7 +65,7 @@ class ApiClient {
     return data
   }
 
-  async get<T>(path: string, params?: Record<string, any>): Promise<T> {
+  async get<T>(path: string, params?: Record<string, string | number | boolean>): Promise<T> {
     // BASE_URL is relative (`/api`) in the browser, so anchor it to the current
     // origin for URL parsing; it is absolute (http...) during SSR.
     const href = BASE_URL.startsWith('http')
@@ -64,7 +84,7 @@ class ApiClient {
     return this.handleResponse<T>(response)
   }
 
-  async post<T>(path: string, body?: any): Promise<T> {
+  async post<T>(path: string, body?: Record<string, unknown> | null): Promise<T> {
     const response = await fetch(`${BASE_URL}${path}`, {
       method: 'POST',
       headers: this.getHeaders(),
@@ -87,7 +107,7 @@ class ApiClient {
     return this.handleResponse<T>(response)
   }
 
-  async put<T>(path: string, body?: any): Promise<T> {
+  async put<T>(path: string, body?: Record<string, unknown> | null): Promise<T> {
     const response = await fetch(`${BASE_URL}${path}`, {
       method: 'PUT',
       headers: this.getHeaders(),
@@ -133,188 +153,208 @@ export const api = new ApiClient()
 // ============================================================
 export const authApi = {
   login: (data: { email: string; password: string }) =>
-    api.post<ApiResponse<{ user: any; accessToken: string; refreshToken: string }>>('/auth/login', data),
+    api.post<AuthPayload>('/auth/login', data),
   loginFirebase: (data: { idToken: string; name?: string; username?: string; hometown?: string }) =>
-    api.post<ApiResponse<{ user: any; accessToken: string; refreshToken: string }>>('/auth/firebase', data),
-  register: (data: { idToken?: string; [key: string]: any }) =>
-    api.post<ApiResponse<{ user: any; accessToken: string; refreshToken: string }>>('/auth/register', data),
-  logout: (refreshToken: string) => api.post('/auth/logout', { refreshToken }),
-  forgotPassword: (email: string) => api.post('/auth/forgot-password', { email }),
+    api.post<AuthPayload>('/auth/firebase', data),
+  register: (data: Record<string, unknown>) =>
+    api.post<AuthPayload>('/auth/register', data),
+  logout: (refreshToken: string) => api.post<ApiResponse<null>>('/auth/logout', { refreshToken }),
+  forgotPassword: (email: string) =>
+    api.post<ApiResponse<{ resetUrl?: string }>>('/auth/forgot-password', { email }),
   resetPassword: (token: string, password: string) =>
-    api.post('/auth/reset-password', { token, password }),
+    api.post<ApiResponse<null>>('/auth/reset-password', { token, password }),
   changePassword: (currentPassword: string, newPassword: string) =>
-    api.post('/auth/change-password', { currentPassword, newPassword }),
-  me: () => api.get<ApiResponse<any>>('/auth/me'),
+    api.post<ApiResponse<null>>('/auth/change-password', { currentPassword, newPassword }),
+  me: () => api.get<ApiResponse<{ user: User } | User>>('/auth/me'),
 }
 
 // ============================================================
 // USERS API
 // ============================================================
 export const usersApi = {
-  getMe: () => api.get<ApiResponse<any>>('/users/me'),
-  updateMe: (data: any) => api.put<ApiResponse<any>>('/users/me', data),
-  uploadAvatar: (formData: FormData) => api.postForm<ApiResponse<any>>('/users/me/avatar', formData),
-  uploadCover: (formData: FormData) => api.postForm<ApiResponse<any>>('/users/me/cover', formData),
-  getById: (id: string) => api.get<ApiResponse<any>>(`/users/${id}`),
-  getPosts: (id: string, params?: any) => api.get<PaginatedResponse<any>>(`/users/${id}/posts`, params),
-  getCommunities: (id: string) => api.get<ApiResponse<any[]>>(`/users/${id}/communities`),
-  search: (q: string) => api.get<ApiResponse<any[]>>('/users/search/users', { q }),
+  getMe: () => api.get<ApiResponse<User>>('/users/me'),
+  updateMe: (data: Record<string, unknown>) => api.put<ApiResponse<User>>('/users/me', data),
+  uploadAvatar: (formData: FormData) => api.postForm<ApiResponse<User>>('/users/me/avatar', formData),
+  uploadCover: (formData: FormData) => api.postForm<ApiResponse<User>>('/users/me/cover', formData),
+  getById: (id: string) => api.get<ApiResponse<User>>(`/users/${id}`),
+  getPosts: (id: string, params?: Record<string, string | number | boolean>) =>
+    api.get<ApiResponse<Post[]>>(`/users/${id}/posts`, params),
+  getCommunities: (id: string) => api.get<ApiResponse<Community[]>>(`/users/${id}/communities`),
+  search: (q: string) => api.get<ApiResponse<User[]>>('/users/search/users', { q }),
 }
 
 // ============================================================
 // COMMUNITIES API
 // ============================================================
 export const communitiesApi = {
-  getAll: (params?: any) => api.get<PaginatedResponse<any>>('/communities', params),
-  create: (data: any) => api.post<ApiResponse<any>>('/communities', data),
-  getBySlug: (slug: string) => api.get<ApiResponse<any>>(`/communities/${slug}`),
-  update: (id: string, data: any) => api.put<ApiResponse<any>>(`/communities/${id}`, data),
-  deleteCommunity: (id: string) => api.delete<ApiResponse<any>>(`/communities/${id}`),
+  getAll: (params?: Record<string, string | number | boolean>) =>
+    api.get<ApiResponse<Community[]>>('/communities', params),
+  create: (data: Record<string, unknown>) => api.post<ApiResponse<Community>>('/communities', data),
+  getBySlug: (slug: string) => api.get<ApiResponse<Community>>(`/communities/${slug}`),
+  update: (id: string, data: Record<string, unknown>) =>
+    api.put<ApiResponse<Community>>(`/communities/${id}`, data),
+  deleteCommunity: (id: string) => api.delete<ApiResponse<null>>(`/communities/${id}`),
   uploadBanner: (id: string, formData: FormData) =>
-    api.postForm<ApiResponse<any>>(`/communities/${id}/banner`, formData),
-  join: (id: string) => api.post<ApiResponse<any>>(`/communities/${id}/join`),
-  leave: (id: string) => api.delete<ApiResponse<any>>(`/communities/${id}/leave`),
-  getMembers: (id: string, params?: any) =>
-    api.get<ApiResponse<any[]>>(`/communities/${id}/members`, params),
-  getPosts: (id: string, params?: any) =>
-    api.get<PaginatedResponse<any>>(`/communities/${id}/posts`, params),
+    api.postForm<ApiResponse<Community>>(`/communities/${id}/banner`, formData),
+  join: (id: string) => api.post<ApiResponse<null>>(`/communities/${id}/join`),
+  leave: (id: string) => api.delete<ApiResponse<null>>(`/communities/${id}/leave`),
+  getMembers: (id: string, params?: Record<string, string | number | boolean>) =>
+    api.get<ApiResponse<User[]>>(`/communities/${id}/members`, params),
+  getPosts: (id: string, params?: Record<string, string | number | boolean>) =>
+    api.get<ApiResponse<Post[]>>(`/communities/${id}/posts`, params),
   updateMemberRole: (id: string, userId: string, role: string) =>
-    api.put(`/communities/${id}/members/${userId}/role`, { role }),
+    api.put<ApiResponse<null>>(`/communities/${id}/members/${userId}/role`, { role }),
   removeMember: (id: string, userId: string) =>
-    api.delete(`/communities/${id}/members/${userId}`),
+    api.delete<ApiResponse<null>>(`/communities/${id}/members/${userId}`),
 }
 
 // ============================================================
 // POSTS API
 // ============================================================
 export const postsApi = {
-  getFeed: (params?: any) => api.get<PaginatedResponse<any>>('/posts', params),
-  create: (formData: FormData) => api.postForm<ApiResponse<any>>('/posts', formData),
-  getById: (id: string) => api.get<ApiResponse<any>>(`/posts/${id}`),
-  update: (id: string, content: string) => api.put<ApiResponse<any>>(`/posts/${id}`, { content }),
-  delete: (id: string) => api.delete<ApiResponse<any>>(`/posts/${id}`),
-  like: (id: string) => api.post<ApiResponse<any>>(`/posts/${id}/like`),
-  getComments: (id: string, params?: any) =>
-    api.get<ApiResponse<any[]>>(`/posts/${id}/comments`, params),
+  getFeed: (params?: Record<string, string | number | boolean>) =>
+    api.get<ApiResponse<Post[]>>('/posts', params),
+  create: (formData: FormData) => api.postForm<ApiResponse<Post>>('/posts', formData),
+  getById: (id: string) => api.get<ApiResponse<Post>>(`/posts/${id}`),
+  update: (id: string, content: string) => api.put<ApiResponse<Post>>(`/posts/${id}`, { content }),
+  delete: (id: string) => api.delete<ApiResponse<null>>(`/posts/${id}`),
+  like: (id: string) => api.post<ApiResponse<{ liked?: boolean; likeCount?: number }>>(`/posts/${id}/like`),
+  getComments: (id: string, params?: Record<string, string | number | boolean>) =>
+    api.get<ApiResponse<Comment[]>>(`/posts/${id}/comments`, params),
   addComment: (id: string, data: { content: string; parentId?: string }) =>
-    api.post<ApiResponse<any>>(`/posts/${id}/comments`, data),
-  pin: (id: string) => api.post<ApiResponse<any>>(`/posts/${id}/pin`),
-  share: (id: string) => api.post<ApiResponse<any>>(`/posts/${id}/share`),
+    api.post<ApiResponse<Comment>>(`/posts/${id}/comments`, data),
+  pin: (id: string) => api.post<ApiResponse<Post>>(`/posts/${id}/pin`),
+  share: (id: string) => api.post<ApiResponse<{ shareCount?: number }>>(`/posts/${id}/share`),
 }
 
 // ============================================================
 // COMMENTS API
 // ============================================================
 export const commentsApi = {
-  update: (id: string, content: string) => api.put<ApiResponse<any>>(`/comments/${id}`, { content }),
-  delete: (id: string) => api.delete<ApiResponse<any>>(`/comments/${id}`),
-  like: (id: string) => api.post<ApiResponse<any>>(`/comments/${id}/like`),
-  getReplies: (id: string, params?: any) =>
-    api.get<ApiResponse<any[]>>(`/comments/${id}/replies`, params),
+  update: (id: string, content: string) => api.put<ApiResponse<Comment>>(`/comments/${id}`, { content }),
+  delete: (id: string) => api.delete<ApiResponse<null>>(`/comments/${id}`),
+  like: (id: string) => api.post<ApiResponse<{ liked?: boolean; likeCount?: number }>>(`/comments/${id}/like`),
+  getReplies: (id: string, params?: Record<string, string | number | boolean>) =>
+    api.get<ApiResponse<Comment[]>>(`/comments/${id}/replies`, params),
 }
 
 // ============================================================
 // EVENTS API
 // ============================================================
 export const eventsApi = {
-  getAll: (params?: any) => api.get<PaginatedResponse<any>>('/events', params),
-  create: (data: any) => api.post<ApiResponse<any>>('/events', data),
-  getById: (id: string) => api.get<ApiResponse<any>>(`/events/${id}`),
-  update: (id: string, data: any) => api.put<ApiResponse<any>>(`/events/${id}`, data),
-  delete: (id: string) => api.delete<ApiResponse<any>>(`/events/${id}`),
-  rsvp: (id: string, status: string) => api.post<ApiResponse<any>>(`/events/${id}/rsvp`, { status }),
-  getParticipants: (id: string, params?: any) =>
-    api.get<ApiResponse<any[]>>(`/events/${id}/participants`, params),
+  getAll: (params?: Record<string, string | number | boolean>) =>
+    api.get<ApiResponse<Event[]>>('/events', params),
+  create: (data: Record<string, unknown>) => api.post<ApiResponse<Event>>('/events', data),
+  getById: (id: string) => api.get<ApiResponse<Event>>(`/events/${id}`),
+  update: (id: string, data: Record<string, unknown>) => api.put<ApiResponse<Event>>(`/events/${id}`, data),
+  delete: (id: string) => api.delete<ApiResponse<null>>(`/events/${id}`),
+  rsvp: (id: string, status: string) =>
+    api.post<ApiResponse<{ status?: string }>>(`/events/${id}/rsvp`, { status }),
+  getParticipants: (id: string, params?: Record<string, string | number | boolean>) =>
+    api.get<ApiResponse<EventParticipantView[]>>(`/events/${id}/participants`, params),
   uploadBanner: (id: string, formData: FormData) =>
-    api.postForm<ApiResponse<any>>(`/events/${id}/banner`, formData),
+    api.postForm<ApiResponse<Event>>(`/events/${id}/banner`, formData),
 }
 
 // ============================================================
 // NOTIFICATIONS API
 // ============================================================
 export const notificationsApi = {
-  getAll: (params?: any) => api.get<any>('/notifications', params),
-  markRead: (id: string) => api.put(`/notifications/${id}/read`),
-  markAllRead: () => api.put('/notifications/read-all/mark'),
-  delete: (id: string) => api.delete(`/notifications/${id}`),
-  clearAll: () => api.delete('/notifications/clear/all'),
+  getAll: (params?: Record<string, string | number | boolean>) =>
+    api.get<ApiResponse<Notification[]>>('/notifications', params),
+  markRead: (id: string) => api.put<ApiResponse<Notification>>(`/notifications/${id}/read`),
+  markAllRead: () => api.put<ApiResponse<null>>('/notifications/read-all/mark'),
+  delete: (id: string) => api.delete<ApiResponse<null>>(`/notifications/${id}`),
+  clearAll: () => api.delete<ApiResponse<null>>('/notifications/clear/all'),
 }
 
 // ============================================================
 // ADMIN API
 // ============================================================
 export const adminApi = {
-  getAnalytics: () => api.get<ApiResponse<any>>('/admin/analytics'),
-  getUsers: (params?: any) => api.get<PaginatedResponse<any>>('/admin/users', params),
-  updateUser: (id: string, data: any) => api.put<ApiResponse<any>>(`/admin/users/${id}`, data),
-  deleteUser: (id: string) => api.delete(`/admin/users/${id}`),
-  getCommunities: (params?: any) => api.get<PaginatedResponse<any>>('/admin/communities', params),
-  updateCommunity: (id: string, data: any) =>
-    api.put<ApiResponse<any>>(`/admin/communities/${id}`, data),
-  getReports: (params?: any) => api.get<PaginatedResponse<any>>('/admin/reports', params),
-  updateReport: (id: string, data: any) =>
-    api.put<ApiResponse<any>>(`/admin/reports/${id}`, data),
-  getCategories: () => api.get<ApiResponse<any[]>>('/admin/categories'),
-  createCategory: (data: any) => api.post<ApiResponse<any>>('/admin/categories', data),
+  getAnalytics: () => api.get<ApiResponse<DashboardAnalytics>>('/admin/analytics'),
+  getUsers: (params?: Record<string, string | number | boolean>) =>
+    api.get<ApiResponse<User[]>>('/admin/users', params),
+  updateUser: (id: string, data: Record<string, unknown>) =>
+    api.put<ApiResponse<User>>(`/admin/users/${id}`, data),
+  deleteUser: (id: string) => api.delete<ApiResponse<null>>(`/admin/users/${id}`),
+  getCommunities: (params?: Record<string, string | number | boolean>) =>
+    api.get<ApiResponse<Community[]>>('/admin/communities', params),
+  updateCommunity: (id: string, data: Record<string, unknown>) =>
+    api.put<ApiResponse<Community>>(`/admin/communities/${id}`, data),
+  getReports: (params?: Record<string, string | number | boolean>) =>
+    api.get<ApiResponse<Record<string, unknown>[]>>('/admin/reports', params),
+  updateReport: (id: string, data: Record<string, unknown>) =>
+    api.put<ApiResponse<Record<string, unknown>>>(`/admin/reports/${id}`, data),
+  getCategories: () => api.get<ApiResponse<Category[]>>('/admin/categories'),
+  createCategory: (data: Record<string, unknown>) =>
+    api.post<ApiResponse<Category>>('/admin/categories', data),
 }
 
 // ============================================================
 // REPORTS API
 // ============================================================
 export const reportsApi = {
-  create: (data: any) => api.post<ApiResponse<any>>('/reports', data),
+  create: (data: Record<string, unknown>) =>
+    api.post<ApiResponse<Record<string, unknown>>>('/reports', data),
 }
 
 // ============================================================
 // NEW FEATURES API
 // ============================================================
 export const jobsApi = {
-  getAll: (params?: any) => api.get<PaginatedResponse<any>>('/jobs', params),
-  getById: (id: string) => api.get<ApiResponse<any>>(`/jobs/${id}`),
-  create: (data: any) => api.post<ApiResponse<any>>('/jobs', data),
-  apply: (id: string) => api.post<ApiResponse<any>>(`/jobs/${id}/apply`),
+  getAll: (params?: Record<string, string | number | boolean>) =>
+    api.get<ApiResponse<Job[]>>('/jobs', params),
+  getById: (id: string) => api.get<ApiResponse<Job>>(`/jobs/${id}`),
+  create: (data: Record<string, unknown>) => api.post<ApiResponse<Job>>('/jobs', data),
+  apply: (id: string) => api.post<ApiResponse<{ applied?: boolean }>>(`/jobs/${id}/apply`),
 }
 
 export const newsApi = {
-  getAll: (params?: any) => api.get<PaginatedResponse<any>>('/news', params),
-  getById: (id: string) => api.get<ApiResponse<any>>(`/news/${id}`),
-  like: (id: string) => api.post<ApiResponse<any>>(`/news/${id}/like`),
-  share: (id: string) => api.post<ApiResponse<any>>(`/news/${id}/share`),
+  getAll: (params?: Record<string, string | number | boolean>) =>
+    api.get<ApiResponse<NewsArticle[]>>('/news', params),
+  getById: (id: string) => api.get<ApiResponse<NewsArticle>>(`/news/${id}`),
+  like: (id: string) => api.post<ApiResponse<{ likes?: number }>>(`/news/${id}/like`),
+  share: (id: string) => api.post<ApiResponse<{ shareCount?: number }>>(`/news/${id}/share`),
 }
 
 export const tourismApi = {
-  getAll: (params?: any) => api.get<PaginatedResponse<any>>('/tourism', params),
-  getById: (id: string) => api.get<ApiResponse<any>>(`/tourism/${id}`),
+  getAll: (params?: Record<string, string | number | boolean>) =>
+    api.get<ApiResponse<TourismSpot[]>>('/tourism', params),
+  getById: (id: string) => api.get<ApiResponse<TourismSpot>>(`/tourism/${id}`),
 }
 
 export const govApi = {
-  getAll: (params?: any) => api.get<ApiResponse<any>>('/gov', params),
-  getById: (id: string) => api.get<ApiResponse<any>>(`/gov/${id}`),
+  getAll: (params?: Record<string, string | number | boolean>) =>
+    api.get<ApiResponse<GovScheme[]>>('/gov', params),
+  getById: (id: string) => api.get<ApiResponse<GovScheme>>(`/gov/${id}`),
 }
 
 export const marketplaceApi = {
-  getAll: (params?: any) => api.get<PaginatedResponse<any>>('/marketplace', params),
-  getById: (id: string) => api.get<ApiResponse<any>>(`/marketplace/${id}`),
-  create: (data: any) => api.post<ApiResponse<any>>('/marketplace', data),
+  getAll: (params?: Record<string, string | number | boolean>) =>
+    api.get<ApiResponse<MarketplaceItem[]>>('/marketplace', params),
+  getById: (id: string) => api.get<ApiResponse<MarketplaceItem>>(`/marketplace/${id}`),
+  create: (data: Record<string, unknown>) => api.post<ApiResponse<MarketplaceItem>>('/marketplace', data),
 }
 
 export const dashboardApi = {
-  getAnalytics: () => api.get<ApiResponse<any>>('/dashboard/analytics'),
+  getAnalytics: () => api.get<ApiResponse<DashboardAnalytics>>('/dashboard/analytics'),
 }
 
 export const educationApi = {
-  getCourses: () => api.get<ApiResponse<any[]>>('/education/courses'),
-  getScholarships: () => api.get<ApiResponse<any[]>>('/education/scholarships'),
+  getCourses: () => api.get<ApiResponse<Course[]>>('/education/courses'),
+  getScholarships: () => api.get<ApiResponse<Scholarship[]>>('/education/scholarships'),
 }
 
 export const healthcareApi = {
-  getHospitals: () => api.get<ApiResponse<any[]>>('/healthcare/hospitals'),
-  getSchemes: () => api.get<ApiResponse<any[]>>('/healthcare/schemes'),
+  getHospitals: () => api.get<ApiResponse<Hospital[]>>('/healthcare/hospitals'),
+  getSchemes: () => api.get<ApiResponse<HealthScheme[]>>('/healthcare/schemes'),
 }
 
 export const bookmarksApi = {
-  getAll: (type?: string) => api.get<ApiResponse<any[]>>('/bookmarks', type ? { type } : undefined),
+  getAll: (type?: string) =>
+    api.get<ApiResponse<Record<string, unknown>[]>>('/bookmarks', type ? { type } : undefined),
   toggle: (targetType: string, targetId: string) =>
-    api.post<ApiResponse<{ saved: boolean }>>('/bookmarks', { targetType, targetId }),
-  remove: (type: string, id: string) => api.delete(`/bookmarks/${type}/${id}`),
+    api.post<ApiResponse<BookmarkToggleResult>>('/bookmarks', { targetType, targetId }),
+  remove: (type: string, id: string) => api.delete<ApiResponse<null>>(`/bookmarks/${type}/${id}`),
 }

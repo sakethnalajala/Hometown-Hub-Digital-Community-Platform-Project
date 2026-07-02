@@ -15,6 +15,7 @@ import { AnimatedCounter } from '@/components/ui/AnimatedCounter'
 import { SkeletonGrid } from '@/components/ui/SkeletonCard'
 import { PORTAL_LIST, getTheme } from '@/lib/theme'
 import { format } from 'date-fns'
+import type { Post, Community, Event, NewsArticle, Job } from '@/types'
 
 export default function DashboardPage() {
   const { user } = useAuthStore()
@@ -148,8 +149,8 @@ export default function DashboardPage() {
               </Link>
             </div>
             <div className="space-y-3">
-              {discussions.slice(0, 5).map((post: any) => (
-                <PortalCard key={post.id} theme="communities" href="/">
+              {discussions.slice(0, 5).map((post: Post) => (
+                <PortalCard key={String(post.id)} theme="communities" href="/">
                   <div className="p-5">
                     <div className="flex items-start justify-between gap-4">
                       <div className="min-w-0 flex-1">
@@ -157,13 +158,13 @@ export default function DashboardPage() {
                           {post.community?.name || 'Community'}
                         </span>
                         <p className="line-clamp-2 text-white transition-colors group-hover:text-purple-200">
-                          {post.content}
+                          {String(post.content || '')}
                         </p>
-                        <p className="mt-2 text-xs text-muted-foreground">by {post.author?.name}</p>
+                        <p className="mt-2 text-xs text-muted-foreground">by {String(post.author?.name || 'Neighbor')}</p>
                       </div>
                       <div className="flex shrink-0 items-center gap-2 rounded-full bg-white/5 px-3 py-1 text-sm text-muted-foreground">
                         <MessageSquare className="h-4 w-4" />
-                        {post.commentCount || 0}
+                        {Number(post.commentCount || 0)}
                       </div>
                     </div>
                   </div>
@@ -184,12 +185,12 @@ export default function DashboardPage() {
                 </Link>
               </div>
               <div className="space-y-3">
-                {trending.trendingNews.map((n: any) => (
-                  <PortalCard key={n.id} theme="news" href={`/news/${n.id}`}>
+                {trending.trendingNews.map((n: NewsArticle) => (
+                  <PortalCard key={String(n.id)} theme="news" href={`/news/${n.id}`}>
                     <div className="p-4">
-                      <span className="text-xs font-medium text-red-400">{n.category}</span>
-                      <p className="mt-1 line-clamp-1 text-sm text-white">{n.title}</p>
-                      <p className="mt-1 text-xs text-muted-foreground">{n.views?.toLocaleString()} views</p>
+                      <span className="text-xs font-medium text-red-400">{String(n.category || 'News')}</span>
+                      <p className="mt-1 line-clamp-1 text-sm text-white">{String(n.title || '')}</p>
+                      <p className="mt-1 text-xs text-muted-foreground">{Number(n.views || 0).toLocaleString()} views</p>
                     </div>
                   </PortalCard>
                 ))}
@@ -208,15 +209,15 @@ export default function DashboardPage() {
               <Link href="/communities" className="text-sm font-medium text-purple-400 hover:text-purple-300">All</Link>
             </div>
             <div className="grid gap-3">
-              {communities.slice(0, 5).map((c: any) => (
-                <PortalCard key={c.id || c.slug} theme="communities" href={`/communities/${c.slug}`}>
+              {communities.slice(0, 5).map((c: Community) => (
+                <PortalCard key={String(c.id || c.slug)} theme="communities" href={`/communities/${c.slug}`}>
                   <div className="flex items-center gap-3 p-4">
                     <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-purple-500/30 to-indigo-500/30">
                       <Users className="h-5 w-5 text-purple-300" />
                     </div>
                     <div className="min-w-0">
-                      <h4 className="truncate text-sm font-semibold text-white transition-colors group-hover:text-purple-300">{c.name}</h4>
-                      <p className="text-xs text-muted-foreground">{(c.memberCount || c._count?.members || 0).toLocaleString()} members</p>
+                      <h4 className="truncate text-sm font-semibold text-white transition-colors group-hover:text-purple-300">{String(c.name || '')}</h4>
+                      <p className="text-xs text-muted-foreground">{(Number(c.memberCount || c._count?.members || 0)).toLocaleString()} members</p>
                     </div>
                   </div>
                 </PortalCard>
@@ -233,16 +234,16 @@ export default function DashboardPage() {
               <Link href="/events" className="text-sm font-medium text-orange-400 hover:text-orange-300">All</Link>
             </div>
             <div className="grid gap-3">
-              {events.slice(0, 4).map((event: any) => (
-                <PortalCard key={event.id} theme="events" href={`/events/${event.id}`}>
+              {events.slice(0, 4).map((event: Event) => (
+                <PortalCard key={String(event.id)} theme="events" href={`/events/${event.id}`}>
                   <div className="flex items-center gap-4 p-4">
                     <div className="min-w-[56px] rounded-xl border border-white/5 bg-gradient-to-br from-orange-500/20 to-amber-500/20 p-3 text-center">
-                      <div className="text-xs font-bold uppercase text-orange-400">{format(new Date(event.date), 'MMM')}</div>
-                      <div className="text-lg font-bold text-white">{format(new Date(event.date), 'd')}</div>
+                      <div className="text-xs font-bold uppercase text-orange-400">{format(new Date(String(event.date || 0)), 'MMM')}</div>
+                      <div className="text-lg font-bold text-white">{format(new Date(String(event.date || 0)), 'd')}</div>
                     </div>
                     <div className="min-w-0">
-                      <h4 className="truncate text-sm font-semibold text-white">{event.title}</h4>
-                      <p className="text-xs text-muted-foreground">{event._count?.participants || 0} attending</p>
+                      <h4 className="truncate text-sm font-semibold text-white">{String(event.title || '')}</h4>
+                      <p className="text-xs text-muted-foreground">{Number(event._count?.participants || 0)} attending</p>
                     </div>
                   </div>
                 </PortalCard>
@@ -260,11 +261,11 @@ export default function DashboardPage() {
                 <Link href="/jobs" className="text-sm font-medium text-blue-400 hover:text-blue-300">All</Link>
               </div>
               <div className="space-y-2">
-                {trending.trendingJobs.map((j: any) => (
-                  <PortalCard key={j.id} theme="jobs" href={`/jobs/${j.id}`}>
+                {trending.trendingJobs.map((j: Job) => (
+                  <PortalCard key={String(j.id)} theme="jobs" href={`/jobs/${j.id}`}>
                     <div className="p-3">
-                      <p className="truncate text-sm font-medium text-white">{j.title}</p>
-                      <p className="text-xs text-muted-foreground">{j.company} • {j.applicants} applicants</p>
+                      <p className="truncate text-sm font-medium text-white">{String(j.title || '')}</p>
+                      <p className="text-xs text-muted-foreground">{String(j.company || '')} • {Number(j.applicants || 0)} applicants</p>
                     </div>
                   </PortalCard>
                 ))}

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
-import { Settings, User, Bell, Lock, Eye, EyeOff, Palette, Globe, Shield, LogOut, ChevronRight, Save, Moon, Sun, Monitor } from 'lucide-react'
+import { Settings, User, Bell, Eye, EyeOff, Palette, Globe, Shield, LogOut, ChevronRight, Save, Moon, Sparkles, Monitor } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { useAuthStore } from '@/store/authStore'
@@ -24,7 +24,7 @@ export default function SettingsPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [passwordForm, setPasswordForm] = useState({ current: '', newPass: '', confirm: '' })
   const [changingPassword, setChangingPassword] = useState(false)
-  const [theme, setTheme] = useState<'dark' | 'light' | 'system'>(getStoredTheme())
+  const [theme, setTheme] = useState<'dark' | 'glass' | 'system'>(getStoredTheme())
   const [notifications, setNotifications] = useState({
     emailDigest: true,
     communityUpdates: true,
@@ -68,8 +68,9 @@ export default function SettingsPage() {
       await authApi.changePassword(passwordForm.current, passwordForm.newPass)
       toast.success('Password updated successfully!')
       setPasswordForm({ current: '', newPass: '', confirm: '' })
-    } catch (err: any) {
-      toast.error(err.message || 'Failed to update password')
+    } catch (err: unknown) {
+      const error = err instanceof Error ? err : new Error('Failed to update password')
+      toast.error(error.message)
     } finally {
       setChangingPassword(false)
     }
@@ -83,7 +84,7 @@ export default function SettingsPage() {
         hometown: profileData.hometown,
         currentCity: profileData.currentCity,
       })
-      updateUser(res.data)
+      if (res.data) updateUser(res.data)
       toast.success('Profile updated successfully!')
     } catch {
       toast.error('Failed to update profile')
@@ -286,9 +287,9 @@ export default function SettingsPage() {
                 <h3 className="text-white font-medium text-sm mb-3">Theme</h3>
                 <div className="grid grid-cols-3 gap-3">
                   {[
-                    { value: 'dark' as const, label: 'Dark', icon: Moon },
-                    { value: 'light' as const, label: 'Light', icon: Sun },
-                    { value: 'system' as const, label: 'System', icon: Monitor },
+                    { value: 'dark' as const, label: 'Dark Theme', icon: Moon },
+                    { value: 'glass' as const, label: 'Glass Theme', icon: Sparkles },
+                    { value: 'system' as const, label: 'System Theme', icon: Monitor },
                   ].map(t => (
                     <button
                       key={t.value}

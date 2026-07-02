@@ -29,8 +29,9 @@ function ResetPasswordForm() {
       await authApi.resetPassword(token, password)
       toast.success('Password updated! Please log in.')
       router.push('/login')
-    } catch (err: any) {
-      toast.error(err.message || 'Failed to reset password')
+    } catch (err: unknown) {
+      const error = err instanceof Error ? err : new Error('Unknown error')
+      toast.error(error.message || 'Failed to reset password')
     } finally {
       setLoading(false)
     }

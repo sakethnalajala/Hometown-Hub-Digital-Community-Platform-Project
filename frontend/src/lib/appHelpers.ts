@@ -2,24 +2,27 @@ import { toast } from 'sonner'
 import { useNotificationStore } from '@/store/notificationStore'
 import type { Notification } from '@/types'
 
-export type AppTheme = 'dark' | 'light' | 'system'
+export type AppTheme = 'dark' | 'glass' | 'system'
 
 const THEME_STORAGE_KEY = 'hometown-hub-theme'
 
 export function getStoredTheme(): AppTheme {
   if (typeof window === 'undefined') return 'dark'
   const stored = window.localStorage.getItem(THEME_STORAGE_KEY)
-  return stored === 'light' || stored === 'dark' || stored === 'system' ? stored : 'dark'
+  return stored === 'glass' || stored === 'dark' || stored === 'system' ? stored : 'dark'
 }
 
 export function applyAppTheme(theme: AppTheme) {
   if (typeof window === 'undefined') return
+  const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
   const resolved = theme === 'system'
-    ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
+    ? (prefersDark ? 'dark' : 'glass')
     : theme
 
+  document.documentElement.classList.remove('dark', 'glass')
   document.documentElement.classList.toggle('dark', resolved === 'dark')
-  document.documentElement.style.colorScheme = resolved
+  document.documentElement.classList.toggle('glass', resolved === 'glass')
+  document.documentElement.style.colorScheme = 'dark'
   window.localStorage.setItem(THEME_STORAGE_KEY, theme)
 }
 

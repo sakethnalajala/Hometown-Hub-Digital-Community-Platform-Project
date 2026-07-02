@@ -8,11 +8,30 @@ import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 import { HeartPulse, Sparkles } from 'lucide-react'
 
+export interface AppointmentPayload {
+  fullName: string
+  age: string
+  gender: string
+  bloodGroup: string
+  mobile: string
+  email: string
+  address: string
+  medicalProblem: string
+  symptoms: string
+  doctor: string
+  appointmentDate: string
+  appointmentTime: string
+}
+
+interface HospitalSummary {
+  name?: string
+}
+
 interface AppointmentModalProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  hospital: any
-  onSubmit: (payload: any) => void
+  hospital: HospitalSummary | null | undefined
+  onSubmit: (payload: AppointmentPayload) => void
 }
 
 export function AppointmentModal({ open, onOpenChange, hospital, onSubmit }: AppointmentModalProps) {

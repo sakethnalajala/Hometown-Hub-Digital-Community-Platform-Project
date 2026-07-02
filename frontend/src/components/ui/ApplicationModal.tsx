@@ -8,11 +8,33 @@ import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 import { FileText, Sparkles } from 'lucide-react'
 
+export interface JobApplicationPayload {
+  fullName: string
+  email: string
+  phone: string
+  college: string
+  course: string
+  coverLetter: string
+  resume: string
+  jobId?: string
+  jobTitle?: string
+  company?: string
+  salary?: string
+  description?: string
+}
+
+interface JobSummary {
+  title?: string
+  company?: string
+  salary?: string
+  description?: string
+}
+
 interface ApplicationModalProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  job: any
-  onSubmit: (payload: any) => void
+  job: JobSummary | null | undefined
+  onSubmit: (payload: JobApplicationPayload) => void
 }
 
 export function ApplicationModal({ open, onOpenChange, job, onSubmit }: ApplicationModalProps) {

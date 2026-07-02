@@ -8,21 +8,30 @@ import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 import { downloadTextAsPdf, triggerAppNotification, openExternalLink } from '@/lib/appHelpers'
 import { jobsApi } from '@/lib/api'
-import { Sparkles, FileText, ExternalLink } from 'lucide-react'
+import { FileText, ExternalLink } from 'lucide-react'
+
+interface JobApplicationDetails {
+  title?: string
+  company?: string
+  location?: string
+  type?: string
+  description?: string
+  website?: string
+  companyWebsite?: string
+}
 
 export default function JobApplicationPage({ params }: { params: { id: string } }) {
   const router = useRouter()
-  const [job, setJob] = useState<any | null>(null)
+  const [job, setJob] = useState<JobApplicationDetails | null>(null)
   const [form, setForm] = useState({ fullName: '', email: '', phone: '', college: '', course: '', resume: '', coverLetter: '' })
   const [submitting, setSubmitting] = useState(false)
 
   useEffect(() => {
-    jobsApi.getById(params.id).then(res => setJob(res.data)).catch(() => setJob(null))
+    jobsApi.getById(params.id).then(res => setJob(res.data ?? null)).catch(() => setJob(null))
   }, [params.id])
 
   const handleSubmit = async () => {
     setSubmitting(true)
-    const payload = { ...form, jobId: params.id, jobTitle: job?.title }
     // generate PDF confirmation
     const confirmation = `Application Confirmation\nApplicant: ${form.fullName}\nEmail: ${form.email}\nPhone: ${form.phone}\nCollege: ${form.college}\nCourse: ${form.course}\nJob: ${job?.title}`
     downloadTextAsPdf(`${(job?.title || 'application').replace(/\s+/g, '-')}-confirmation.pdf`, confirmation)

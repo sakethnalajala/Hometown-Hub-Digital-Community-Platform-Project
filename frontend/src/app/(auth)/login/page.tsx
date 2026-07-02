@@ -66,9 +66,10 @@ export default function LoginPage() {
             router.push('/dashboard');
           }
           return;
-        } catch (error: any) {
-          console.error('Demo Login Error:', error);
-          toast.error(error.message || 'Demo Login failed');
+        } catch (error: unknown) {
+          const err = error instanceof Error ? error : new Error('Unknown error')
+          console.error('Demo Login Error:', err);
+          toast.error(err.message || 'Demo Login failed');
           setIsLoading(false);
           return;
         }
@@ -86,17 +87,17 @@ export default function LoginPage() {
         toast.success('Welcome back to Hometown Hub!')
         router.push('/dashboard')
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const err = error instanceof Error ? error : new Error('Unknown error')
       if (error instanceof z.ZodError) {
-        const newErrors: any = {}
-        const zodError = error as any
-        zodError.errors.forEach((err: any) => {
-          if (err.path[0]) newErrors[err.path[0]] = err.message
+        const newErrors: Partial<Record<keyof LoginFormValues, string>> = {}
+        error.issues.forEach((e) => {
+          if (e.path[0]) newErrors[e.path[0] as keyof LoginFormValues] = e.message
         })
         setErrors(newErrors)
       } else {
-        console.error('Login Error:', error);
-        toast.error(error.message || 'Login failed. Please check your credentials.')
+        console.error('Login Error:', err);
+        toast.error(err.message || 'Login failed. Please check your credentials.')
       }
     } finally {
       setIsLoading(false)
@@ -116,9 +117,10 @@ export default function LoginPage() {
             router.push('/dashboard');
           }
           return;
-        } catch (error: any) {
-          console.error('Demo Google Login Error:', error);
-          toast.error(error.message || 'Demo Login failed');
+        } catch (error: unknown) {
+          const err = error instanceof Error ? error : new Error('Unknown error')
+          console.error('Demo Google Login Error:', err);
+          toast.error(err.message || 'Demo Login failed');
           setIsGoogleLoading(false);
           return;
         }
@@ -136,9 +138,10 @@ export default function LoginPage() {
         toast.success('Google Sign-In successful!')
         router.push('/dashboard')
       }
-    } catch (error: any) {
-      console.error('Google Sign-In Error:', error)
-      toast.error(error.message || 'Google Sign-In failed')
+    } catch (error: unknown) {
+      const err = error instanceof Error ? error : new Error('Unknown error')
+      console.error('Google Sign-In Error:', err)
+      toast.error(err.message || 'Google Sign-In failed')
     } finally {
       setIsGoogleLoading(false)
     }
@@ -155,18 +158,17 @@ export default function LoginPage() {
       <motion.div 
         animate={{ y: [0, -8, 0] }}
         transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
-        className="w-full bg-white/5 backdrop-blur-xl border border-white/10 rounded-[24px] p-8 shadow-[0_0_40px_rgba(168,85,247,0.15)] relative overflow-hidden"
+        className="w-full bg-[#111827] border border-white/10 rounded-[24px] p-8 shadow-[0_30px_80px_rgba(0,0,0,0.35)] relative overflow-hidden"
       >
-        {/* Neon glow effect on the border */}
-        <div className="absolute inset-0 rounded-[24px] pointer-events-none border border-transparent [background:linear-gradient(45deg,transparent,rgba(168,85,247,0.3),transparent)_border-box] [mask:linear-gradient(#fff_0_0)_padding-box,linear-gradient(#fff_0_0)] [-webkit-mask-composite:xor]" />
+        <div className="absolute inset-0 rounded-[24px] bg-[radial-gradient(circle_at_top,_rgba(99,102,241,0.16),_transparent_40%)] pointer-events-none" />
 
         <div className="space-y-2 text-center mb-8 relative z-10">
           <h1 className="text-3xl font-bold tracking-tight text-white">Welcome back</h1>
-          <p className="text-sm text-gray-400">
+          <p className="text-sm text-slate-300">
             Sign in to continue to Hometown Hub
           </p>
           {process.env.NEXT_PUBLIC_DEMO_MODE === 'true' && (
-            <p className="text-xs text-purple-300/80 mt-2 bg-purple-500/10 rounded-lg px-3 py-2 border border-purple-500/20">
+            <p className="text-xs text-purple-300/90 mt-2 bg-white/5 rounded-lg px-3 py-2 border border-purple-500/20">
               Demo: demo@hometownhub.com / Demo@12345
             </p>
           )}
@@ -176,7 +178,7 @@ export default function LoginPage() {
           <div className="space-y-1">
             <label className="text-sm font-medium text-gray-300 ml-1" htmlFor="email">Email</label>
             <div className="relative group">
-              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500 group-focus-within:text-purple-400 transition-colors" />
+              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500 group-focus-within:text-purple-400 transition-colors" />
               <Input 
                 id="email" 
                 name="email"
@@ -184,7 +186,7 @@ export default function LoginPage() {
                 placeholder="m@example.com" 
                 value={formData.email}
                 onChange={handleChange}
-                className={`pl-10 bg-white/5 border-white/10 text-white placeholder:text-gray-500 rounded-xl focus:border-purple-500 focus:ring-1 focus:ring-purple-500 transition-all ${errors.email ? 'border-red-500' : ''}`}
+                className={`pl-10 bg-white/5 border-white/10 text-white placeholder:text-slate-500 rounded-xl focus:border-purple-500 focus:ring-1 focus:ring-purple-500 transition-all ${errors.email ? 'border-red-500' : ''}`}
               />
             </div>
             {errors.email && <p className="text-xs text-red-400 ml-1">{errors.email}</p>}
@@ -198,7 +200,7 @@ export default function LoginPage() {
               </Link>
             </div>
             <div className="relative group">
-              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500 group-focus-within:text-purple-400 transition-colors" />
+              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500 group-focus-within:text-purple-400 transition-colors" />
               <Input 
                 id="password" 
                 name="password"
@@ -206,7 +208,7 @@ export default function LoginPage() {
                 placeholder="••••••••"
                 value={formData.password}
                 onChange={handleChange}
-                className={`pl-10 pr-10 bg-white/5 border-white/10 text-white placeholder:text-gray-500 rounded-xl focus:border-purple-500 focus:ring-1 focus:ring-purple-500 transition-all ${errors.password ? 'border-red-500' : ''}`}
+                className={`pl-10 pr-10 bg-white/5 border-white/10 text-white placeholder:text-slate-500 rounded-xl focus:border-purple-500 focus:ring-1 focus:ring-purple-500 transition-all ${errors.password ? 'border-red-500' : ''}`}
               />
               <button
                 type="button"
@@ -222,10 +224,9 @@ export default function LoginPage() {
           <Button 
             type="submit" 
             disabled={isLoading}
-            className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white rounded-xl py-6 font-semibold shadow-[0_0_20px_rgba(168,85,247,0.4)] transition-all hover:shadow-[0_0_30px_rgba(168,85,247,0.6)] relative overflow-hidden group"
+            className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white rounded-xl py-6 font-semibold shadow-[0_0_20px_rgba(168,85,247,0.4)] transition-all hover:shadow-[0_0_30px_rgba(168,85,247,0.65)] relative overflow-hidden group"
           >
-            {/* Ripple effect placeholder */}
-            <span className="absolute inset-0 w-full h-full bg-white/20 scale-0 group-active:scale-100 rounded-full transition-transform duration-300 origin-center opacity-0 group-active:opacity-100" />
+            <span className="absolute inset-0 w-full h-full bg-white/10 scale-0 group-active:scale-100 rounded-full transition-transform duration-200 origin-center opacity-0 group-active:opacity-100" />
             {isLoading ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : 'Sign In'}
           </Button>
         </form>
@@ -236,7 +237,7 @@ export default function LoginPage() {
               <div className="w-full border-t border-white/10"></div>
             </div>
             <div className="relative flex justify-center text-sm">
-              <span className="px-2 bg-transparent text-gray-400 text-xs uppercase tracking-wider backdrop-blur-xl">Or continue with</span>
+              <span className="px-2 bg-[#111827] text-slate-400 text-xs uppercase tracking-wider">Or continue with</span>
             </div>
           </div>
         </div>
@@ -277,7 +278,7 @@ export default function LoginPage() {
           )}
         </div>
 
-        <div className="text-center text-sm mt-8 relative z-10 text-gray-400">
+        <div className="text-center text-sm mt-8 relative z-10 text-slate-400">
           Don&apos;t have an account?{' '}
           <Link href="/register" className="font-medium text-purple-400 hover:text-purple-300 transition-colors">
             Sign up

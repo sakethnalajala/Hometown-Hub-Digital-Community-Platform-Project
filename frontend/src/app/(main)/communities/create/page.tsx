@@ -35,14 +35,15 @@ export default function CreateCommunityPage() {
   const [errors, setErrors] = useState<Partial<Record<keyof FormValues, string>>>({})
 
   const mutation = useMutation({
-    mutationFn: (data: any) => communitiesApi.create(data),
+    mutationFn: (data: FormValues) => communitiesApi.create(data),
     onSuccess: (res) => {
       toast.success(res.message || 'Community created successfully')
       queryClient.invalidateQueries({ queryKey: ['communities'] })
-      router.push(`/communities/${res.data.slug}`)
+      if (res.data) router.push(`/communities/${res.data.slug}`)
     },
-    onError: (error: any) => {
-      toast.error(error.data?.message || 'Failed to create community')
+    onError: (error: unknown) => {
+      const err = error instanceof Error ? error : new Error('Failed to create community')
+      toast.error(err.message)
     }
   })
 
@@ -54,10 +55,10 @@ export default function CreateCommunityPage() {
       mutation.mutate(formData)
     } catch (error) {
       if (error instanceof z.ZodError) {
-        const newErrors: any = {}
-        const zodError = error as any
-        zodError.errors.forEach((err: any) => {
-          if (err.path[0]) newErrors[err.path[0]] = err.message
+        const newErrors: Partial<Record<keyof FormValues, string>> = {}
+        error.issues.forEach((err) => {
+          const path = err.path[0]
+          if (typeof path === 'string') newErrors[path as keyof FormValues] = err.message
         })
         setErrors(newErrors)
       }

@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
-import { Map, Search, Star, MapPin, Camera, Clock, Compass, Mountain, TreePine, Landmark, Loader2, Sparkles, Navigation, Trash2 } from 'lucide-react'
+import { Search, Star, MapPin, Compass, Loader2, Navigation, Trash2 } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { tourismApi } from '@/lib/api'
@@ -29,6 +29,20 @@ function parseImages(images: unknown): string[] {
   return []
 }
 
+interface TourismDestination {
+  id?: string
+  name?: string
+  description?: string
+  rating?: number
+  location?: string
+  city?: string
+  category?: string
+  type?: string
+  image?: string
+  images?: unknown
+  bestTime?: string
+}
+
 const types = ['All', 'Nature', 'Heritage', 'Hill Station', 'Wildlife', 'Beach', 'Adventure']
 
 const containerVariants = {
@@ -40,9 +54,9 @@ const itemVariants = { hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0, 
 export default function TourismPage() {
   const [search, setSearch] = useState('')
   const [activeType, setActiveType] = useState('All')
-  const [destinations, setDestinations] = useState<any[]>(SAMPLE_DESTINATIONS)
+  const [destinations, setDestinations] = useState<TourismDestination[]>(SAMPLE_DESTINATIONS)
   const [loading, setLoading] = useState(true)
-  const [destinationToDelete, setDestinationToDelete] = useState<any | null>(null)
+  const [destinationToDelete, setDestinationToDelete] = useState<TourismDestination | null>(null)
 
   useEffect(() => {
     tourismApi.getAll()
@@ -56,8 +70,8 @@ export default function TourismPage() {
       })
   }, [])
 
-  const handleExplore = (destination: any) => {
-    const city = destination.location || destination.city || destination.name
+  const handleExplore = (destination: TourismDestination) => {
+    const city = destination.location || destination.city || destination.name || ''
     const mapsUrl = `https://www.google.com/maps/search/${encodeURIComponent(destination.name || city)}`
     const stayUrl = `https://www.booking.com/searchresults.html?ss=${encodeURIComponent(city)}`
     triggerAppNotification('Tourism explored', `${destination.name} opened with maps and stay options.`)
@@ -65,7 +79,7 @@ export default function TourismPage() {
     window.open(stayUrl, '_blank', 'noopener,noreferrer')
   }
 
-  const handleDelete = (destination: any) => {
+  const handleDelete = (destination: TourismDestination) => {
     setDestinationToDelete(destination)
   }
 
@@ -189,7 +203,7 @@ export default function TourismPage() {
           </motion.div>
         ) : (
           <motion.div variants={containerVariants} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filtered.slice(0, 6).map((dest: any) => {
+            {filtered.slice(0, 6).map((dest: TourismDestination) => {
               const images = parseImages(dest.images)
               const mainImage = images[0] || dest.image || '/placeholder-tourism.jpg'
               return (

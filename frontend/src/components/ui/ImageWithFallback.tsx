@@ -1,10 +1,12 @@
 'use client'
 
+import Image from 'next/image'
 import { useState } from 'react'
 import { cn } from '@/lib/utils'
 import { ImageOff } from 'lucide-react'
 
-interface ImageWithFallbackProps extends React.ImgHTMLAttributes<HTMLImageElement> {
+interface ImageWithFallbackProps extends Omit<React.ImgHTMLAttributes<HTMLImageElement>, 'src' | 'width' | 'height'> {
+  src?: string | null
   fallbackSrc?: string
 }
 
@@ -30,9 +32,12 @@ export function ImageWithFallback({
           <ImageOff className="h-8 w-8 opacity-40" />
         </div>
       ) : (
-        <img
-          src={src || fallbackSrc}
+        <Image
+          src={(src || fallbackSrc) as string}
           alt={alt}
+          width={1200}
+          height={800}
+          sizes="(max-width: 768px) 100vw, 50vw"
           className={cn('object-cover transition-opacity duration-300', loaded ? 'opacity-100' : 'opacity-0', className)}
           onLoad={() => setLoaded(true)}
           onError={() => { setError(true); setLoaded(true) }}

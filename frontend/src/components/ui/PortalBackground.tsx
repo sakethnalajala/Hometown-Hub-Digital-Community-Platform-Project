@@ -1,6 +1,6 @@
 'use client'
 
-import { ReactNode } from 'react'
+import { ReactNode, useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 
 type PortalType = 'communities' | 'jobs' | 'events' | 'news' | 'tourism' | 'education' | 'marketplace' | 'government' | 'healthcare' | 'notifications'
@@ -9,6 +9,18 @@ interface PortalBackgroundProps {
   portal: PortalType
   children: ReactNode
   className?: string
+}
+
+interface ParticleStyle {
+  background: string
+  left: string
+  top: string
+}
+
+interface ParticleConfig extends ParticleStyle {
+  randomX: number
+  randomDelay: number
+  randomDuration: number
 }
 
 const portalThemes = {
@@ -64,6 +76,58 @@ const portalThemes = {
   },
 }
 
+interface ParticleContainerProps {
+  theme: (typeof portalThemes)[PortalType]
+}
+
+function ParticleContainer({ theme }: ParticleContainerProps) {
+  // Generated client-side only (post-mount) so SSR markup (no particles)
+  // matches the initial client render — Math.random() would otherwise
+  // differ between server and client and trigger a hydration mismatch.
+  const [particles, setParticles] = useState<ParticleConfig[]>([])
+
+  useEffect(() => {
+    setParticles(
+      [...Array(15)].map((_, i) => ({
+        background: theme.meshColors[i % theme.meshColors.length],
+        left: `${Math.random() * 100}%`,
+        top: `${Math.random() * 100}%`,
+        randomX: Math.random() * 20 - 10,
+        randomDelay: Math.random() * 5,
+        randomDuration: 5 + Math.random() * 5,
+      } as ParticleConfig))
+    )
+    // theme.meshColors is a stable reference from the portalThemes map keyed by portal
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  return (
+    <div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
+      {particles.map((particle, i) => (
+        <motion.div
+          key={i}
+          className="absolute w-2 h-2 rounded-full opacity-20"
+          style={{
+            background: particle.background,
+            left: particle.left,
+            top: particle.top,
+          }}
+          animate={{
+            y: [0, -30, 0],
+            x: [0, particle.randomX, 0],
+            opacity: [0.1, 0.3, 0.1],
+          }}
+          transition={{
+            duration: particle.randomDuration,
+            repeat: Infinity,
+            delay: particle.randomDelay,
+          }}
+        />
+      ))}
+    </div>
+  )
+}
+
 export function PortalBackground({ portal, children, className = '' }: PortalBackgroundProps) {
   const theme = portalThemes[portal]
 
@@ -114,31 +178,7 @@ export function PortalBackground({ portal, children, className = '' }: PortalBac
       </div>
 
       {/* Floating Particles (for select portals) */}
-      {theme.particles && (
-        <div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
-          {[...Array(15)].map((_, i) => (
-            <motion.div
-              key={i}
-              className="absolute w-2 h-2 rounded-full opacity-20"
-              style={{
-                background: theme.meshColors[i % theme.meshColors.length],
-                left: `${Math.random() * 100}%`,
-                top: `${Math.random() * 100}%`,
-              }}
-              animate={{
-                y: [0, -30, 0],
-                x: [0, Math.random() * 20 - 10, 0],
-                opacity: [0.1, 0.3, 0.1],
-              }}
-              transition={{
-                duration: 5 + Math.random() * 5,
-                repeat: Infinity,
-                delay: Math.random() * 5,
-              }}
-            />
-          ))}
-        </div>
-      )}
+      {theme.particles && <ParticleContainer theme={theme} />}
 
       {/* Content */}
       <div className="relative z-0">{children}</div>

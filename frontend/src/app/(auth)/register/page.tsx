@@ -71,9 +71,10 @@ export default function RegisterPage() {
             router.push('/dashboard');
           }
           return;
-        } catch (error: any) {
-          console.error('Demo Register Error:', error);
-          toast.error(error.message || 'Registration failed. Use demo@hometownhub.com in demo mode.');
+        } catch (error: unknown) {
+          const err = error instanceof Error ? error : new Error('Unknown error');
+          console.error('Demo Register Error:', err);
+          toast.error(err.message || 'Registration failed. Use demo@hometownhub.com in demo mode.');
           setIsLoading(false);
           return;
         }
@@ -106,16 +107,16 @@ export default function RegisterPage() {
         toast.success('Account created successfully!')
         router.push('/dashboard')
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       if (error instanceof z.ZodError) {
-        const newErrors: any = {}
-        const zodError = error as any
-        zodError.errors.forEach((err: any) => {
-          if (err.path[0]) newErrors[err.path[0]] = err.message
+        const newErrors: Record<string, string> = {}
+        error.issues.forEach((err) => {
+          if (err.path[0]) newErrors[err.path[0] as string] = err.message
         })
-        setErrors(newErrors)
+        setErrors(newErrors as Partial<Record<keyof RegisterFormValues, string>>)
       } else {
-        toast.error(error.message || 'Registration failed. Please try again.')
+        const err = error instanceof Error ? error : new Error('Unknown error')
+        toast.error(err.message || 'Registration failed. Please try again.')
       }
     } finally {
       setIsLoading(false)
@@ -135,9 +136,10 @@ export default function RegisterPage() {
             router.push('/dashboard');
           }
           return;
-        } catch (error: any) {
-          console.error('Demo Google Login Error:', error);
-          toast.error(error.message || 'Demo Login failed');
+        } catch (error: unknown) {
+          const err = error instanceof Error ? error : new Error('Unknown error');
+          console.error('Demo Google Login Error:', err);
+          toast.error(err.message || 'Demo Login failed');
           setIsGoogleLoading(false);
           return;
         }
@@ -163,9 +165,10 @@ export default function RegisterPage() {
         toast.success('Google Sign-In successful!')
         router.push('/dashboard')
       }
-    } catch (error: any) {
-      console.error('Google Sign-In Error:', error)
-      toast.error(error.message || 'Google Sign-In failed')
+    } catch (error: unknown) {
+      const err = error instanceof Error ? error : new Error('Google Sign-In failed')
+      console.error('Google Sign-In Error:', err)
+      toast.error(err.message)
     } finally {
       setIsGoogleLoading(false)
     }

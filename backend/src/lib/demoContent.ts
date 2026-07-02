@@ -6,13 +6,10 @@ export const daysAgo = (d: number) => new Date(now.getTime() - d * 86400000).toI
 export const hoursAgo = (h: number) => new Date(now.getTime() - h * 3600000).toISOString();
 
 const img = (seed: string, w = 800, h = 400) => {
-  // Use a simple hash of the seed to get a stable integer ID for picsum
-  let hash = 0;
-  for (let i = 0; i < seed.length; i++) {
-    hash = seed.charCodeAt(i) + ((hash << 5) - hash);
-  }
-  const id = Math.abs(hash) % 1000;
-  return `https://picsum.photos/id/${id}/${w}/${h}`;
+  // picsum's numeric /id/{n} space has gaps (some ids 404), so a hashed id
+  // can point at a missing image. The /seed/{string}/... endpoint hashes
+  // the seed itself and always resolves to a valid deterministic image.
+  return `https://picsum.photos/seed/${encodeURIComponent(seed)}/${w}/${h}`;
 };
 
 // ─── COMMUNITIES (exactly 5 — one per global city) ─────────────────────────
@@ -68,20 +65,24 @@ const jobDefs = [
   { title: 'Staff Nurse', company: 'City General Hospital', type: 'Full-time', salary: '₹3–6 LPA', loc: 'Local', skills: ['Patient Care', 'ICU', 'Medical Records'] },
 ];
 
-export const allJobs = jobDefs.map((j, i) => ({
-  id: `job-${String(i + 1).padStart(3, '0')}`,
-  title: j.title,
-  company: j.company,
-  companyLogo: `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(j.company)}`,
-  type: j.type,
-  salary: j.salary,
-  location: j.loc,
-  description: `${j.company} is hiring a talented ${j.title} to join our growing team. You'll work on exciting projects that impact our local community and beyond. We offer competitive compensation, flexible work arrangements, and a collaborative culture.`,
-  skills: j.skills,
-  authorId: demoPeople[i % demoPeople.length].id,
-  createdAt: daysAgo(i * 2),
-  applicants: 15 + i * 7,
-}));
+export const allJobs = jobDefs.map((j, i) => {
+  const author = demoPeople[i % demoPeople.length];
+  return {
+    id: `job-${String(i + 1).padStart(3, '0')}`,
+    title: j.title,
+    company: j.company,
+    companyLogo: `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(j.company)}`,
+    type: j.type,
+    salary: j.salary,
+    location: j.loc,
+    description: `${j.company} is hiring a talented ${j.title} to join our growing team. You'll work on exciting projects that impact our local community and beyond. We offer competitive compensation, flexible work arrangements, and a collaborative culture.`,
+    skills: j.skills,
+    authorId: author.id,
+    author: { id: author.id, name: author.name, profileImage: author.profileImage },
+    createdAt: daysAgo(i * 2),
+    applicants: 15 + i * 7,
+  };
+});
 
 // ─── EVENTS (exactly 5 — one per global city) ───────────────────────────────
 const eventDefs = [

@@ -1,6 +1,16 @@
 'use client'
 
 import { useState } from 'react'
+
+interface FeedComment {
+  id: string
+  content: string
+  createdAt: string
+  author?: {
+    profileImage?: string
+    name?: string
+  }
+}
 import { useAuthStore } from '@/store/authStore'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { postsApi } from '@/lib/api'
@@ -51,7 +61,7 @@ function CommentSection({ postId }: { postId: string }) {
       ) : comments.length === 0 ? (
         <p className="text-sm text-muted-foreground text-center py-1">No comments yet.</p>
       ) : (
-        comments.map((c: any) => (
+        comments.map((c: FeedComment) => (
           <div key={c.id} className="flex gap-3 py-1">
             <Avatar className="h-8 w-8">
               <AvatarImage src={c.author?.profileImage} />

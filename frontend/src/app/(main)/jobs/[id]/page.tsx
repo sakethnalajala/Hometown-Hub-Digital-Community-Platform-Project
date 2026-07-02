@@ -113,7 +113,7 @@ export default function JobDetailPage() {
               </Avatar>
               <div>
                 <p className="text-sm font-medium text-white">Posted by {job.author.name}</p>
-                <p className="text-xs text-muted-foreground">{new Date(job.createdAt).toLocaleDateString()}</p>
+                <p className="text-xs text-muted-foreground">{job.createdAt ? new Date(job.createdAt).toLocaleDateString() : ''}</p>
               </div>
             </div>
           )}
