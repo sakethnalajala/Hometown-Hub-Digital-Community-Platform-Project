@@ -75,6 +75,14 @@ export default function TourismPage() {
       return []
     }
   })
+  const [removedDestinationIds, setRemovedDestinationIds] = useState<string[]>(() => {
+    if (typeof window === 'undefined') return []
+    try {
+      return JSON.parse(window.localStorage.getItem('tourismRemovedIds') || '[]')
+    } catch {
+      return []
+    }
+  })
 
   const toggleFavorite = (e: React.MouseEvent, destId?: string) => {
     e.preventDefault()
@@ -103,9 +111,11 @@ export default function TourismPage() {
   }, [])
 
   // Local (user-created) destinations are shown first, followed by the catalog.
+  // Deleted catalog destinations are tombstoned via removedDestinationIds since
+  // they come from the read-only API and can't be removed from localStorage directly.
   const combined = useMemo<TourismDestination[]>(
-    () => [...localDestinations, ...destinations],
-    [localDestinations, destinations]
+    () => [...localDestinations, ...destinations].filter((d) => !d.id || !removedDestinationIds.includes(d.id)),
+    [localDestinations, destinations, removedDestinationIds]
   )
 
   const handleCreateClick = () => {
@@ -165,8 +175,19 @@ export default function TourismPage() {
 
   const confirmDelete = () => {
     if (!destinationToDelete?.id) return
-    deleteLocalDestination(destinationToDelete.id)
-    setLocalDestinations(getLocalDestinations())
+    const id = destinationToDelete.id
+    if (destinationToDelete.isLocal) {
+      deleteLocalDestination(id)
+      setLocalDestinations(getLocalDestinations())
+    } else {
+      setRemovedDestinationIds((current) => {
+        const updated = Array.from(new Set([...current, id]))
+        if (typeof window !== 'undefined') {
+          window.localStorage.setItem('tourismRemovedIds', JSON.stringify(updated))
+        }
+        return updated
+      })
+    }
     triggerAppNotification('Destination deleted', `${destinationToDelete.name} was removed.`)
     toast.success(`${destinationToDelete.name} deleted`)
     setDestinationToDelete(null)
@@ -365,26 +386,33 @@ export default function TourismPage() {
                             <span className="line-clamp-1">{dest.bestSeason || dest.bestTime || 'Year Round'}</span>
                           </div>
 
-                          <div className={`grid gap-2.5 pt-4 border-t border-white/10 ${isLocal ? 'grid-cols-3' : 'grid-cols-1'}`}>
+                          <div className="flex flex-col gap-2.5 pt-4 border-t border-white/10">
                             {/* Navigation is handled by the wrapping Link; this button is the visible affordance */}
                             <Button className="h-10 w-full bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white rounded-xl font-bold shadow-lg">
                               Explore
                             </Button>
-                            {isLocal && (
-                              <>
+                            {isLocal ? (
+                              <div className="grid grid-cols-2 gap-2.5">
                                 <Button
                                   className="h-10 w-full bg-gradient-to-r from-orange-500 to-amber-600 hover:from-orange-600 hover:to-amber-700 text-white rounded-xl font-bold shadow-lg"
                                   onClick={(e) => handleEditClick(e, dest)}
                                 >
-                                  <Pencil className="w-4 h-4" />
+                                  <Pencil className="w-4 h-4 mr-1.5 shrink-0" /> Edit
                                 </Button>
                                 <Button
                                   className="h-10 w-full bg-red-600 hover:bg-red-700 text-white rounded-xl font-bold shadow-lg"
                                   onClick={(e) => handleDelete(e, dest)}
                                 >
-                                  <Trash2 className="w-4 h-4" />
+                                  <Trash2 className="w-4 h-4 mr-1.5 shrink-0" /> Delete
                                 </Button>
-                              </>
+                              </div>
+                            ) : (
+                              <Button
+                                className="h-10 w-full bg-red-600 hover:bg-red-700 text-white rounded-xl font-bold shadow-lg"
+                                onClick={(e) => handleDelete(e, dest)}
+                              >
+                                <Trash2 className="w-4 h-4 mr-1.5 shrink-0" /> Delete
+                              </Button>
                             )}
                           </div>
                         </div>
