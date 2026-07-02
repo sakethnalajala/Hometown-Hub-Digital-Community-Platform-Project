@@ -268,6 +268,7 @@ export interface NewsArticle {
   trending?: boolean;
   createdAt?: string;
   publishedAt?: string;
+  updatedAt?: string;
   readTime?: string;
   tags?: string[];
 }

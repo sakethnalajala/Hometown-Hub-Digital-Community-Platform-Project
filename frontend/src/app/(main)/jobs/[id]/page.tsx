@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button'
 import { ImageWithFallback } from '@/components/ui/ImageWithFallback'
 import { PageWrapper, PageSection } from '@/components/ui/PageWrapper'
 import { SkeletonCard } from '@/components/ui/SkeletonCard'
-import { MapPin, Clock, DollarSign, ArrowLeft, ExternalLink, BookmarkPlus } from 'lucide-react'
+import { MapPin, Clock, DollarSign, ArrowLeft, ExternalLink, BookmarkPlus, Briefcase } from 'lucide-react'
 import { toast } from 'sonner'
 import Link from 'next/link'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
@@ -91,6 +91,7 @@ export default function JobDetailPage() {
             <span className="flex items-center gap-1.5"><MapPin className="w-4 h-4 text-pink-400" /> {job.location}</span>
             <span className="flex items-center gap-1.5"><Clock className="w-4 h-4 text-yellow-400" /> {job.type || 'Full-time'}</span>
             {job.salary && <span className="flex items-center gap-1.5"><DollarSign className="w-4 h-4 text-green-400" /> {job.salary}</span>}
+            {job.experience && <span className="flex items-center gap-1.5"><Briefcase className="w-4 h-4 text-purple-400" /> {job.experience} experience</span>}
           </div>
 
           {skills.length > 0 && (

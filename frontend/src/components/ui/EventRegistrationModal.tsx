@@ -6,13 +6,14 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
-import { Calendar, MapPin, Mail, Phone, User, Sparkles } from 'lucide-react'
+import { Calendar, MapPin, Mail, Phone, User, Sparkles, Ticket, Minus, Plus } from 'lucide-react'
 
 interface EventRegistrationPayload {
   fullName: string
   email: string
   phone: string
   notes: string
+  quantity: number
   eventId?: string
   eventTitle?: string
 }
@@ -39,6 +40,7 @@ export function EventRegistrationModal({ open, onOpenChange, event, onSubmit }: 
     phone: '',
     notes: '',
   })
+  const [quantity, setQuantity] = useState(1)
 
   const isReady = useMemo(
     () => Boolean(form.fullName.trim() && form.email.trim() && form.phone.trim()),
@@ -48,10 +50,12 @@ export function EventRegistrationModal({ open, onOpenChange, event, onSubmit }: 
   const handleSubmit = () => {
     onSubmit({
       ...form,
+      quantity,
       eventId: event?.id,
       eventTitle: event?.title,
     })
     onOpenChange(false)
+    setQuantity(1)
   }
 
   return (
@@ -115,6 +119,32 @@ export function EventRegistrationModal({ open, onOpenChange, event, onSubmit }: 
                   className="pl-12 bg-white/5 border-white/10 text-white"
                   placeholder="+91 98765 43210"
                 />
+              </div>
+            </div>
+            <div className="space-y-2 md:col-span-2">
+              <Label className="text-white">Number of Tickets</Label>
+              <div className="flex items-center gap-3 rounded-md border border-white/10 bg-white/5 px-3 py-2">
+                <Ticket className="text-slate-400 w-4 h-4" />
+                <button
+                  type="button"
+                  onClick={() => setQuantity((q) => Math.max(1, q - 1))}
+                  className="flex h-7 w-7 items-center justify-center rounded-md bg-white/10 text-white hover:bg-white/20 disabled:opacity-40"
+                  disabled={quantity <= 1}
+                  aria-label="Decrease ticket count"
+                >
+                  <Minus className="w-3.5 h-3.5" />
+                </button>
+                <span className="w-6 text-center font-semibold text-white">{quantity}</span>
+                <button
+                  type="button"
+                  onClick={() => setQuantity((q) => Math.min(6, q + 1))}
+                  className="flex h-7 w-7 items-center justify-center rounded-md bg-white/10 text-white hover:bg-white/20 disabled:opacity-40"
+                  disabled={quantity >= 6}
+                  aria-label="Increase ticket count"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                </button>
+                <span className="text-xs text-slate-400 ml-auto">Max 6 per booking</span>
               </div>
             </div>
             <div className="space-y-2 md:col-span-2">

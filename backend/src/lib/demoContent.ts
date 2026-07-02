@@ -12,6 +12,10 @@ const img = (seed: string, w = 800, h = 400) => {
   return `https://picsum.photos/seed/${encodeURIComponent(seed)}/${w}/${h}`;
 };
 
+// Real, verified Unsplash photo IDs for subject-specific imagery (news, hospitals, etc.)
+// where the picsum seed hash can't guarantee topical relevance.
+const unsplashPhoto = (id: string, w = 800, h = 400) => `https://images.unsplash.com/photo-${id}?w=${w}&h=${h}&fit=crop&auto=format&q=70`;
+
 // ─── COMMUNITIES (exactly 5 — one per global city) ─────────────────────────
 const communityDefs = [
   { name: 'Hyderabad Community', slug: 'hyderabad-community', cat: 'Regional', city: 'Hyderabad', country: 'India', img: 'https://images.unsplash.com/photo-1572445271230-a78b5944a659?w=800&h=400&fit=crop&auto=format&q=70', members: 4820, posts: 1240, desc: 'Connect with people across Hyderabad — share local news, events and stories from the City of Pearls.' },
@@ -44,28 +48,178 @@ export const allCommunities = communityDefs.map((c, i) => ({
 
 // ─── JOBS ───────────────────────────────────────────────────────────────────
 const jobDefs = [
-  { title: 'Frontend Developer', company: 'TechNova Solutions', type: 'Full-time', salary: '₹8–14 LPA', loc: 'Bangalore', skills: ['React', 'TypeScript', 'Tailwind CSS'], website: 'https://careers.microsoft.com/' },
-  { title: 'Backend Developer', company: 'CloudStack Inc', type: 'Full-time', salary: '₹10–18 LPA', loc: 'Hyderabad', skills: ['Node.js', 'PostgreSQL', 'Redis'], website: 'https://www.amazon.jobs/' },
-  { title: 'Full Stack Developer', company: 'Digital Forge', type: 'Full-time', salary: '₹12–20 LPA', loc: 'Pune', skills: ['React', 'Node.js', 'MongoDB'], website: 'https://careers.ibm.com/' },
-  { title: 'React Developer', company: 'AppCraft Studio', type: 'Full-time', salary: '₹7–12 LPA', loc: 'Remote', skills: ['React', 'Redux', 'Next.js'], website: 'https://www.atlassian.com/company/careers' },
-  { title: 'Node.js Developer', company: 'ServerLogic', type: 'Contract', salary: '₹9–15 LPA', loc: 'Chennai', skills: ['Node.js', 'Express', 'AWS'], website: 'https://www.oracle.com/careers/' },
-  { title: 'Python Developer', company: 'DataPulse AI', type: 'Full-time', salary: '₹10–16 LPA', loc: 'Bangalore', skills: ['Python', 'Django', 'FastAPI'], website: 'https://careers.google.com/' },
-  { title: 'Data Analyst', company: 'InsightMetrics', type: 'Full-time', salary: '₹6–10 LPA', loc: 'Mumbai', skills: ['SQL', 'Python', 'Tableau'], website: 'https://www.sap.com/india/about/careers.html' },
-  { title: 'Data Scientist', company: 'MLWorks', type: 'Full-time', salary: '₹15–25 LPA', loc: 'Bangalore', skills: ['Python', 'TensorFlow', 'Statistics'], website: 'https://www.nvidia.com/en-us/about-nvidia/careers/' },
-  { title: 'UI/UX Designer', company: 'DesignHive', type: 'Full-time', salary: '₹8–14 LPA', loc: 'Remote', skills: ['Figma', 'Prototyping', 'User Research'], website: 'https://www.adobe.com/careers.html' },
-  { title: 'Graphic Designer', company: 'Creative Pulse', type: 'Part-time', salary: '₹4–7 LPA', loc: 'Delhi', skills: ['Photoshop', 'Illustrator', 'Branding'], website: 'https://www.canva.com/careers/' },
-  { title: 'Marketing Executive', company: 'BrandWave Media', type: 'Full-time', salary: '₹5–9 LPA', loc: 'Mumbai', skills: ['Digital Marketing', 'SEO', 'Content Strategy'], website: 'https://www.hubspot.com/careers' },
-  { title: 'HR Executive', company: 'PeopleFirst Corp', type: 'Full-time', salary: '₹5–8 LPA', loc: 'Hyderabad', skills: ['Recruitment', 'HRMS', 'Employee Relations'], website: 'https://jobs.workday.com/' },
-  { title: 'Sales Executive', company: 'GrowthEdge Sales', type: 'Full-time', salary: '₹4–8 LPA + incentives', loc: 'Chennai', skills: ['B2B Sales', 'CRM', 'Negotiation'], website: 'https://www.zoho.com/careers.html' },
-  { title: 'Civil Engineer', company: 'BuildRight Infrastructure', type: 'Full-time', salary: '₹6–12 LPA', loc: 'Pune', skills: ['AutoCAD', 'Project Management', 'Structural Design'], website: 'https://www.larsentoubro.com/corporate/careers/' },
-  { title: 'Mechanical Engineer', company: 'Precision Motors', type: 'Full-time', salary: '₹7–13 LPA', loc: 'Chennai', skills: ['SolidWorks', 'Manufacturing', 'Quality Control'], website: 'https://www.tatamotors.com/careers/' },
-  { title: 'Electrical Engineer', company: 'PowerGrid Solutions', type: 'Full-time', salary: '₹7–14 LPA', loc: 'Bangalore', skills: ['Circuit Design', 'PLC', 'Electrical Safety'], website: 'https://www.siemens.com/global/en/company/jobs.html' },
-  { title: 'Teacher', company: 'Bright Future Academy', type: 'Full-time', salary: '₹3–6 LPA', loc: 'Local', skills: ['Teaching', 'Curriculum Design', 'Communication'], website: 'https://byjus.com/careers/' },
-  { title: 'Accountant', company: 'FinTrust Associates', type: 'Full-time', salary: '₹4–8 LPA', loc: 'Mumbai', skills: ['Tally', 'GST', 'Financial Reporting'], website: 'https://www2.deloitte.com/us/en/careers.html' },
-  { title: 'Staff Nurse', company: 'City General Hospital', type: 'Full-time', salary: '₹3–6 LPA', loc: 'Local', skills: ['Patient Care', 'ICU', 'Medical Records'], website: 'https://www.apollohospitals.com/careers/' },
+  { title: 'Frontend Developer', company: 'TechNova Solutions', type: 'Full-time', salary: '₹8–14 LPA', experience: '2–4 years', loc: 'Bangalore', skills: ['React', 'TypeScript', 'Tailwind CSS'], website: 'https://careers.microsoft.com/' },
+  { title: 'Backend Developer', company: 'CloudStack Inc', type: 'Full-time', salary: '₹10–18 LPA', experience: '3–5 years', loc: 'Hyderabad', skills: ['Node.js', 'PostgreSQL', 'Redis'], website: 'https://www.amazon.jobs/' },
+  { title: 'Full Stack Developer', company: 'Digital Forge', type: 'Full-time', salary: '₹12–20 LPA', experience: '3–6 years', loc: 'Pune', skills: ['React', 'Node.js', 'MongoDB'], website: 'https://careers.ibm.com/' },
+  { title: 'React Developer', company: 'AppCraft Studio', type: 'Full-time', salary: '₹7–12 LPA', experience: '1–3 years', loc: 'Remote', skills: ['React', 'Redux', 'Next.js'], website: 'https://www.atlassian.com/company/careers' },
+  { title: 'Node.js Developer', company: 'ServerLogic', type: 'Contract', salary: '₹9–15 LPA', experience: '2–4 years', loc: 'Chennai', skills: ['Node.js', 'Express', 'AWS'], website: 'https://www.oracle.com/careers/' },
+  { title: 'Python Developer', company: 'DataPulse AI', type: 'Full-time', salary: '₹10–16 LPA', experience: '2–5 years', loc: 'Bangalore', skills: ['Python', 'Django', 'FastAPI'], website: 'https://careers.google.com/' },
+  { title: 'Data Analyst', company: 'InsightMetrics', type: 'Full-time', salary: '₹6–10 LPA', experience: '1–3 years', loc: 'Mumbai', skills: ['SQL', 'Python', 'Tableau'], website: 'https://www.sap.com/india/about/careers.html' },
+  { title: 'Data Scientist', company: 'MLWorks', type: 'Full-time', salary: '₹15–25 LPA', experience: '3–6 years', loc: 'Bangalore', skills: ['Python', 'TensorFlow', 'Statistics'], website: 'https://www.nvidia.com/en-us/about-nvidia/careers/' },
+  { title: 'UI/UX Designer', company: 'DesignHive', type: 'Full-time', salary: '₹8–14 LPA', experience: '2–4 years', loc: 'Remote', skills: ['Figma', 'Prototyping', 'User Research'], website: 'https://www.adobe.com/careers.html' },
+  { title: 'Graphic Designer', company: 'Creative Pulse', type: 'Part-time', salary: '₹4–7 LPA', experience: '0–2 years', loc: 'Delhi', skills: ['Photoshop', 'Illustrator', 'Branding'], website: 'https://www.canva.com/careers/' },
+  { title: 'Marketing Executive', company: 'BrandWave Media', type: 'Full-time', salary: '₹5–9 LPA', experience: '1–3 years', loc: 'Mumbai', skills: ['Digital Marketing', 'SEO', 'Content Strategy'], website: 'https://www.hubspot.com/careers' },
+  { title: 'HR Executive', company: 'PeopleFirst Corp', type: 'Full-time', salary: '₹5–8 LPA', experience: '1–3 years', loc: 'Hyderabad', skills: ['Recruitment', 'HRMS', 'Employee Relations'], website: 'https://jobs.workday.com/' },
+  { title: 'Sales Executive', company: 'GrowthEdge Sales', type: 'Full-time', salary: '₹4–8 LPA + incentives', experience: '1–3 years', loc: 'Chennai', skills: ['B2B Sales', 'CRM', 'Negotiation'], website: 'https://www.zoho.com/careers.html' },
+  { title: 'Civil Engineer', company: 'BuildRight Infrastructure', type: 'Full-time', salary: '₹6–12 LPA', experience: '2–5 years', loc: 'Pune', skills: ['AutoCAD', 'Project Management', 'Structural Design'], website: 'https://www.larsentoubro.com/corporate/careers/' },
+  { title: 'Mechanical Engineer', company: 'Precision Motors', type: 'Full-time', salary: '₹7–13 LPA', experience: '2–5 years', loc: 'Chennai', skills: ['SolidWorks', 'Manufacturing', 'Quality Control'], website: 'https://www.tatamotors.com/careers/' },
+  { title: 'Electrical Engineer', company: 'PowerGrid Solutions', type: 'Full-time', salary: '₹7–14 LPA', experience: '2–5 years', loc: 'Bangalore', skills: ['Circuit Design', 'PLC', 'Electrical Safety'], website: 'https://www.siemens.com/global/en/company/jobs.html' },
+  { title: 'Teacher', company: 'Bright Future Academy', type: 'Full-time', salary: '₹3–6 LPA', experience: '0–2 years', loc: 'Local', skills: ['Teaching', 'Curriculum Design', 'Communication'], website: 'https://byjus.com/careers/' },
+  { title: 'Accountant', company: 'FinTrust Associates', type: 'Full-time', salary: '₹4–8 LPA', experience: '1–3 years', loc: 'Mumbai', skills: ['Tally', 'GST', 'Financial Reporting'], website: 'https://www2.deloitte.com/us/en/careers.html' },
+  { title: 'Staff Nurse', company: 'City General Hospital', type: 'Full-time', salary: '₹3–6 LPA', experience: '0–2 years', loc: 'Local', skills: ['Patient Care', 'ICU', 'Medical Records'], website: 'https://www.apollohospitals.com/careers/' },
 ];
 
-export const allJobs = jobDefs.map((j, i) => {
+// Comprehensive technology catalog spanning languages, frameworks, infra, and
+// specialist domains, used to generate a large, varied jobs board covering
+// every major stack a job-seeker might search for.
+interface TechCatalogEntry { tech: string; category: string; roleTemplate: string; skills: string[] }
+
+const techCatalog: TechCatalogEntry[] = [
+  // Programming Languages
+  { tech: 'C', category: 'Programming Languages', roleTemplate: 'C Programmer', skills: ['C', 'Data Structures', 'Memory Management'] },
+  { tech: 'C++', category: 'Programming Languages', roleTemplate: 'C++ Developer', skills: ['C++', 'STL', 'Object-Oriented Design'] },
+  { tech: 'Java', category: 'Programming Languages', roleTemplate: 'Java Developer', skills: ['Java', 'Spring', 'Multithreading'] },
+  { tech: 'Python', category: 'Programming Languages', roleTemplate: 'Python Developer', skills: ['Python', 'REST APIs', 'Automation'] },
+  { tech: 'JavaScript', category: 'Programming Languages', roleTemplate: 'JavaScript Developer', skills: ['JavaScript', 'ES6+', 'DOM APIs'] },
+  { tech: 'TypeScript', category: 'Programming Languages', roleTemplate: 'TypeScript Engineer', skills: ['TypeScript', 'Type Systems', 'Node.js'] },
+  { tech: 'PHP', category: 'Programming Languages', roleTemplate: 'PHP Developer', skills: ['PHP', 'MySQL', 'REST APIs'] },
+  { tech: 'Ruby', category: 'Programming Languages', roleTemplate: 'Ruby Developer', skills: ['Ruby', 'Rails', 'RSpec'] },
+  { tech: 'Go', category: 'Programming Languages', roleTemplate: 'Go (Golang) Developer', skills: ['Go', 'Concurrency', 'Microservices'] },
+  { tech: 'Rust', category: 'Programming Languages', roleTemplate: 'Rust Systems Engineer', skills: ['Rust', 'Systems Programming', 'Performance Tuning'] },
+  { tech: 'Kotlin', category: 'Programming Languages', roleTemplate: 'Kotlin Developer', skills: ['Kotlin', 'Coroutines', 'Android SDK'] },
+  { tech: 'Swift', category: 'Programming Languages', roleTemplate: 'Swift Developer', skills: ['Swift', 'SwiftUI', 'Xcode'] },
+  { tech: 'Dart', category: 'Programming Languages', roleTemplate: 'Dart Developer', skills: ['Dart', 'Flutter', 'Async Programming'] },
+  { tech: 'C#', category: 'Programming Languages', roleTemplate: 'C# Developer', skills: ['C#', '.NET', 'LINQ'] },
+  { tech: 'R', category: 'Programming Languages', roleTemplate: 'R Programmer', skills: ['R', 'Statistical Modeling', 'Data Visualization'] },
+  { tech: 'Scala', category: 'Programming Languages', roleTemplate: 'Scala Developer', skills: ['Scala', 'Akka', 'Functional Programming'] },
+  // Frontend
+  { tech: 'HTML', category: 'Frontend', roleTemplate: 'HTML/CSS Developer', skills: ['HTML5', 'CSS3', 'Responsive Design'] },
+  { tech: 'CSS', category: 'Frontend', roleTemplate: 'CSS Specialist', skills: ['CSS3', 'Sass', 'Flexbox/Grid'] },
+  { tech: 'Bootstrap', category: 'Frontend', roleTemplate: 'Bootstrap Frontend Developer', skills: ['Bootstrap', 'HTML5', 'jQuery'] },
+  { tech: 'Tailwind', category: 'Frontend', roleTemplate: 'Tailwind CSS Developer', skills: ['Tailwind CSS', 'React', 'Component Design'] },
+  { tech: 'React', category: 'Frontend', roleTemplate: 'React Developer', skills: ['React', 'Redux', 'Hooks'] },
+  { tech: 'Angular', category: 'Frontend', roleTemplate: 'Angular Developer', skills: ['Angular', 'RxJS', 'TypeScript'] },
+  { tech: 'Vue', category: 'Frontend', roleTemplate: 'Vue.js Developer', skills: ['Vue.js', 'Vuex', 'Composition API'] },
+  { tech: 'Next.js', category: 'Frontend', roleTemplate: 'Next.js Developer', skills: ['Next.js', 'React', 'SSR/SSG'] },
+  { tech: 'Svelte', category: 'Frontend', roleTemplate: 'Svelte Developer', skills: ['Svelte', 'SvelteKit', 'JavaScript'] },
+  // Backend
+  { tech: 'Node.js', category: 'Backend', roleTemplate: 'Node.js Backend Engineer', skills: ['Node.js', 'Express', 'REST APIs'] },
+  { tech: 'Express', category: 'Backend', roleTemplate: 'Express.js Developer', skills: ['Express.js', 'Node.js', 'MongoDB'] },
+  { tech: 'Spring Boot', category: 'Backend', roleTemplate: 'Spring Boot Developer', skills: ['Spring Boot', 'Java', 'Microservices'] },
+  { tech: 'Django', category: 'Backend', roleTemplate: 'Django Developer', skills: ['Django', 'Python', 'PostgreSQL'] },
+  { tech: 'Flask', category: 'Backend', roleTemplate: 'Flask Developer', skills: ['Flask', 'Python', 'REST APIs'] },
+  { tech: 'Laravel', category: 'Backend', roleTemplate: 'Laravel Developer', skills: ['Laravel', 'PHP', 'MySQL'] },
+  { tech: 'ASP.NET', category: 'Backend', roleTemplate: 'ASP.NET Developer', skills: ['ASP.NET Core', 'C#', 'SQL Server'] },
+  // Database
+  { tech: 'SQL', category: 'Database', roleTemplate: 'SQL Database Developer', skills: ['SQL', 'Query Optimization', 'Data Modeling'] },
+  { tech: 'MySQL', category: 'Database', roleTemplate: 'MySQL Database Administrator', skills: ['MySQL', 'Database Tuning', 'Backup & Recovery'] },
+  { tech: 'PostgreSQL', category: 'Database', roleTemplate: 'PostgreSQL Developer', skills: ['PostgreSQL', 'Indexing', 'Query Optimization'] },
+  { tech: 'MongoDB', category: 'Database', roleTemplate: 'MongoDB Developer', skills: ['MongoDB', 'Aggregation Pipelines', 'NoSQL Design'] },
+  { tech: 'Oracle', category: 'Database', roleTemplate: 'Oracle Database Administrator', skills: ['Oracle DB', 'PL/SQL', 'Performance Tuning'] },
+  { tech: 'SQLite', category: 'Database', roleTemplate: 'SQLite Application Developer', skills: ['SQLite', 'Mobile Storage', 'SQL'] },
+  { tech: 'Firebase', category: 'Database', roleTemplate: 'Firebase Backend Developer', skills: ['Firebase', 'Firestore', 'Cloud Functions'] },
+  { tech: 'Redis', category: 'Database', roleTemplate: 'Redis Caching Engineer', skills: ['Redis', 'Caching Strategies', 'Pub/Sub'] },
+  // Cloud
+  { tech: 'AWS', category: 'Cloud', roleTemplate: 'AWS Cloud Engineer', skills: ['AWS', 'EC2/S3', 'CloudFormation'] },
+  { tech: 'Azure', category: 'Cloud', roleTemplate: 'Azure Cloud Engineer', skills: ['Azure', 'ARM Templates', 'Azure DevOps'] },
+  { tech: 'GCP', category: 'Cloud', roleTemplate: 'GCP Cloud Engineer', skills: ['Google Cloud Platform', 'BigQuery', 'Kubernetes Engine'] },
+  // DevOps
+  { tech: 'Docker', category: 'DevOps', roleTemplate: 'DevOps Engineer (Docker)', skills: ['Docker', 'Containerization', 'CI/CD'] },
+  { tech: 'Kubernetes', category: 'DevOps', roleTemplate: 'Kubernetes Engineer', skills: ['Kubernetes', 'Helm', 'Container Orchestration'] },
+  { tech: 'Jenkins', category: 'DevOps', roleTemplate: 'CI/CD Engineer (Jenkins)', skills: ['Jenkins', 'CI/CD Pipelines', 'Groovy'] },
+  { tech: 'GitHub Actions', category: 'DevOps', roleTemplate: 'DevOps Engineer (GitHub Actions)', skills: ['GitHub Actions', 'CI/CD', 'YAML Pipelines'] },
+  // Security & Infra
+  { tech: 'Cyber Security', category: 'Security', roleTemplate: 'Cyber Security Analyst', skills: ['Threat Detection', 'SIEM', 'Vulnerability Assessment'] },
+  { tech: 'Networking', category: 'Networking', roleTemplate: 'Network Engineer', skills: ['TCP/IP', 'Routing & Switching', 'Firewalls'] },
+  { tech: 'Operating Systems', category: 'Systems', roleTemplate: 'Systems Engineer', skills: ['Operating Systems', 'Process Scheduling', 'Shell Scripting'] },
+  { tech: 'Linux', category: 'Systems', roleTemplate: 'Linux System Administrator', skills: ['Linux', 'Bash Scripting', 'System Administration'] },
+  { tech: 'Embedded Systems', category: 'Embedded', roleTemplate: 'Embedded Systems Engineer', skills: ['Embedded C', 'Microcontrollers', 'RTOS'] },
+  { tech: 'IoT', category: 'IoT', roleTemplate: 'IoT Developer', skills: ['IoT Protocols', 'MQTT', 'Embedded Systems'] },
+  { tech: 'Blockchain', category: 'Blockchain', roleTemplate: 'Blockchain Developer', skills: ['Solidity', 'Smart Contracts', 'Web3.js'] },
+  { tech: 'Game Development', category: 'Game Dev', roleTemplate: 'Game Developer', skills: ['Unity', 'C#', 'Game Physics'] },
+  // Data & AI
+  { tech: 'Data Science', category: 'Data & AI', roleTemplate: 'Data Scientist', skills: ['Python', 'Pandas', 'Statistical Analysis'] },
+  { tech: 'Machine Learning', category: 'Data & AI', roleTemplate: 'Machine Learning Engineer', skills: ['Machine Learning', 'Scikit-learn', 'Model Deployment'] },
+  { tech: 'Artificial Intelligence', category: 'Data & AI', roleTemplate: 'AI Engineer', skills: ['AI Systems', 'Python', 'Neural Networks'] },
+  { tech: 'Deep Learning', category: 'Data & AI', roleTemplate: 'Deep Learning Engineer', skills: ['PyTorch', 'TensorFlow', 'Neural Networks'] },
+  { tech: 'NLP', category: 'Data & AI', roleTemplate: 'NLP Engineer', skills: ['NLP', 'Transformers', 'spaCy/NLTK'] },
+  { tech: 'Computer Vision', category: 'Data & AI', roleTemplate: 'Computer Vision Engineer', skills: ['OpenCV', 'CNNs', 'Image Processing'] },
+  // QA / Testing
+  { tech: 'Software Testing', category: 'QA', roleTemplate: 'Software Test Engineer', skills: ['Test Planning', 'Bug Tracking', 'Regression Testing'] },
+  { tech: 'QA Engineering', category: 'QA', roleTemplate: 'QA Engineer', skills: ['Test Cases', 'Quality Assurance', 'Defect Management'] },
+  { tech: 'Automation Testing', category: 'QA', roleTemplate: 'Automation Test Engineer', skills: ['Selenium', 'Test Automation', 'CI/CD Integration'] },
+  { tech: 'Manual Testing', category: 'QA', roleTemplate: 'Manual QA Tester', skills: ['Manual Testing', 'Test Case Design', 'Exploratory Testing'] },
+  // UI/UX & Mobile
+  { tech: 'UI/UX', category: 'Design', roleTemplate: 'UI/UX Designer', skills: ['Figma', 'Wireframing', 'User Research'] },
+  { tech: 'Android', category: 'Mobile', roleTemplate: 'Android Developer', skills: ['Android SDK', 'Kotlin', 'Jetpack Compose'] },
+  { tech: 'iOS', category: 'Mobile', roleTemplate: 'iOS Developer', skills: ['Swift', 'SwiftUI', 'Xcode'] },
+  { tech: 'Flutter', category: 'Mobile', roleTemplate: 'Flutter Developer', skills: ['Flutter', 'Dart', 'Cross-Platform Apps'] },
+  { tech: 'React Native', category: 'Mobile', roleTemplate: 'React Native Developer', skills: ['React Native', 'JavaScript', 'Mobile APIs'] },
+  // CS Fundamentals
+  { tech: 'Data Structures', category: 'Core CS', roleTemplate: 'Software Engineer (Data Structures & Algorithms)', skills: ['Data Structures', 'Algorithms', 'Problem Solving'] },
+  { tech: 'Algorithms', category: 'Core CS', roleTemplate: 'Algorithms Engineer', skills: ['Algorithm Design', 'Complexity Analysis', 'Optimization'] },
+  { tech: 'System Design', category: 'Core CS', roleTemplate: 'Software Architect (System Design)', skills: ['System Design', 'Scalability', 'Distributed Systems'] },
+  { tech: 'DBMS', category: 'Core CS', roleTemplate: 'Database Engineer (DBMS)', skills: ['DBMS Concepts', 'Normalization', 'Transactions'] },
+  { tech: 'Computer Networks', category: 'Core CS', roleTemplate: 'Network Systems Engineer', skills: ['Computer Networks', 'OSI Model', 'Network Security'] },
+];
+
+const seniorityLevels = [
+  { label: 'Junior', prefix: 'Junior', experience: '0–1 years', lpaMin: 4, lpaMax: 8 },
+  { label: 'Mid', prefix: '', experience: '2–4 years', lpaMin: 8, lpaMax: 16 },
+  { label: 'Senior', prefix: 'Senior', experience: '5–8 years', lpaMin: 16, lpaMax: 32 },
+];
+
+const jobLocationPool = ['Bangalore', 'Hyderabad', 'Pune', 'Chennai', 'Mumbai', 'Gurugram', 'Noida', 'Kolkata', 'Ahmedabad', 'Kochi', 'Coimbatore', 'Jaipur', 'Indore', 'Remote'];
+const jobTypePool = ['Full-time', 'Full-time', 'Full-time', 'Remote', 'Contract'];
+
+const companyPrefixes = ['Tech', 'Cloud', 'Data', 'Byte', 'Code', 'Logic', 'Pixel', 'Cyber', 'Net', 'Dev', 'Quantum', 'Nova', 'Stack', 'Core', 'Flux', 'Spark', 'Vertex', 'Apex', 'Prime', 'Nex'];
+const companySuffixes = ['Solutions', 'Systems', 'Labs', 'Works', 'Technologies', 'Softwares', 'Innovations', 'Networks', 'Dynamics', 'Studio'];
+
+const realCareerSites = [
+  'https://careers.google.com/', 'https://careers.microsoft.com/', 'https://www.amazon.jobs/',
+  'https://careers.ibm.com/', 'https://www.atlassian.com/company/careers', 'https://www.oracle.com/careers/',
+  'https://www.sap.com/india/about/careers.html', 'https://www.nvidia.com/en-us/about-nvidia/careers/',
+  'https://www.adobe.com/careers.html', 'https://www.salesforce.com/company/careers/',
+  'https://jobs.workday.com/', 'https://www.zoho.com/careers.html', 'https://www.cisco.com/c/en/us/about/careers.html',
+  'https://www.vmware.com/company/careers.html', 'https://www.intel.com/content/www/us/en/jobs/jobs-at-intel.html',
+  'https://www.dell.com/en-in/dt/corporate/careers.htm', 'https://www.hpe.com/us/en/about/careers.html',
+  'https://www.servicenow.com/careers.html', 'https://www.freshworks.com/company/careers/',
+  'https://www.infosys.com/careers.html', 'https://www.tcs.com/careers', 'https://careers.wipro.com/',
+  'https://www.accenture.com/in-en/careers', 'https://careers.cognizant.com/', 'https://careers.hcltech.com/',
+];
+
+function generatedCompanyName(index: number): string {
+  const prefix = companyPrefixes[index % companyPrefixes.length];
+  const suffix = companySuffixes[Math.floor(index / companyPrefixes.length) % companySuffixes.length];
+  return `${prefix}${suffix}`;
+}
+
+const generatedJobDefs: typeof jobDefs = [];
+let genIndex = 0;
+techCatalog.forEach((entry) => {
+  // Every technology gets a mid + senior listing; roughly a third also get a junior listing,
+  // spreading the catalog out to comfortably clear 150+ total unique roles.
+  const levelsForTech = genIndex % 3 === 0 ? seniorityLevels : seniorityLevels.slice(1);
+  levelsForTech.forEach((level) => {
+    const company = generatedCompanyName(genIndex);
+    const title = level.prefix ? `${level.prefix} ${entry.roleTemplate}` : entry.roleTemplate;
+    generatedJobDefs.push({
+      title,
+      company,
+      type: jobTypePool[genIndex % jobTypePool.length],
+      salary: `₹${level.lpaMin}–${level.lpaMax} LPA`,
+      experience: level.experience,
+      loc: jobLocationPool[genIndex % jobLocationPool.length],
+      skills: entry.skills,
+      website: realCareerSites[genIndex % realCareerSites.length],
+    });
+    genIndex += 1;
+  });
+});
+
+const allJobDefs = [...jobDefs, ...generatedJobDefs];
+
+export const allJobs = allJobDefs.map((j, i) => {
   const author = demoPeople[i % demoPeople.length];
   return {
     id: `job-${String(i + 1).padStart(3, '0')}`,
@@ -74,6 +228,7 @@ export const allJobs = jobDefs.map((j, i) => {
     companyLogo: `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(j.company)}`,
     type: j.type,
     salary: j.salary,
+    experience: j.experience,
     location: j.loc,
     description: `${j.company} is hiring a talented ${j.title} to join our growing team. You'll work on exciting projects that impact our local community and beyond. We offer competitive compensation, flexible work arrangements, and a collaborative culture.`,
     skills: j.skills,
@@ -135,51 +290,105 @@ export const allEvents = eventDefs.map((e, i) => {
 
 // ─── NEWS ───────────────────────────────────────────────────────────────────
 const newsDefs = [
-  { cat: 'Politics', title: 'City Council Approves ₹500 Crore Infrastructure Budget', summary: 'Major allocation for roads, water supply, and public transport upgrades across all wards.', loc: 'GHMC Head Office, Hyderabad' },
-  { cat: 'Education', title: 'New STEM Labs Open in 50 Public Schools', summary: 'State government initiative brings robotics and coding labs to underserved schools.', loc: 'Kukatpally, Hyderabad' },
-  { cat: 'Technology', title: 'Local Startup Raises ₹50 Crore Series A Funding', summary: 'AgriTech platform FarmLink plans to onboard 1 lakh farmers across rural districts.', loc: 'T-Hub, Hyderabad' },
-  { cat: 'Healthcare', title: 'Free Health Checkup Camps Across 20 Wards This Month', summary: 'Municipal health department partners with local hospitals for preventive care drives.', loc: 'Secunderabad, Hyderabad' },
-  { cat: 'Environment', title: 'Green Park Renovation Project Gets Green Light', summary: '₹12 crore plan adds eco-friendly amenities, amphitheater, and children\'s learning garden.', loc: 'KBR Park, Hyderabad' },
-  { cat: 'Transportation', title: 'New Metro Line to Connect Outer Suburbs by 2027', summary: 'Transport authority announces expansion benefiting 2 million residents.', loc: 'Miyapur, Hyderabad' },
-  { cat: 'Business', title: 'Small Business Grant Program Launches with ₹100 Crore Fund', summary: 'Local entrepreneurs can apply for zero-interest loans up to ₹10 lakhs.', loc: 'Begumpet, Hyderabad' },
-  { cat: 'Sports', title: 'City Team Wins State Cricket Championship', summary: 'Historic victory after 15 years brings home the trophy to cheering fans.', loc: 'Uppal Stadium, Hyderabad' },
-  { cat: 'Culture', title: 'Annual Cultural Festival to Feature Artists from 20 Countries', summary: 'Five-day celebration of art, dance, and cuisine at the Heritage Grounds.', loc: 'Shilparamam, Hyderabad' },
-  { cat: 'Politics', title: 'New Ward Boundaries Finalized After Census Review', summary: 'Redistricting ensures better representation for growing suburban areas.', loc: 'LB Nagar, Hyderabad' },
-  { cat: 'Education', title: 'Scholarship Portal Opens for Merit-Based Awards', summary: '500 scholarships available for students pursuing higher education locally.', loc: 'Ameerpet, Hyderabad' },
-  { cat: 'Technology', title: 'Free Wi-Fi Hotspots Installed at 100 Public Locations', summary: 'Digital inclusion initiative covers parks, libraries, and bus stations.', loc: 'Gachibowli, Hyderabad' },
-  { cat: 'Healthcare', title: 'New 500-Bed Super Specialty Hospital Inaugurated', summary: 'State-of-the-art facility offers cardiac, neuro, and oncology services.', loc: 'Banjara Hills, Hyderabad' },
-  { cat: 'Environment', title: 'Plastic Ban Enforcement Drives Reduce Waste by 40%', summary: 'Community compliance and awareness campaigns show significant impact.', loc: 'Jubilee Hills, Hyderabad' },
-  { cat: 'Transportation', title: 'Electric Bus Fleet Expanded to 200 Vehicles', summary: 'Clean energy transition accelerates with new charging infrastructure.', loc: 'Mehdipatnam, Hyderabad' },
-  { cat: 'Business', title: 'Local Handicraft Exporters See 30% Growth', summary: 'Global demand for traditional crafts boosts rural artisan incomes.', loc: 'Charminar, Hyderabad' },
-  { cat: 'Sports', title: 'Youth Football Academy Opens Registration', summary: 'Free coaching for ages 8-16 at the new municipal sports complex.', loc: 'Malkajgiri, Hyderabad' },
-  { cat: 'Culture', title: 'Heritage Museum Launches Virtual Tour Platform', summary: 'Explore 500 years of local history from anywhere in the world.', loc: 'Salar Jung Museum, Hyderabad' },
-  { cat: 'Education', title: 'Hyderabad Public Library Reopens After Digital Overhaul', summary: 'Newly renovated central library adds 200 study pods, e-book kiosks, and a maker space for students.', loc: 'Afzal Gunj, Hyderabad' },
-  { cat: 'Healthcare', title: 'Mobile Health Vans to Reach 40 Remote Colonies', summary: 'New fleet of mobile clinics brings free diagnostics and vaccinations directly to underserved neighborhoods.', loc: 'Rajendranagar, Hyderabad' },
-  { cat: 'Environment', title: 'Community Tree Plantation Drive Crosses 1 Lakh Saplings', summary: 'Volunteers and school groups mark a major environmental milestone ahead of monsoon season.', loc: 'Kokapet, Hyderabad' },
-  { cat: 'Technology', title: 'City Launches AI-Powered Traffic Management Pilot', summary: 'Smart signals at 25 junctions aim to cut average commute times by 15% during peak hours.', loc: 'Hitech City, Hyderabad' },
-  { cat: 'Culture', title: 'Weekend Farmers Market Returns to Necklace Road', summary: 'Over 80 local vendors will sell organic produce, handmade crafts, and street food every Saturday.', loc: 'Necklace Road, Hyderabad' },
+  { cat: 'Politics', title: 'City Council Approves ₹500 Crore Infrastructure Budget', summary: 'Major allocation for roads, water supply, and public transport upgrades across all wards.', loc: 'GHMC Head Office, Hyderabad', photo: '1541872703-74c5e44368f9' },
+  { cat: 'Education', title: 'New STEM Labs Open in 50 Public Schools', summary: 'State government initiative brings robotics and coding labs to underserved schools.', loc: 'Kukatpally, Hyderabad', photo: '1509062522246-3755977927d7' },
+  { cat: 'Technology', title: 'Local Startup Raises ₹50 Crore Series A Funding', summary: 'AgriTech platform FarmLink plans to onboard 1 lakh farmers across rural districts.', loc: 'T-Hub, Hyderabad', photo: '1596496181848-3091d4878b24' },
+  { cat: 'Healthcare', title: 'Free Health Checkup Camps Across 20 Wards This Month', summary: 'Municipal health department partners with local hospitals for preventive care drives.', loc: 'Secunderabad, Hyderabad', photo: '1584982751601-97dcc096659c' },
+  { cat: 'Environment', title: 'Green Park Renovation Project Gets Green Light', summary: '₹12 crore plan adds eco-friendly amenities, amphitheater, and children\'s learning garden.', loc: 'KBR Park, Hyderabad', photo: '1441986300917-64674bd600d8' },
+  { cat: 'Transportation', title: 'New Metro Line to Connect Outer Suburbs by 2027', summary: 'Transport authority announces expansion benefiting 2 million residents.', loc: 'Miyapur, Hyderabad', photo: '1517649763962-0c623066013b' },
+  { cat: 'Business', title: 'Small Business Grant Program Launches with ₹100 Crore Fund', summary: 'Local entrepreneurs can apply for zero-interest loans up to ₹10 lakhs.', loc: 'Begumpet, Hyderabad', photo: '1556761175-4b46a572b786' },
+  { cat: 'Sports', title: 'City Team Wins State Cricket Championship', summary: 'Historic victory after 15 years brings home the trophy to cheering fans.', loc: 'Uppal Stadium, Hyderabad', photo: '1531482615713-2afd69097998' },
+  { cat: 'Culture', title: 'Annual Cultural Festival to Feature Artists from 20 Countries', summary: 'Five-day celebration of art, dance, and cuisine at the Heritage Grounds.', loc: 'Shilparamam, Hyderabad', photo: '1541829070764-84a7d30dd3f3' },
+  { cat: 'Politics', title: 'New Ward Boundaries Finalized After Census Review', summary: 'Redistricting ensures better representation for growing suburban areas.', loc: 'LB Nagar, Hyderabad', photo: '1523240795612-9a054b0db644' },
+  { cat: 'Education', title: 'Scholarship Portal Opens for Merit-Based Awards', summary: '500 scholarships available for students pursuing higher education locally.', loc: 'Ameerpet, Hyderabad', photo: '1517457373958-b7bdd4587205' },
+  { cat: 'Technology', title: 'Free Wi-Fi Hotspots Installed at 100 Public Locations', summary: 'Digital inclusion initiative covers parks, libraries, and bus stations.', loc: 'Gachibowli, Hyderabad', photo: '1544717305-2782549b5136' },
+  { cat: 'Healthcare', title: 'New 500-Bed Super Specialty Hospital Inaugurated', summary: 'State-of-the-art facility offers cardiac, neuro, and oncology services.', loc: 'Banjara Hills, Hyderabad', photo: '1587351021759-3e566b6af7cc' },
+  { cat: 'Environment', title: 'Plastic Ban Enforcement Drives Reduce Waste by 40%', summary: 'Community compliance and awareness campaigns show significant impact.', loc: 'Jubilee Hills, Hyderabad', photo: '1542601906990-b4d3fb778b09' },
+  { cat: 'Transportation', title: 'Electric Bus Fleet Expanded to 200 Vehicles', summary: 'Clean energy transition accelerates with new charging infrastructure.', loc: 'Mehdipatnam, Hyderabad', photo: '1601758228041-f3b2795255f1' },
+  { cat: 'Business', title: 'Local Handicraft Exporters See 30% Growth', summary: 'Global demand for traditional crafts boosts rural artisan incomes.', loc: 'Charminar, Hyderabad', photo: '1546519638-68e109498ffc' },
+  { cat: 'Sports', title: 'Youth Football Academy Opens Registration', summary: 'Free coaching for ages 8-16 at the new municipal sports complex.', loc: 'Malkajgiri, Hyderabad', photo: '1526304640581-d334cdbbf45e' },
+  { cat: 'Culture', title: 'Heritage Museum Launches Virtual Tour Platform', summary: 'Explore 500 years of local history from anywhere in the world.', loc: 'Salar Jung Museum, Hyderabad', photo: '1524178232363-1fb2b075b655' },
+  { cat: 'Education', title: 'Hyderabad Public Library Reopens After Digital Overhaul', summary: 'Newly renovated central library adds 200 study pods, e-book kiosks, and a maker space for students.', loc: 'Afzal Gunj, Hyderabad', photo: '1521587760476-6c12a4b040da' },
+  { cat: 'Healthcare', title: 'Mobile Health Vans to Reach 40 Remote Colonies', summary: 'New fleet of mobile clinics brings free diagnostics and vaccinations directly to underserved neighborhoods.', loc: 'Rajendranagar, Hyderabad', photo: '1532375810709-75b1da00537c' },
+  { cat: 'Environment', title: 'Community Tree Plantation Drive Crosses 1 Lakh Saplings', summary: 'Volunteers and school groups mark a major environmental milestone ahead of monsoon season.', loc: 'Kokapet, Hyderabad', photo: '1497436072909-60f360e1d4b1' },
+  { cat: 'Technology', title: 'City Launches AI-Powered Traffic Management Pilot', summary: 'Smart signals at 25 junctions aim to cut average commute times by 15% during peak hours.', loc: 'Hitech City, Hyderabad', photo: '1571019613454-1cb2f99b2d8b' },
+  { cat: 'Culture', title: 'Weekend Farmers Market Returns to Necklace Road', summary: 'Over 80 local vendors will sell organic produce, handmade crafts, and street food every Saturday.', loc: 'Necklace Road, Hyderabad', photo: '1560179707-f14e90ef3623' },
 ];
 
-const newsImages = ['1571091718767-18b5b1457add', '1625246333195-78d9c38ad449', '1519331379826-f10be5486c6f', '1576091160399-112ba8d25d1f', '1504711434969-e33886168f5c', '1544627737-d9e3c37a2c6d'];
+const NEWS_TAGS: Record<string, string[]> = {
+  Politics: ['Local Governance', 'City Council', 'Public Policy', 'Civic Affairs'],
+  Education: ['Schools', 'Students', 'Learning', 'Youth Development'],
+  Technology: ['Innovation', 'Startups', 'Digital India', 'Smart City'],
+  Healthcare: ['Public Health', 'Hospitals', 'Wellness', 'Medical Access'],
+  Environment: ['Sustainability', 'Green Initiative', 'Climate Action', 'Urban Ecology'],
+  Transportation: ['Public Transit', 'Infrastructure', 'Commute', 'Urban Mobility'],
+  Business: ['Local Economy', 'Entrepreneurship', 'Small Business', 'Growth'],
+  Sports: ['Athletics', 'Community Sports', 'Youth Sports', 'Championship'],
+  Culture: ['Arts & Culture', 'Community Events', 'Heritage', 'Local Traditions'],
+};
+
+const NEWS_SOURCES = ['Hometown Hub Newsroom', 'City Desk Reporter', 'Hyderabad Metro Bureau', 'Community Affairs Desk'];
+
+function buildArticleBody(n: { cat: string; title: string; summary: string; loc: string }, i: number): string {
+  const spokesperson = demoPeople[(i + 3) % demoPeople.length];
+  const analyst = demoPeople[(i + 6) % demoPeople.length];
+  const resident = demoPeople[(i + 9) % demoPeople.length];
+
+  return `${n.summary}
+
+The announcement was made official this week at ${n.loc}, where municipal representatives, community stakeholders, and members of the press gathered to review the scope of the initiative. Officials described it as one of the more ambitious ${n.cat.toLowerCase()}-focused efforts undertaken by the local administration in recent years, with planning having stretched back several months before today's formal rollout.
+
+"This has been a long time coming, and we're proud to finally bring it to the residents who need it most," said ${spokesperson.name}, a senior coordinator involved in the project. "We consulted extensively with local stakeholders to make sure this reflects what the community actually asked for, not just what looks good on paper. Every phase of this rollout has been shaped by direct resident feedback, and we intend to keep it that way as implementation continues."
+
+Background and context
+
+The initiative did not emerge in isolation. Over the past year, city planners and department heads have been reviewing data on service gaps across wards, with ${n.cat.toLowerCase()}-related concerns consistently ranking among the top issues raised in resident surveys and ward committee meetings. Budget allocations for this cycle reflect that shift in priority, with a notably larger share directed toward projects with direct, measurable impact on everyday residents rather than long-horizon infrastructure that takes years to materialize.
+
+Officials noted that similar efforts in neighboring districts have shown encouraging early results, and the current rollout draws on lessons learned from those pilot programs — including a stronger emphasis on transparent timelines and regular public progress updates, both of which were cited as weaknesses in earlier civic initiatives.
+
+Community reaction
+
+Reaction from residents in and around ${n.loc} has been largely positive, though not without a note of cautious optimism. "We've heard promises like this before, so I'll believe it when I see the results on the ground," said ${resident.name}, a long-time resident of the area. "That said, the fact that they're actually out here talking to us before rolling it out is a good sign. It feels different this time."
+
+Local community groups have already begun organizing informational sessions to help residents understand how to access the new services or participate in upcoming phases. Several ward-level representatives have pledged to hold monthly check-in meetings to track progress and surface any issues early, rather than waiting for a single end-of-year review.
+
+Expert perspective
+
+${analyst.name}, an independent policy analyst who has tracked municipal ${n.cat.toLowerCase()} initiatives across the region, offered a measured take on the announcement. "The scale here is genuinely significant compared to what we've seen in similar-sized cities, but execution is everything. The gap between an announced budget and a delivered outcome can be wide if oversight isn't consistent. What will really matter is whether the promised timeline holds and whether the reporting stays transparent through every phase, not just the launch."
+
+Analysts also pointed out that initiatives of this scope typically require coordination across multiple municipal departments, which historically has been a source of delay. City officials say they've set up a dedicated inter-departmental task force specifically to avoid the bottlenecks that slowed comparable projects in the past.
+
+What happens next
+
+According to the timeline shared at the announcement, the first visible results are expected within the next few weeks, with a fuller rollout continuing over the following months. Officials have committed to publishing quarterly progress updates and holding open town-hall sessions so residents can ask questions directly and flag concerns as they arise.
+
+Residents interested in staying informed or getting involved are encouraged to follow official municipal channels and attend upcoming ward meetings, where further details and opportunities for public feedback will be shared. Hometown Hub will continue to follow this story and provide updates as the initiative progresses.`;
+}
 
 export const allNews = newsDefs.map((n, i) => {
   const author = demoPeople[i % demoPeople.length];
+  const created = daysAgo(i);
+  const updated = new Date(new Date(created).getTime() + (2 + (i % 5)) * 3600000).toISOString();
   return {
     id: `news-${String(i + 1).padStart(3, '0')}`,
     title: n.title,
     summary: n.summary,
-    content: `${n.summary}\n\nIn a significant development for the local community, officials announced comprehensive measures that will benefit residents across all demographics. Community leaders have praised the initiative, noting its potential to create lasting positive change.\n\nLocal experts weigh in on the implications, with many calling it a step in the right direction. Public consultations will continue over the coming weeks to gather feedback and refine implementation plans.`,
+    content: buildArticleBody(n, i),
     category: n.cat,
     location: n.loc,
-    image: img(newsImages[i % newsImages.length]),
+    image: unsplashPhoto(n.photo),
     authorId: author.id,
     author: { id: author.id, name: author.name, username: author.username, profileImage: author.profileImage },
     views: 1200 + i * 340,
     likes: 45 + i * 12,
     commentCount: 8 + i * 3,
     shareCount: 5 + i,
-    readTime: `${3 + (i % 4)} min read`,
-    createdAt: daysAgo(i),
+    readTime: `${6 + (i % 4)} min read`,
+    tags: NEWS_TAGS[n.cat] || ['Local News'],
+    source: NEWS_SOURCES[i % NEWS_SOURCES.length],
+    createdAt: created,
+    publishedAt: created,
+    updatedAt: updated,
     trending: i < 4,
   };
 });
@@ -442,8 +651,6 @@ export const allScholarships = [
 ];
 
 // ─── HEALTHCARE ─────────────────────────────────────────────────────────────
-const unsplashPhoto = (id: string, w = 800, h = 400) => `https://images.unsplash.com/photo-${id}?w=${w}&h=${h}&fit=crop&auto=format&q=70`;
-
 export const allHospitals = [
   { id: 'hosp-001', name: 'Apollo Hospitals Hyderabad', type: 'Multi-specialty', address: 'Jubilee Hills, Hyderabad, Telangana', phone: '+91-40-2360-7777', rating: 4.5, beds: 500, emergency: true, distance: '1.2 km', specialities: ['Cardiology', 'Neurology', 'Orthopedics', 'Emergency'], image: unsplashPhoto('1587351021759-3e566b6af7cc') },
   { id: 'hosp-002', name: 'Care Hospitals', type: 'Primary Care', address: 'Banjara Hills, Hyderabad, Telangana', phone: '+91-40-6165-6565', rating: 4.3, beds: 50, emergency: false, distance: '2.8 km', specialities: ['General Medicine', 'Pediatrics', 'Dermatology'], image: unsplashPhoto('1516549655169-df83a0774514') },

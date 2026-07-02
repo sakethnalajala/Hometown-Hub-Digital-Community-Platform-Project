@@ -72,7 +72,7 @@ export default function EventsPage() {
     setRegistrationOpen(true)
   }
 
-  const handleRegistrationSubmit = async (payload: { fullName: string; email: string; phone: string; notes: string }) => {
+  const handleRegistrationSubmit = async (payload: { fullName: string; email: string; phone: string; notes: string; quantity: number }) => {
     if (!selectedEvent) return
     try {
       await eventsApi.rsvp(selectedEvent.id, 'GOING')
@@ -87,10 +87,13 @@ export default function EventsPage() {
       fullName: payload.fullName,
       email: payload.email,
       phone: payload.phone,
+      quantity: payload.quantity,
       dateTime: selectedEvent.date,
       venue: selectedEvent.isOnline ? 'Online Event' : (selectedEvent.location || 'To be announced'),
+      organizer: selectedEvent.organizer?.name || selectedEvent.community?.name || 'Hometown Hub',
+      eventImage: selectedEvent.bannerImage,
     })
-    toast.success(`You're registered for ${selectedEvent.title}!`)
+    toast.success(`You're registered for ${selectedEvent.title}! ${payload.quantity} ticket${payload.quantity > 1 ? 's' : ''} booked.`)
     setInvitation(newInvitation)
     setInvitationOpen(true)
   }

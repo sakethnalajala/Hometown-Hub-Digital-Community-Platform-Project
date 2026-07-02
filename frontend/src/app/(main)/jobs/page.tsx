@@ -48,9 +48,10 @@ export default function JobsPage() {
   const [applicationOpen, setApplicationOpen] = useState(false)
   const [selectedJob, setSelectedJob] = useState<Job | null>(null)
   const [jobToDelete, setJobToDelete] = useState<{ id: string; title: string } | null>(null)
+  const [visibleCount, setVisibleCount] = useState(12)
 
   useEffect(() => {
-    jobsApi.getAll({ limit: 100 })
+    jobsApi.getAll({ limit: 300 })
       .then(res => {
         setJobs(res.data || [])
         setLoading(false)
@@ -110,10 +111,13 @@ export default function JobsPage() {
   const filtered = jobs.filter(job => {
     const jobType = job.type || 'Full-time'
     const matchType = activeType === 'All' || jobType === activeType
+    const q = search.toLowerCase()
+    const skills = Array.isArray(job.skills) ? job.skills.join(' ') : (job.skills || '')
     const matchSearch = !search ||
-      (job.title || '').toLowerCase().includes(search.toLowerCase()) ||
-      (job.company || '').toLowerCase().includes(search.toLowerCase()) ||
-      (job.location || '').toLowerCase().includes(search.toLowerCase())
+      (job.title || '').toLowerCase().includes(q) ||
+      (job.company || '').toLowerCase().includes(q) ||
+      (job.location || '').toLowerCase().includes(q) ||
+      skills.toLowerCase().includes(q)
     return matchType && matchSearch
   })
 
@@ -192,7 +196,7 @@ export default function JobsPage() {
                 <Input
                   placeholder="Search jobs, companies, skills..."
                   value={search}
-                  onChange={e => setSearch(e.target.value)}
+                  onChange={e => { setSearch(e.target.value); setVisibleCount(12) }}
                   className="pl-12 bg-white border-white/10 text-gray-900 placeholder:text-gray-500 rounded-2xl h-16 font-medium shadow-2xl focus:ring-4 focus:ring-cyan-400/50 text-lg"
                 />
               </div>
@@ -215,7 +219,7 @@ export default function JobsPage() {
               {jobTypes.map(type => (
                 <motion.button
                   key={type}
-                  onClick={() => setActiveType(type)}
+                  onClick={() => { setActiveType(type); setVisibleCount(12) }}
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                   className={`px-6 py-3 rounded-full text-sm font-bold transition-all shadow-lg ${
@@ -264,8 +268,12 @@ export default function JobsPage() {
             <p className="text-lg">No jobs found. Try adjusting your filters.</p>
           </motion.div>
         ) : (
+          <>
+          <motion.p variants={itemVariants} className="text-sm text-gray-400">
+            Showing {Math.min(visibleCount, filtered.length)} of {filtered.length} job{filtered.length === 1 ? '' : 's'}
+          </motion.p>
           <motion.div variants={containerVariants} className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {filtered.slice(0, 6).map((job: Job) => (
+            {filtered.slice(0, visibleCount).map((job: Job) => (
               <motion.div key={job.id} variants={itemVariants}>
                 <Link href={`/jobs/${job.id}`}>
                   <motion.div
@@ -319,6 +327,11 @@ export default function JobsPage() {
                           <DollarSign className="w-3.5 h-3.5" /> {job.salary}
                         </span>
                       )}
+                      {job.experience && (
+                        <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/30">
+                          <Briefcase className="w-3.5 h-3.5" /> {job.experience}
+                        </span>
+                      )}
                       <span className="ml-auto text-gray-400">{job.createdAt ? new Date(job.createdAt).toLocaleDateString() : ''}</span>
                     </div>
 
@@ -339,6 +352,18 @@ export default function JobsPage() {
               </motion.div>
             ))}
           </motion.div>
+          {visibleCount < filtered.length && (
+            <div className="flex justify-center">
+              <Button
+                onClick={() => setVisibleCount((v) => v + 12)}
+                variant="outline"
+                className="border-white/20 bg-white/10 backdrop-blur-md text-white hover:bg-white/20 rounded-2xl px-8 font-bold"
+              >
+                Load More Jobs
+              </Button>
+            </div>
+          )}
+          </>
         )}
 
         {/* Post a Job CTA */}

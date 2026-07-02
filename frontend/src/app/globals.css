@@ -645,20 +645,115 @@ h1, h2, h3, h4, h5, h6 {
   .show-mobile-only { display: none !important; }
 }
 
-/* Print — only the event invitation card is printed, everything else hidden */
+/* Print — only the event ticket pages are printed, everything else hidden.
+   Each .ticket-page is forced onto its own printed page so N booked
+   tickets produce N separate pages. */
 @media print {
   body * {
     visibility: hidden;
   }
-  #invitation-print-area,
-  #invitation-print-area * {
+  #ticket-print-area,
+  #ticket-print-area * {
     visibility: visible;
   }
-  #invitation-print-area {
-    position: fixed;
+  #ticket-print-area {
+    position: absolute;
     inset: 0;
-    margin: 2rem auto;
-    width: 480px;
+    display: block !important;
+  }
+
+  .ticket-page {
+    width: 100%;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    page-break-after: always;
+    break-after: page;
+  }
+  .ticket-page:last-child {
+    page-break-after: auto;
+    break-after: auto;
+  }
+
+  .ticket-card {
+    width: 100%;
+    max-width: 620px;
+    margin: 0 auto;
+    padding: 40px 44px;
+    background: #ffffff;
+    color: #111827;
+    border: 2px solid #111827;
+    border-radius: 20px;
+  }
+  .ticket-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 2px dashed #d1d5db;
+    padding-bottom: 16px;
+    margin-bottom: 16px;
+  }
+  .ticket-card-brand {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 800;
+    font-size: 14px;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: #7c3aed;
+  }
+  .ticket-card-badge {
+    font-size: 11px;
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: 999px;
+    background: #f3f4f6;
+    color: #374151;
+  }
+  .ticket-card-title {
+    font-size: 26px;
+    font-weight: 900;
+    margin-bottom: 20px;
+    color: #111827;
+  }
+  .ticket-card-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px 24px;
+    margin-bottom: 24px;
+  }
+  .ticket-card-label {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #6b7280;
+    margin-bottom: 2px;
+  }
+  .ticket-card-value {
+    font-size: 15px;
+    font-weight: 700;
+    color: #111827;
+  }
+  .ticket-card-qr-wrap {
+    display: flex;
+    justify-content: center;
+    padding: 20px 0;
+    border-top: 2px dashed #d1d5db;
+    border-bottom: 2px dashed #d1d5db;
+    margin-bottom: 20px;
+  }
+  .ticket-card-footer {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .ticket-card-terms p {
+    font-size: 10px;
+    line-height: 1.5;
+    color: #6b7280;
+    margin-top: 2px;
   }
 }
 
