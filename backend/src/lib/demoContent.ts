@@ -183,46 +183,132 @@ export const allNews = newsDefs.map((n, i) => {
   };
 });
 
-// ─── TOURISM (15 iconic Indian destinations) ────────────────────────────────
-const tourismDefs = [
-  { name: 'Charminar', type: 'MONUMENT', loc: 'Hyderabad, Telangana', rating: 4.7, desc: 'A 16th-century mosque and iconic monument with four grand minarets, the beating heart of the Old City.', entryFee: '₹20 (Indians) / ₹300 (Foreigners)', openingTime: '9:00 AM – 5:30 PM', hotels: ['Taj Falaknuma Palace', 'ITC Kohenur'] },
-  { name: 'Golconda Fort', type: 'MONUMENT', loc: 'Hyderabad, Telangana', rating: 4.6, desc: 'A majestic 16th-century fortress famed for its acoustic engineering, diamond trade history, and sound-and-light show.', entryFee: '₹25 (Indians) / ₹300 (Foreigners)', openingTime: '9:00 AM – 5:30 PM', hotels: ['Taj Falaknuma Palace', 'Marriott Hyderabad'] },
-  { name: 'Ramoji Film City', type: 'ACTIVITY', loc: 'Hyderabad, Telangana', rating: 4.5, desc: 'The world\'s largest integrated film studio complex, offering theme-park rides, film sets, and live shows.', entryFee: '₹1,150 onwards', openingTime: '9:00 AM – 5:30 PM', hotels: ['Ramoji Film City Resort'] },
-  { name: 'Hussain Sagar', type: 'PLACE', loc: 'Hyderabad, Telangana', rating: 4.4, desc: 'A heart-shaped lake with a giant monolithic Buddha statue at its centre, popular for boating and evening walks.', entryFee: 'Free', openingTime: '6:00 AM – 9:00 PM', hotels: ['Taj Deccan', 'Park Hyatt Hyderabad'] },
-  { name: 'Salar Jung Museum', type: 'MUSEUM', loc: 'Hyderabad, Telangana', rating: 4.6, desc: 'One of the largest one-man-collected museums in the world, housing sculptures, manuscripts, and artefacts.', entryFee: '₹20 (Indians) / ₹500 (Foreigners)', openingTime: '10:00 AM – 5:00 PM', hotels: ['Taj Falaknuma Palace'] },
-  { name: 'Statue of Unity', type: 'MONUMENT', loc: 'Kevadia, Gujarat', rating: 4.8, desc: 'The world\'s tallest statue, honouring Sardar Vallabhbhai Patel, set against the Narmada river and Satpura hills.', entryFee: '₹150 onwards', openingTime: '8:00 AM – 6:00 PM', hotels: ['SOU Tent City', 'Narmada Resort'] },
-  { name: 'Taj Mahal', type: 'MONUMENT', loc: 'Agra, Uttar Pradesh', rating: 4.9, desc: 'The legendary white marble mausoleum and UNESCO World Heritage Site, a timeless symbol of love.', entryFee: '₹50 (Indians) / ₹1,100 (Foreigners)', openingTime: 'Sunrise – Sunset (closed Fridays)', hotels: ['The Oberoi Amarvilas', 'ITC Mughal'] },
-  { name: 'Mysore Palace', type: 'PALACE', loc: 'Mysuru, Karnataka', rating: 4.8, desc: 'A resplendent Indo-Saracenic palace, dazzlingly lit up on Sundays and festival nights with nearly 100,000 bulbs.', entryFee: '₹70 (Indians) / ₹200 (Foreigners)', openingTime: '10:00 AM – 5:30 PM', hotels: ['Lalitha Mahal Palace Hotel', 'Radisson Blu Mysore'] },
-  { name: 'Gateway of India', type: 'MONUMENT', loc: 'Mumbai, Maharashtra', rating: 4.6, desc: 'An iconic 20th-century arch monument overlooking the Arabian Sea, gateway to the Elephanta Caves ferry.', entryFee: 'Free', openingTime: 'Open 24 hours', hotels: ['Taj Mahal Palace', 'The Oberoi Mumbai'] },
-  { name: 'Ooty', type: 'HILL_STATION', loc: 'Nilgiris, Tamil Nadu', rating: 4.7, desc: 'The "Queen of Hill Stations", known for its tea gardens, botanical gardens, and the toy train.', entryFee: 'Free', openingTime: 'Open year-round', hotels: ['Savoy Hotel Ooty', 'Sterling Ooty Elk Hill'] },
-  { name: 'Goa Beaches', type: 'BEACH', loc: 'Goa', rating: 4.7, desc: 'Sun-soaked golden beaches, vibrant nightlife, water sports, and relaxed Portuguese-era charm.', entryFee: 'Free', openingTime: 'Open 24 hours', hotels: ['Taj Exotica Goa', 'W Goa'] },
-  { name: 'Kerala Backwaters', type: 'NATURE', loc: 'Alleppey, Kerala', rating: 4.8, desc: 'A serene network of lagoons and canals best explored aboard a traditional houseboat.', entryFee: 'Houseboats from ₹8,000/day', openingTime: 'Open year-round', hotels: ['Kumarakom Lake Resort', 'Punnamada Resort'] },
-  { name: 'Hampi', type: 'MONUMENT', loc: 'Ballari, Karnataka', rating: 4.8, desc: 'A UNESCO World Heritage Site of dramatic boulder landscapes and the ruins of the Vijayanagara Empire.', entryFee: '₹40 (Indians) / ₹600 (Foreigners)', openingTime: '6:00 AM – 6:00 PM', hotels: ['Evolve Back Hampi', 'Hampi Boulders'] },
-  { name: 'Leh Ladakh', type: 'MOUNTAIN', loc: 'Ladakh', rating: 4.9, desc: 'A high-altitude desert of dramatic monasteries, turquoise lakes, and some of the world\'s highest motorable passes.', entryFee: 'Free (Inner Line Permit required)', openingTime: 'Open May – September', hotels: ['The Grand Dragon Ladakh', 'Ladakh Sarai'] },
-  { name: 'Manali', type: 'HILL_STATION', loc: 'Kullu, Himachal Pradesh', rating: 4.7, desc: 'A snow-capped Himalayan retreat popular for adventure sports, apple orchards, and Solang Valley.', entryFee: 'Free', openingTime: 'Open year-round', hotels: ['The Himalayan', 'Span Resort'] },
+// ─── TOURISM (72 destinations — 12 across each of 6 categories) ────────────
+type TourismCategory = 'Nature' | 'Heritage' | 'Hill Station' | 'Wildlife' | 'Beach' | 'Adventure';
+
+const categoryDefaults: Record<TourismCategory, { entryFee: string; openingTime: string; bestSeason: string; tip: string }> = {
+  'Nature': { entryFee: 'Free – ₹50', openingTime: '6:00 AM – 6:00 PM', bestSeason: 'October – March', tip: 'Carry water, sunscreen, and comfortable walking shoes.' },
+  'Heritage': { entryFee: '₹30 (Indians) / ₹500 (Foreigners)', openingTime: '9:00 AM – 5:30 PM', bestSeason: 'October – March', tip: 'Hire a local guide for historical context and go early to avoid crowds.' },
+  'Hill Station': { entryFee: 'Free', openingTime: 'Open year-round', bestSeason: 'March – June, September – November', tip: 'Pack warm layers — evenings get cold even in summer.' },
+  'Wildlife': { entryFee: '₹200 – ₹2,000 (safari charges apply)', openingTime: '6:00 AM – 10:00 AM, 2:00 PM – 5:30 PM (safari slots)', bestSeason: 'November – April', tip: 'Book safari permits in advance and wear neutral, non-bright colours.' },
+  'Beach': { entryFee: 'Free', openingTime: 'Open 24 hours', bestSeason: 'November – February', tip: 'Check local tide and safety flags before swimming.' },
+  'Adventure': { entryFee: '₹500 – ₹5,000 (activity-dependent)', openingTime: '7:00 AM – 5:00 PM (weather permitting)', bestSeason: 'March – June, September – November', tip: 'Book with certified operators and check weather conditions beforehand.' },
+};
+
+const tourismDefs: { name: string; type: TourismCategory; loc: string; rating: number; desc: string }[] = [
+  // Nature (12)
+  { name: 'Kerala Backwaters', type: 'Nature', loc: 'Alleppey, Kerala', rating: 4.8, desc: 'A serene network of lagoons and canals best explored aboard a traditional houseboat.' },
+  { name: 'Valley of Flowers', type: 'Nature', loc: 'Chamoli, Uttarakhand', rating: 4.8, desc: 'A UNESCO-listed alpine valley that erupts into a carpet of wildflowers every monsoon.' },
+  { name: 'Chilika Lake', type: 'Nature', loc: 'Puri, Odisha', rating: 4.5, desc: 'Asia\'s largest brackish water lagoon, home to migratory birds and Irrawaddy dolphins.' },
+  { name: 'Sundarbans Mangroves', type: 'Nature', loc: 'South 24 Parganas, West Bengal', rating: 4.6, desc: 'The world\'s largest mangrove forest, a maze of tidal waterways and dense green canopy.' },
+  { name: 'Western Ghats Trail', type: 'Nature', loc: 'Sahyadri Range, Maharashtra', rating: 4.6, desc: 'A UNESCO biodiversity hotspot of misty ridgelines, waterfalls, and endemic flora.' },
+  { name: 'Dandeli Forest', type: 'Nature', loc: 'Uttara Kannada, Karnataka', rating: 4.5, desc: 'A dense deciduous forest along the Kali river, popular for river rafting and birdwatching.' },
+  { name: 'Wayanad Greenery', type: 'Nature', loc: 'Wayanad, Kerala', rating: 4.7, desc: 'Rolling spice plantations, waterfalls, and ancient caves set in the Western Ghats.' },
+  { name: 'Bhitarkanika Mangroves', type: 'Nature', loc: 'Kendrapara, Odisha', rating: 4.4, desc: 'A remote mangrove ecosystem and crocodile sanctuary reachable only by boat.' },
+  { name: 'Khajjiar Meadows', type: 'Nature', loc: 'Chamba, Himachal Pradesh', rating: 4.6, desc: 'A saucer-shaped alpine meadow ringed by deodar forests, often called "Mini Switzerland".' },
+  { name: 'Araku Valley', type: 'Nature', loc: 'Visakhapatnam, Andhra Pradesh', rating: 4.5, desc: 'A scenic hill valley of coffee plantations, waterfalls, and tribal culture.' },
+  { name: 'Loktak Lake', type: 'Nature', loc: 'Bishnupur, Manipur', rating: 4.5, desc: 'The largest freshwater lake in Northeast India, famous for its floating phumdi islands.' },
+  { name: 'Majuli River Island', type: 'Nature', loc: 'Jorhat, Assam', rating: 4.4, desc: 'The world\'s largest river island, with Vaishnavite monasteries and vast wetlands.' },
+  // Heritage (12)
+  { name: 'Taj Mahal', type: 'Heritage', loc: 'Agra, Uttar Pradesh', rating: 4.9, desc: 'The legendary white marble mausoleum and UNESCO World Heritage Site, a timeless symbol of love.' },
+  { name: 'Hampi Ruins', type: 'Heritage', loc: 'Ballari, Karnataka', rating: 4.8, desc: 'A UNESCO World Heritage Site of dramatic boulder landscapes and the ruins of the Vijayanagara Empire.' },
+  { name: 'Charminar', type: 'Heritage', loc: 'Hyderabad, Telangana', rating: 4.7, desc: 'A 16th-century mosque and iconic monument with four grand minarets, the beating heart of the Old City.' },
+  { name: 'Golconda Fort', type: 'Heritage', loc: 'Hyderabad, Telangana', rating: 4.6, desc: 'A majestic 16th-century fortress famed for its acoustic engineering and diamond trade history.' },
+  { name: 'Mysore Palace', type: 'Heritage', loc: 'Mysuru, Karnataka', rating: 4.8, desc: 'A resplendent Indo-Saracenic palace, dazzlingly lit up on Sundays and festival nights.' },
+  { name: 'Qutub Minar', type: 'Heritage', loc: 'Delhi', rating: 4.7, desc: 'A soaring 73-metre minaret of fluted red sandstone, the tallest brick minaret in the world.' },
+  { name: 'Fatehpur Sikri', type: 'Heritage', loc: 'Agra, Uttar Pradesh', rating: 4.6, desc: 'A perfectly preserved Mughal capital of red sandstone palaces, courtyards, and mosques.' },
+  { name: 'Konark Sun Temple', type: 'Heritage', loc: 'Konark, Odisha', rating: 4.7, desc: 'A 13th-century temple carved as a colossal chariot for the sun god, rich with intricate stonework.' },
+  { name: 'Ajanta Caves', type: 'Heritage', loc: 'Aurangabad, Maharashtra', rating: 4.7, desc: 'Rock-cut Buddhist caves adorned with 2,000-year-old paintings and sculptures.' },
+  { name: 'Ellora Caves', type: 'Heritage', loc: 'Aurangabad, Maharashtra', rating: 4.7, desc: 'A UNESCO site of 34 monasteries and temples carved from a single basalt cliff.' },
+  { name: 'Khajuraho Temples', type: 'Heritage', loc: 'Chhatarpur, Madhya Pradesh', rating: 4.6, desc: 'Medieval Hindu and Jain temples celebrated for their exquisite, intricate carvings.' },
+  { name: 'Jaisalmer Fort', type: 'Heritage', loc: 'Jaisalmer, Rajasthan', rating: 4.7, desc: 'A living "Golden Fort" of honey-hued sandstone rising from the Thar Desert.' },
+  // Hill Station (12)
+  { name: 'Ooty', type: 'Hill Station', loc: 'Nilgiris, Tamil Nadu', rating: 4.7, desc: 'The "Queen of Hill Stations", known for its tea gardens, botanical gardens, and the toy train.' },
+  { name: 'Manali', type: 'Hill Station', loc: 'Kullu, Himachal Pradesh', rating: 4.7, desc: 'A snow-capped Himalayan retreat popular for adventure sports, apple orchards, and Solang Valley.' },
+  { name: 'Shimla', type: 'Hill Station', loc: 'Shimla, Himachal Pradesh', rating: 4.6, desc: 'The former British summer capital, with colonial architecture and pine-clad ridges.' },
+  { name: 'Darjeeling', type: 'Hill Station', loc: 'Darjeeling, West Bengal', rating: 4.7, desc: 'Famous for its tea estates, the toy train, and sweeping views of Kangchenjunga.' },
+  { name: 'Coorg', type: 'Hill Station', loc: 'Kodagu, Karnataka', rating: 4.7, desc: '"Scotland of India" — misty coffee estates, waterfalls, and Kodava culture.' },
+  { name: 'Mussoorie', type: 'Hill Station', loc: 'Dehradun, Uttarakhand', rating: 4.5, desc: 'The "Queen of the Hills", with panoramic views of the Doon Valley and Himalayan peaks.' },
+  { name: 'Nainital', type: 'Hill Station', loc: 'Nainital, Uttarakhand', rating: 4.6, desc: 'A lake town cradled by seven hills, popular for boating and colonial-era charm.' },
+  { name: 'Kodaikanal', type: 'Hill Station', loc: 'Dindigul, Tamil Nadu', rating: 4.6, desc: 'A serene lake town of pine forests, waterfalls, and star-shaped botanical gardens.' },
+  { name: 'Gulmarg', type: 'Hill Station', loc: 'Baramulla, Jammu & Kashmir', rating: 4.8, desc: 'A meadow-of-flowers turned premier ski resort, with Asia\'s highest gondola.' },
+  { name: 'Lansdowne', type: 'Hill Station', loc: 'Pauri Garhwal, Uttarakhand', rating: 4.4, desc: 'A quiet, uncrowded cantonment town of oak and pine forests, ideal for a peaceful retreat.' },
+  { name: 'Yercaud', type: 'Hill Station', loc: 'Salem, Tamil Nadu', rating: 4.4, desc: 'A laid-back hill station of coffee plantations and orange groves in the Shevaroy Hills.' },
+  { name: 'Kalimpong', type: 'Hill Station', loc: 'Kalimpong, West Bengal', rating: 4.5, desc: 'A charming Himalayan town of monasteries, nurseries, and views of the Teesta valley.' },
+  // Wildlife (12)
+  { name: 'Jim Corbett National Park', type: 'Wildlife', loc: 'Nainital, Uttarakhand', rating: 4.8, desc: 'India\'s oldest national park, renowned for its Bengal tiger population and river valleys.' },
+  { name: 'Ranthambore National Park', type: 'Wildlife', loc: 'Sawai Madhopur, Rajasthan', rating: 4.7, desc: 'A former royal hunting ground turned premier tiger reserve set amid ancient ruins.' },
+  { name: 'Kaziranga National Park', type: 'Wildlife', loc: 'Golaghat, Assam', rating: 4.8, desc: 'A UNESCO site protecting two-thirds of the world\'s one-horned rhinoceroses.' },
+  { name: 'Bandipur National Park', type: 'Wildlife', loc: 'Chamarajanagar, Karnataka', rating: 4.6, desc: 'A biodiversity-rich tiger reserve within the Nilgiri Biosphere, home to elephants and leopards.' },
+  { name: 'Gir Forest National Park', type: 'Wildlife', loc: 'Junagadh, Gujarat', rating: 4.7, desc: 'The last wild refuge of the Asiatic lion, a dry deciduous forest teeming with wildlife.' },
+  { name: 'Periyar Wildlife Sanctuary', type: 'Wildlife', loc: 'Thekkady, Kerala', rating: 4.6, desc: 'A misty reserve centred on a scenic lake, known for boat safaris spotting wild elephants.' },
+  { name: 'Sundarbans Tiger Reserve', type: 'Wildlife', loc: 'South 24 Parganas, West Bengal', rating: 4.5, desc: 'A mangrove wilderness that shelters the elusive Royal Bengal tiger.' },
+  { name: 'Kanha National Park', type: 'Wildlife', loc: 'Mandla, Madhya Pradesh', rating: 4.7, desc: 'The inspiration for "The Jungle Book", with sal forests and thriving tiger populations.' },
+  { name: 'Nagarhole National Park', type: 'Wildlife', loc: 'Kodagu, Karnataka', rating: 4.6, desc: 'A lush reserve along the Kabini river, famed for large elephant herds and tiger sightings.' },
+  { name: 'Pench National Park', type: 'Wildlife', loc: 'Seoni, Madhya Pradesh', rating: 4.5, desc: 'A teak-forest reserve straddling Madhya Pradesh and Maharashtra, rich in tiger and deer.' },
+  { name: 'Bharatpur Bird Sanctuary', type: 'Wildlife', loc: 'Bharatpur, Rajasthan', rating: 4.5, desc: 'A UNESCO wetland famed for thousands of migratory birds, including the rare Siberian crane.' },
+  { name: 'Satpura National Park', type: 'Wildlife', loc: 'Hoshangabad, Madhya Pradesh', rating: 4.4, desc: 'A rugged, less-crowded reserve offering walking and canoe safaris through dense forest.' },
+  // Beach (12)
+  { name: 'Goa Beaches', type: 'Beach', loc: 'Goa', rating: 4.7, desc: 'Sun-soaked golden beaches, vibrant nightlife, water sports, and relaxed Portuguese-era charm.' },
+  { name: 'Varkala Beach', type: 'Beach', loc: 'Thiruvananthapuram, Kerala', rating: 4.6, desc: 'A dramatic red laterite cliff overlooking golden sands and the Arabian Sea.' },
+  { name: 'Gokarna Beach', type: 'Beach', loc: 'Uttara Kannada, Karnataka', rating: 4.5, desc: 'A laid-back pilgrim town with pristine, less-crowded beaches perfect for backpackers.' },
+  { name: 'Radhanagar Beach', type: 'Beach', loc: 'Havelock Island, Andaman & Nicobar', rating: 4.8, desc: 'Consistently ranked among Asia\'s best beaches, with powder-white sand and turquoise water.' },
+  { name: 'Marina Beach', type: 'Beach', loc: 'Chennai, Tamil Nadu', rating: 4.3, desc: 'One of the world\'s longest urban beaches, a bustling promenade along the Bay of Bengal.' },
+  { name: 'Kovalam Beach', type: 'Beach', loc: 'Thiruvananthapuram, Kerala', rating: 4.5, desc: 'A crescent-shaped beach with a lighthouse, backed by coconut groves and Ayurvedic resorts.' },
+  { name: 'Puri Beach', type: 'Beach', loc: 'Puri, Odisha', rating: 4.4, desc: 'A sacred coastal town beach beside the Jagannath Temple, lively with local fishing culture.' },
+  { name: 'Digha Beach', type: 'Beach', loc: 'Purba Medinipur, West Bengal', rating: 4.2, desc: 'A popular Bengal getaway with a wide, gently sloping shoreline.' },
+  { name: 'Alappuzha Beach', type: 'Beach', loc: 'Alappuzha, Kerala', rating: 4.4, desc: 'A quiet beach beside the backwaters, with a historic century-old pier.' },
+  { name: 'Tarkarli Beach', type: 'Beach', loc: 'Sindhudurg, Maharashtra', rating: 4.6, desc: 'Clear turquoise waters ideal for scuba diving and snorkelling along the Konkan coast.' },
+  { name: 'Diu Beach', type: 'Beach', loc: 'Diu', rating: 4.4, desc: 'A tranquil former Portuguese colony with clean beaches and a laid-back atmosphere.' },
+  { name: 'Rameswaram Beach', type: 'Beach', loc: 'Ramanathapuram, Tamil Nadu', rating: 4.5, desc: 'A sacred coastal town where the Bay of Bengal meets the Indian Ocean near Adam\'s Bridge.' },
+  // Adventure (12)
+  { name: 'Rishikesh River Rafting', type: 'Adventure', loc: 'Rishikesh, Uttarakhand', rating: 4.8, desc: 'World-class white-water rafting on the Ganges, plus bungee jumping and yoga retreats.' },
+  { name: 'Leh-Ladakh Biking Trail', type: 'Adventure', loc: 'Leh, Ladakh', rating: 4.9, desc: 'A legendary high-altitude motorbike route past some of the world\'s highest motorable passes.' },
+  { name: 'Manali Paragliding', type: 'Adventure', loc: 'Solang Valley, Himachal Pradesh', rating: 4.6, desc: 'Tandem paragliding over the dramatic Solang Valley with views of snow-capped peaks.' },
+  { name: 'Auli Skiing Slopes', type: 'Adventure', loc: 'Chamoli, Uttarakhand', rating: 4.6, desc: 'India\'s premier ski destination, with slopes framed by Nanda Devi views.' },
+  { name: 'Bir Billing Paragliding', type: 'Adventure', loc: 'Kangra, Himachal Pradesh', rating: 4.8, desc: 'One of the world\'s best paragliding sites, hosting international championships.' },
+  { name: 'Spiti Valley Trek', type: 'Adventure', loc: 'Lahaul and Spiti, Himachal Pradesh', rating: 4.8, desc: 'A cold desert trekking circuit of monasteries, moonscapes, and remote villages.' },
+  { name: 'Chadar Trek', type: 'Adventure', loc: 'Zanskar, Ladakh', rating: 4.7, desc: 'A legendary winter trek across the frozen Zanskar river.' },
+  { name: 'Havelock Scuba Diving', type: 'Adventure', loc: 'Havelock Island, Andaman & Nicobar', rating: 4.7, desc: 'World-class coral reef diving with vibrant marine life in crystal-clear waters.' },
+  { name: 'Coorg Zip-lining', type: 'Adventure', loc: 'Kodagu, Karnataka', rating: 4.4, desc: 'Zip-line and canopy adventure courses through coffee-estate forest canopy.' },
+  { name: 'Kasol Trekking Trail', type: 'Adventure', loc: 'Kullu, Himachal Pradesh', rating: 4.5, desc: 'A backpacker hub and gateway to the Parvati Valley\'s riverside trekking trails.' },
+  { name: 'Kolad River Rafting', type: 'Adventure', loc: 'Raigad, Maharashtra', rating: 4.4, desc: 'A weekend rafting getaway on the Kundalika river near Mumbai and Pune.' },
+  { name: 'Solang Valley Adventure Park', type: 'Adventure', loc: 'Manali, Himachal Pradesh', rating: 4.5, desc: 'Zorbing, cable cars, and seasonal skiing in a dramatic glacial valley.' },
 ];
 
-export const allTourism = tourismDefs.map((t, i) => ({
-  id: `tourism-${String(i + 1).padStart(3, '0')}`,
-  name: t.name,
-  type: t.type,
-  description: t.desc,
-  location: t.loc,
-  rating: t.rating,
-  reviewCount: 50 + i * 20,
-  reviews: [
-    { id: `tour-rev-${i}-1`, rating: 5, comment: `${t.name} completely lived up to the hype — a must-visit!`, author: demoPeople[i % demoPeople.length].name, createdAt: daysAgo(4) },
-    { id: `tour-rev-${i}-2`, rating: 4, comment: 'Beautiful place, go early to beat the crowds.', author: demoPeople[(i + 2) % demoPeople.length].name, createdAt: daysAgo(12) },
-  ],
-  images: [img(t.name), img(`${t.name}-2`, 400, 300)],
-  image: img(t.name),
-  entryFee: t.entryFee,
-  openingTime: t.openingTime,
-  bestTime: 'October – March',
-  nearbyHotels: t.hotels,
-  mapUrl: `https://maps.google.com/?q=${encodeURIComponent(t.name + ' ' + t.loc)}`,
-  createdAt: daysAgo(30 - i),
-}));
+const genericHotelPool = ['Radisson Blu', 'Taj Gateway', 'The Fern Resort', 'Lemon Tree Premier', 'Ginger Hotels', 'ITC Welcomgroup'];
+const CONTACT_INFO = 'Incredible India Tourism Helpline: 1800-11-1363 (toll-free, 24x7)';
+
+export const allTourism = tourismDefs.map((t, i) => {
+  const cat = categoryDefaults[t.type];
+  const nearby = [tourismDefs[(i + 3) % tourismDefs.length].name, tourismDefs[(i + 7) % tourismDefs.length].name];
+  return {
+    id: `tourism-${String(i + 1).padStart(3, '0')}`,
+    name: t.name,
+    type: t.type,
+    category: t.type,
+    description: t.desc,
+    location: t.loc,
+    rating: t.rating,
+    reviewCount: 50 + i * 17,
+    reviews: [
+      { id: `tour-rev-${i}-1`, rating: 5, comment: `${t.name} completely lived up to the hype — a must-visit!`, author: demoPeople[i % demoPeople.length].name, createdAt: daysAgo(4) },
+      { id: `tour-rev-${i}-2`, rating: 4, comment: 'Beautiful place, go early to beat the crowds.', author: demoPeople[(i + 2) % demoPeople.length].name, createdAt: daysAgo(12) },
+    ],
+    images: [img(t.name), img(`${t.name}-2`, 400, 300), img(`${t.name}-3`, 400, 300)],
+    image: img(t.name),
+    entryFee: cat.entryFee,
+    openingTime: cat.openingTime,
+    bestTime: cat.bestSeason,
+    bestSeason: cat.bestSeason,
+    travelTips: cat.tip,
+    contactInfo: CONTACT_INFO,
+    nearbyAttractions: nearby,
+    nearbyHotels: [genericHotelPool[i % genericHotelPool.length], genericHotelPool[(i + 3) % genericHotelPool.length]],
+    mapUrl: `https://maps.google.com/?q=${encodeURIComponent(t.name + ' ' + t.loc)}`,
+    createdAt: daysAgo(90 - i),
+  };
+});
 
 // ─── GOVERNMENT SERVICES ────────────────────────────────────────────────────
 const govDefs = [

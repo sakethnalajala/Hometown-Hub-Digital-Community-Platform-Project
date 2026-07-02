@@ -311,6 +311,7 @@ export interface TourismSpot {
   id?: string;
   name?: string;
   type?: string;
+  category?: string;
   description?: string;
   image?: string;
   images?: string[];
@@ -320,10 +321,15 @@ export interface TourismSpot {
   location?: string;
   distance?: string;
   bestTime?: string;
+  bestSeason?: string;
   entryFee?: string;
   openingTime?: string;
+  travelTips?: string;
+  contactInfo?: string;
+  nearbyAttractions?: string[];
   nearbyHotels?: string[];
   mapUrl?: string;
+  isLocal?: boolean;
   createdAt?: string;
 }
 
