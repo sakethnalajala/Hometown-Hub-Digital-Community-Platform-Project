@@ -84,13 +84,23 @@ export const allJobs = jobDefs.map((j, i) => {
   };
 });
 
-// ─── EVENTS (exactly 5 — one per global city) ───────────────────────────────
+// ─── EVENTS (15 — global showcase plus hometown community events) ──────────
 const eventDefs = [
   { title: 'Hyderabad Tech Expo 2026', type: 'Tech Expo', loc: 'HITEC City Convention Centre, Hyderabad, India', days: 6, img: 'https://images.unsplash.com/photo-1505373877841-8d25f7d46678?w=800&h=400&fit=crop&auto=format&q=70', attendees: 1200, desc: 'India\'s biggest hometown tech showcase — AI, robotics and startups under one roof at HITEC City, Hyderabad.' },
   { title: 'Tokyo Cultural Festival', type: 'Cultural Festival', loc: 'Ueno Park, Tokyo, Japan', days: 14, img: 'https://images.unsplash.com/photo-1528360983277-13d401cdc186?w=800&h=400&fit=crop&auto=format&q=70', attendees: 2500, desc: 'Experience traditional dance, lantern parades and authentic Japanese cuisine in the heart of Tokyo.' },
   { title: 'New York Startup Summit', type: 'Startup Summit', loc: 'Javits Center, New York, USA', days: 21, img: 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=800&h=400&fit=crop&auto=format&q=70', attendees: 1800, desc: 'Pitch nights, investor panels and networking with the brightest founders in the Big Apple.' },
   { title: 'London Music Carnival', type: 'Music Concert', loc: 'Hyde Park, London, United Kingdom', days: 30, img: 'https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?w=800&h=400&fit=crop&auto=format&q=70', attendees: 5000, desc: 'A day of live performances from world-class artists across multiple stages in Hyde Park.' },
   { title: 'Sydney Food Festival', type: 'Food Festival', loc: 'Darling Harbour, Sydney, Australia', days: 18, img: 'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=800&h=400&fit=crop&auto=format&q=70', attendees: 3200, desc: 'Taste signature dishes from top chefs and local vendors along the waterfront at Darling Harbour.' },
+  { title: 'Hyderabad Startup Summit', type: 'Startup Summit', loc: 'T-Hub, Hyderabad, India', days: 9, img: 'https://images.unsplash.com/photo-1556761175-b413da4baf72?w=800&h=400&fit=crop&auto=format&q=70', attendees: 950, desc: 'Pitch competitions, VC panels and founder meetups at India\'s largest startup incubator, T-Hub.' },
+  { title: 'AI Innovation Conference', type: 'Tech Conference', loc: 'Hyderabad International Convention Centre, India', days: 12, img: 'https://images.unsplash.com/photo-1591453089816-0fbb971b454c?w=800&h=400&fit=crop&auto=format&q=70', attendees: 1600, desc: 'Deep-dive keynotes and hands-on workshops on generative AI, machine learning, and applied robotics.' },
+  { title: 'Food Carnival', type: 'Food Festival', loc: 'Necklace Road Grounds, Hyderabad, India', days: 4, img: 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=800&h=400&fit=crop&auto=format&q=70', attendees: 4200, desc: 'A weekend of street food stalls, live cooking battles, and dessert pop-ups from 50+ local vendors.' },
+  { title: 'Music Festival', type: 'Music Concert', loc: 'People\'s Plaza, Hyderabad, India', days: 25, img: 'https://images.unsplash.com/photo-1459749411175-04bf5292ceea?w=800&h=400&fit=crop&auto=format&q=70', attendees: 6000, desc: 'A three-stage music extravaganza featuring indie, EDM, and classical fusion artists.' },
+  { title: 'Marathon', type: 'Sports', loc: 'Tank Bund, Hyderabad, India', days: 15, img: 'https://images.unsplash.com/photo-1452626038306-9aae5e071dd3?w=800&h=400&fit=crop&auto=format&q=70', attendees: 8000, desc: 'A city-wide 21K/10K/5K run around Hussain Sagar, open to all fitness levels, with medals for finishers.' },
+  { title: 'Book Fair', type: 'Literature', loc: 'NTR Stadium Grounds, Hyderabad, India', days: 20, img: 'https://images.unsplash.com/photo-1521587760476-6c12a4b040da?w=800&h=400&fit=crop&auto=format&q=70', attendees: 2100, desc: 'Browse thousands of titles from 200+ publishers, meet authors, and attend storytelling sessions for kids.' },
+  { title: 'Cultural Night', type: 'Cultural Festival', loc: 'Shilparamam, Hyderabad, India', days: 11, img: 'https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?w=800&h=400&fit=crop&auto=format&q=70', attendees: 1750, desc: 'An evening of classical dance, folk music, and regional cuisine celebrating our community\'s diversity.' },
+  { title: 'Photography Workshop', type: 'Workshop', loc: 'Kalakriti Art Gallery, Hyderabad, India', days: 8, img: 'https://images.unsplash.com/photo-1502920917128-1aa500764cbd?w=800&h=400&fit=crop&auto=format&q=70', attendees: 120, desc: 'Hands-on portrait and street photography masterclass led by award-winning local photographers.' },
+  { title: 'Robotics Expo', type: 'Tech Expo', loc: 'Gachibowli Stadium, Hyderabad, India', days: 17, img: 'https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=800&h=400&fit=crop&auto=format&q=70', attendees: 1400, desc: 'Live robot battles, drone demos, and student showcases from engineering colleges across the region.' },
+  { title: 'Career Fair', type: 'Career', loc: 'HICC Novotel, Hyderabad, India', days: 5, img: 'https://images.unsplash.com/photo-1521737604893-d14cc237f11d?w=800&h=400&fit=crop&auto=format&q=70', attendees: 3000, desc: 'Meet recruiters from 80+ companies, attend resume clinics, and land your next opportunity on the spot.' },
 ];
 
 export const allEvents = eventDefs.map((e, i) => {
@@ -124,24 +134,29 @@ export const allEvents = eventDefs.map((e, i) => {
 
 // ─── NEWS ───────────────────────────────────────────────────────────────────
 const newsDefs = [
-  { cat: 'Politics', title: 'City Council Approves ₹500 Crore Infrastructure Budget', summary: 'Major allocation for roads, water supply, and public transport upgrades across all wards.' },
-  { cat: 'Education', title: 'New STEM Labs Open in 50 Public Schools', summary: 'State government initiative brings robotics and coding labs to underserved schools.' },
-  { cat: 'Technology', title: 'Local Startup Raises ₹50 Crore Series A Funding', summary: 'AgriTech platform FarmLink plans to onboard 1 lakh farmers across rural districts.' },
-  { cat: 'Healthcare', title: 'Free Health Checkup Camps Across 20 Wards This Month', summary: 'Municipal health department partners with local hospitals for preventive care drives.' },
-  { cat: 'Environment', title: 'Green Park Renovation Project Gets Green Light', summary: '₹12 crore plan adds eco-friendly amenities, amphitheater, and children\'s learning garden.' },
-  { cat: 'Transportation', title: 'New Metro Line to Connect Outer Suburbs by 2027', summary: 'Transport authority announces expansion benefiting 2 million residents.' },
-  { cat: 'Business', title: 'Small Business Grant Program Launches with ₹100 Crore Fund', summary: 'Local entrepreneurs can apply for zero-interest loans up to ₹10 lakhs.' },
-  { cat: 'Sports', title: 'City Team Wins State Cricket Championship', summary: 'Historic victory after 15 years brings home the trophy to cheering fans.' },
-  { cat: 'Culture', title: 'Annual Cultural Festival to Feature Artists from 20 Countries', summary: 'Five-day celebration of art, dance, and cuisine at the Heritage Grounds.' },
-  { cat: 'Politics', title: 'New Ward Boundaries Finalized After Census Review', summary: 'Redistricting ensures better representation for growing suburban areas.' },
-  { cat: 'Education', title: 'Scholarship Portal Opens for Merit-Based Awards', summary: '500 scholarships available for students pursuing higher education locally.' },
-  { cat: 'Technology', title: 'Free Wi-Fi Hotspots Installed at 100 Public Locations', summary: 'Digital inclusion initiative covers parks, libraries, and bus stations.' },
-  { cat: 'Healthcare', title: 'New 500-Bed Super Specialty Hospital Inaugurated', summary: 'State-of-the-art facility offers cardiac, neuro, and oncology services.' },
-  { cat: 'Environment', title: 'Plastic Ban Enforcement Drives Reduce Waste by 40%', summary: 'Community compliance and awareness campaigns show significant impact.' },
-  { cat: 'Transportation', title: 'Electric Bus Fleet Expanded to 200 Vehicles', summary: 'Clean energy transition accelerates with new charging infrastructure.' },
-  { cat: 'Business', title: 'Local Handicraft Exporters See 30% Growth', summary: 'Global demand for traditional crafts boosts rural artisan incomes.' },
-  { cat: 'Sports', title: 'Youth Football Academy Opens Registration', summary: 'Free coaching for ages 8-16 at the new municipal sports complex.' },
-  { cat: 'Culture', title: 'Heritage Museum Launches Virtual Tour Platform', summary: 'Explore 500 years of local history from anywhere in the world.' },
+  { cat: 'Politics', title: 'City Council Approves ₹500 Crore Infrastructure Budget', summary: 'Major allocation for roads, water supply, and public transport upgrades across all wards.', loc: 'GHMC Head Office, Hyderabad' },
+  { cat: 'Education', title: 'New STEM Labs Open in 50 Public Schools', summary: 'State government initiative brings robotics and coding labs to underserved schools.', loc: 'Kukatpally, Hyderabad' },
+  { cat: 'Technology', title: 'Local Startup Raises ₹50 Crore Series A Funding', summary: 'AgriTech platform FarmLink plans to onboard 1 lakh farmers across rural districts.', loc: 'T-Hub, Hyderabad' },
+  { cat: 'Healthcare', title: 'Free Health Checkup Camps Across 20 Wards This Month', summary: 'Municipal health department partners with local hospitals for preventive care drives.', loc: 'Secunderabad, Hyderabad' },
+  { cat: 'Environment', title: 'Green Park Renovation Project Gets Green Light', summary: '₹12 crore plan adds eco-friendly amenities, amphitheater, and children\'s learning garden.', loc: 'KBR Park, Hyderabad' },
+  { cat: 'Transportation', title: 'New Metro Line to Connect Outer Suburbs by 2027', summary: 'Transport authority announces expansion benefiting 2 million residents.', loc: 'Miyapur, Hyderabad' },
+  { cat: 'Business', title: 'Small Business Grant Program Launches with ₹100 Crore Fund', summary: 'Local entrepreneurs can apply for zero-interest loans up to ₹10 lakhs.', loc: 'Begumpet, Hyderabad' },
+  { cat: 'Sports', title: 'City Team Wins State Cricket Championship', summary: 'Historic victory after 15 years brings home the trophy to cheering fans.', loc: 'Uppal Stadium, Hyderabad' },
+  { cat: 'Culture', title: 'Annual Cultural Festival to Feature Artists from 20 Countries', summary: 'Five-day celebration of art, dance, and cuisine at the Heritage Grounds.', loc: 'Shilparamam, Hyderabad' },
+  { cat: 'Politics', title: 'New Ward Boundaries Finalized After Census Review', summary: 'Redistricting ensures better representation for growing suburban areas.', loc: 'LB Nagar, Hyderabad' },
+  { cat: 'Education', title: 'Scholarship Portal Opens for Merit-Based Awards', summary: '500 scholarships available for students pursuing higher education locally.', loc: 'Ameerpet, Hyderabad' },
+  { cat: 'Technology', title: 'Free Wi-Fi Hotspots Installed at 100 Public Locations', summary: 'Digital inclusion initiative covers parks, libraries, and bus stations.', loc: 'Gachibowli, Hyderabad' },
+  { cat: 'Healthcare', title: 'New 500-Bed Super Specialty Hospital Inaugurated', summary: 'State-of-the-art facility offers cardiac, neuro, and oncology services.', loc: 'Banjara Hills, Hyderabad' },
+  { cat: 'Environment', title: 'Plastic Ban Enforcement Drives Reduce Waste by 40%', summary: 'Community compliance and awareness campaigns show significant impact.', loc: 'Jubilee Hills, Hyderabad' },
+  { cat: 'Transportation', title: 'Electric Bus Fleet Expanded to 200 Vehicles', summary: 'Clean energy transition accelerates with new charging infrastructure.', loc: 'Mehdipatnam, Hyderabad' },
+  { cat: 'Business', title: 'Local Handicraft Exporters See 30% Growth', summary: 'Global demand for traditional crafts boosts rural artisan incomes.', loc: 'Charminar, Hyderabad' },
+  { cat: 'Sports', title: 'Youth Football Academy Opens Registration', summary: 'Free coaching for ages 8-16 at the new municipal sports complex.', loc: 'Malkajgiri, Hyderabad' },
+  { cat: 'Culture', title: 'Heritage Museum Launches Virtual Tour Platform', summary: 'Explore 500 years of local history from anywhere in the world.', loc: 'Salar Jung Museum, Hyderabad' },
+  { cat: 'Education', title: 'Hyderabad Public Library Reopens After Digital Overhaul', summary: 'Newly renovated central library adds 200 study pods, e-book kiosks, and a maker space for students.', loc: 'Afzal Gunj, Hyderabad' },
+  { cat: 'Healthcare', title: 'Mobile Health Vans to Reach 40 Remote Colonies', summary: 'New fleet of mobile clinics brings free diagnostics and vaccinations directly to underserved neighborhoods.', loc: 'Rajendranagar, Hyderabad' },
+  { cat: 'Environment', title: 'Community Tree Plantation Drive Crosses 1 Lakh Saplings', summary: 'Volunteers and school groups mark a major environmental milestone ahead of monsoon season.', loc: 'Kokapet, Hyderabad' },
+  { cat: 'Technology', title: 'City Launches AI-Powered Traffic Management Pilot', summary: 'Smart signals at 25 junctions aim to cut average commute times by 15% during peak hours.', loc: 'Hitech City, Hyderabad' },
+  { cat: 'Culture', title: 'Weekend Farmers Market Returns to Necklace Road', summary: 'Over 80 local vendors will sell organic produce, handmade crafts, and street food every Saturday.', loc: 'Necklace Road, Hyderabad' },
 ];
 
 const newsImages = ['1571091718767-18b5b1457add', '1625246333195-78d9c38ad449', '1519331379826-f10be5486c6f', '1576091160399-112ba8d25d1f', '1504711434969-e33886168f5c', '1544627737-d9e3c37a2c6d'];
@@ -154,6 +169,7 @@ export const allNews = newsDefs.map((n, i) => {
     summary: n.summary,
     content: `${n.summary}\n\nIn a significant development for the local community, officials announced comprehensive measures that will benefit residents across all demographics. Community leaders have praised the initiative, noting its potential to create lasting positive change.\n\nLocal experts weigh in on the implications, with many calling it a step in the right direction. Public consultations will continue over the coming weeks to gather feedback and refine implementation plans.`,
     category: n.cat,
+    location: n.loc,
     image: img(newsImages[i % newsImages.length]),
     authorId: author.id,
     author: { id: author.id, name: author.name, username: author.username, profileImage: author.profileImage },
@@ -167,35 +183,43 @@ export const allNews = newsDefs.map((n, i) => {
   };
 });
 
-// ─── TOURISM ────────────────────────────────────────────────────────────────
+// ─── TOURISM (15 iconic Indian destinations) ────────────────────────────────
 const tourismDefs = [
-  { name: 'Heritage Fort & Museum', type: 'MONUMENT', loc: 'Old Town', rating: 4.8, img: '1564507592333-a60657ee0b0e' },
-  { name: 'Grand Palace Hotel', type: 'HOTEL', loc: 'City Center', rating: 4.6, img: '1566073771259-6a8506099945' },
-  { name: 'Spice Garden Restaurant', type: 'RESTAURANT', loc: 'Food Street', rating: 4.7, img: '1517248135467-4c7edcad34c4' },
-  { name: 'Sacred Temple Complex', type: 'TEMPLE', loc: 'Temple Road', rating: 4.9, img: '1582510003544-4f00b300f827' },
-  { name: 'Central Green Park', type: 'PARK', loc: 'Midtown', rating: 4.5, img: '1519331379826-f10be5486c6f' },
-  { name: 'River Rafting Adventure', type: 'ACTIVITY', loc: 'River Valley', rating: 4.4, img: '1682687220062-8982fbdd6e03' },
-  { name: 'Sunset Viewpoint', type: 'PLACE', loc: 'Hill Station Road', rating: 4.8, img: '1469854526616-dffba9b8615b' },
-  { name: 'Royal Heritage Walk', type: 'GUIDE', loc: 'Old Town', rating: 4.7, img: '1555881400-74d4aca3a4c4' },
-  { name: 'Lakefront Resort', type: 'HOTEL', loc: 'Lake District', rating: 4.5, img: '1571008887538-e7cc01336969' },
-  { name: 'Street Food Market', type: 'RESTAURANT', loc: 'Night Bazaar', rating: 4.6, img: '1555939594-58d7cb561ad1' },
-  { name: 'War Memorial', type: 'MONUMENT', loc: 'Civic Center', rating: 4.4, img: '1548013146-724797681b98' },
-  { name: 'Botanical Gardens', type: 'PARK', loc: 'North Side', rating: 4.7, img: '1416879595882-3373a0480b05' },
-  { name: 'Paragliding Experience', type: 'ACTIVITY', loc: 'Sky Hills', rating: 4.3, img: '1506905925346-be4210f7a501' },
-  { name: 'Local Craft Village', type: 'PLACE', loc: 'Artisan Quarter', rating: 4.6, img: '1558618666-fcd25c85cd64' },
-  { name: 'Heritage Food Tour', type: 'GUIDE', loc: 'Old Town', rating: 4.8, img: '1504674900247-0877df9cc836' },
+  { name: 'Charminar', type: 'MONUMENT', loc: 'Hyderabad, Telangana', rating: 4.7, desc: 'A 16th-century mosque and iconic monument with four grand minarets, the beating heart of the Old City.', entryFee: '₹20 (Indians) / ₹300 (Foreigners)', openingTime: '9:00 AM – 5:30 PM', hotels: ['Taj Falaknuma Palace', 'ITC Kohenur'] },
+  { name: 'Golconda Fort', type: 'MONUMENT', loc: 'Hyderabad, Telangana', rating: 4.6, desc: 'A majestic 16th-century fortress famed for its acoustic engineering, diamond trade history, and sound-and-light show.', entryFee: '₹25 (Indians) / ₹300 (Foreigners)', openingTime: '9:00 AM – 5:30 PM', hotels: ['Taj Falaknuma Palace', 'Marriott Hyderabad'] },
+  { name: 'Ramoji Film City', type: 'ACTIVITY', loc: 'Hyderabad, Telangana', rating: 4.5, desc: 'The world\'s largest integrated film studio complex, offering theme-park rides, film sets, and live shows.', entryFee: '₹1,150 onwards', openingTime: '9:00 AM – 5:30 PM', hotels: ['Ramoji Film City Resort'] },
+  { name: 'Hussain Sagar', type: 'PLACE', loc: 'Hyderabad, Telangana', rating: 4.4, desc: 'A heart-shaped lake with a giant monolithic Buddha statue at its centre, popular for boating and evening walks.', entryFee: 'Free', openingTime: '6:00 AM – 9:00 PM', hotels: ['Taj Deccan', 'Park Hyatt Hyderabad'] },
+  { name: 'Salar Jung Museum', type: 'MUSEUM', loc: 'Hyderabad, Telangana', rating: 4.6, desc: 'One of the largest one-man-collected museums in the world, housing sculptures, manuscripts, and artefacts.', entryFee: '₹20 (Indians) / ₹500 (Foreigners)', openingTime: '10:00 AM – 5:00 PM', hotels: ['Taj Falaknuma Palace'] },
+  { name: 'Statue of Unity', type: 'MONUMENT', loc: 'Kevadia, Gujarat', rating: 4.8, desc: 'The world\'s tallest statue, honouring Sardar Vallabhbhai Patel, set against the Narmada river and Satpura hills.', entryFee: '₹150 onwards', openingTime: '8:00 AM – 6:00 PM', hotels: ['SOU Tent City', 'Narmada Resort'] },
+  { name: 'Taj Mahal', type: 'MONUMENT', loc: 'Agra, Uttar Pradesh', rating: 4.9, desc: 'The legendary white marble mausoleum and UNESCO World Heritage Site, a timeless symbol of love.', entryFee: '₹50 (Indians) / ₹1,100 (Foreigners)', openingTime: 'Sunrise – Sunset (closed Fridays)', hotels: ['The Oberoi Amarvilas', 'ITC Mughal'] },
+  { name: 'Mysore Palace', type: 'PALACE', loc: 'Mysuru, Karnataka', rating: 4.8, desc: 'A resplendent Indo-Saracenic palace, dazzlingly lit up on Sundays and festival nights with nearly 100,000 bulbs.', entryFee: '₹70 (Indians) / ₹200 (Foreigners)', openingTime: '10:00 AM – 5:30 PM', hotels: ['Lalitha Mahal Palace Hotel', 'Radisson Blu Mysore'] },
+  { name: 'Gateway of India', type: 'MONUMENT', loc: 'Mumbai, Maharashtra', rating: 4.6, desc: 'An iconic 20th-century arch monument overlooking the Arabian Sea, gateway to the Elephanta Caves ferry.', entryFee: 'Free', openingTime: 'Open 24 hours', hotels: ['Taj Mahal Palace', 'The Oberoi Mumbai'] },
+  { name: 'Ooty', type: 'HILL_STATION', loc: 'Nilgiris, Tamil Nadu', rating: 4.7, desc: 'The "Queen of Hill Stations", known for its tea gardens, botanical gardens, and the toy train.', entryFee: 'Free', openingTime: 'Open year-round', hotels: ['Savoy Hotel Ooty', 'Sterling Ooty Elk Hill'] },
+  { name: 'Goa Beaches', type: 'BEACH', loc: 'Goa', rating: 4.7, desc: 'Sun-soaked golden beaches, vibrant nightlife, water sports, and relaxed Portuguese-era charm.', entryFee: 'Free', openingTime: 'Open 24 hours', hotels: ['Taj Exotica Goa', 'W Goa'] },
+  { name: 'Kerala Backwaters', type: 'NATURE', loc: 'Alleppey, Kerala', rating: 4.8, desc: 'A serene network of lagoons and canals best explored aboard a traditional houseboat.', entryFee: 'Houseboats from ₹8,000/day', openingTime: 'Open year-round', hotels: ['Kumarakom Lake Resort', 'Punnamada Resort'] },
+  { name: 'Hampi', type: 'MONUMENT', loc: 'Ballari, Karnataka', rating: 4.8, desc: 'A UNESCO World Heritage Site of dramatic boulder landscapes and the ruins of the Vijayanagara Empire.', entryFee: '₹40 (Indians) / ₹600 (Foreigners)', openingTime: '6:00 AM – 6:00 PM', hotels: ['Evolve Back Hampi', 'Hampi Boulders'] },
+  { name: 'Leh Ladakh', type: 'MOUNTAIN', loc: 'Ladakh', rating: 4.9, desc: 'A high-altitude desert of dramatic monasteries, turquoise lakes, and some of the world\'s highest motorable passes.', entryFee: 'Free (Inner Line Permit required)', openingTime: 'Open May – September', hotels: ['The Grand Dragon Ladakh', 'Ladakh Sarai'] },
+  { name: 'Manali', type: 'HILL_STATION', loc: 'Kullu, Himachal Pradesh', rating: 4.7, desc: 'A snow-capped Himalayan retreat popular for adventure sports, apple orchards, and Solang Valley.', entryFee: 'Free', openingTime: 'Open year-round', hotels: ['The Himalayan', 'Span Resort'] },
 ];
 
 export const allTourism = tourismDefs.map((t, i) => ({
   id: `tourism-${String(i + 1).padStart(3, '0')}`,
   name: t.name,
   type: t.type,
-  description: `Discover ${t.name}, one of the most popular ${t.type.toLowerCase()} destinations in our hometown. Perfect for families, tourists, and locals alike.`,
+  description: t.desc,
   location: t.loc,
   rating: t.rating,
   reviewCount: 50 + i * 20,
-  images: [img(t.img), img(t.img, 400, 300)],
-  image: img(t.img),
+  reviews: [
+    { id: `tour-rev-${i}-1`, rating: 5, comment: `${t.name} completely lived up to the hype — a must-visit!`, author: demoPeople[i % demoPeople.length].name, createdAt: daysAgo(4) },
+    { id: `tour-rev-${i}-2`, rating: 4, comment: 'Beautiful place, go early to beat the crowds.', author: demoPeople[(i + 2) % demoPeople.length].name, createdAt: daysAgo(12) },
+  ],
+  images: [img(t.name), img(`${t.name}-2`, 400, 300)],
+  image: img(t.name),
+  entryFee: t.entryFee,
+  openingTime: t.openingTime,
+  bestTime: 'October – March',
+  nearbyHotels: t.hotels,
   mapUrl: `https://maps.google.com/?q=${encodeURIComponent(t.name + ' ' + t.loc)}`,
   createdAt: daysAgo(30 - i),
 }));
@@ -222,13 +246,47 @@ export const allGovServices = govDefs.map((g, i) => ({
   createdAt: daysAgo(60),
 }));
 
-// ─── MARKETPLACE (exactly 5 — unique products) ──────────────────────────────
+// ─── MARKETPLACE (30+ products across common shopping categories) ──────────
 const productDefs = [
-  { name: 'Handmade Wooden Clock', cat: 'Home Decor', price: 89, seller: 0, img: 'https://images.unsplash.com/photo-1563861826100-9cb868fdbe1c?w=400&h=400&fit=crop&auto=format&q=70', desc: 'A beautifully crafted handmade wooden wall clock with a smooth, silent movement — a timeless centrepiece for any room.' },
-  { name: 'Vintage Camera', cat: 'Electronics', price: 250, seller: 1, img: 'https://images.unsplash.com/photo-1452780212940-6f5c0d14d848?w=400&h=400&fit=crop&auto=format&q=70', desc: 'A fully restored vintage film camera in excellent condition — perfect for collectors and analog photography enthusiasts.' },
-  { name: 'Gaming Keyboard', cat: 'Electronics', price: 120, seller: 2, img: 'https://images.unsplash.com/photo-1541140532154-b024d705b90a?w=400&h=400&fit=crop&auto=format&q=70', desc: 'Mechanical RGB gaming keyboard with hot-swappable switches, anti-ghosting keys and a durable aluminium frame.' },
-  { name: 'Smart Fitness Watch', cat: 'Electronics', price: 199, seller: 3, img: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400&h=400&fit=crop&auto=format&q=70', desc: 'Track heart rate, sleep, steps and workouts with this water-resistant smart fitness watch and 7-day battery life.' },
-  { name: 'Mountain Bicycle', cat: 'Sports', price: 650, seller: 4, img: 'https://images.unsplash.com/photo-1576435728678-68d0fbf94e91?w=400&h=400&fit=crop&auto=format&q=70', desc: 'Lightweight 21-speed mountain bicycle with front suspension and all-terrain tyres — built for trails and city rides alike.' },
+  // Electronics
+  { name: 'Laptop', cat: 'Electronics', price: 48999, seller: 0, img: 'https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=400&h=400&fit=crop&auto=format&q=70', desc: '15.6" full-HD laptop with a fast SSD, ideal for work and study.' },
+  { name: 'Gaming PC', cat: 'Electronics', price: 89999, seller: 1, img: 'https://images.unsplash.com/photo-1591405351990-4726e331f141?w=400&h=400&fit=crop&auto=format&q=70', desc: 'High-performance desktop tower built for demanding modern games.' },
+  { name: 'Smartphone', cat: 'Electronics', price: 24999, seller: 2, img: 'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=400&h=400&fit=crop&auto=format&q=70', desc: 'Latest-gen smartphone with a triple-camera setup and AMOLED display.' },
+  { name: 'Tablet', cat: 'Electronics', price: 19999, seller: 3, img: 'https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?w=400&h=400&fit=crop&auto=format&q=70', desc: '10.5" tablet with stylus support, great for note-taking and media.' },
+  { name: 'DSLR Camera', cat: 'Electronics', price: 39999, seller: 4, img: 'https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=400&h=400&fit=crop&auto=format&q=70', desc: '24MP DSLR camera with an 18-55mm kit lens, perfect for beginners.' },
+  { name: 'Smart TV', cat: 'Electronics', price: 27999, seller: 0, img: 'https://images.unsplash.com/photo-1593359677879-a4bb92f829d1?w=400&h=400&fit=crop&auto=format&q=70', desc: '43" 4K smart LED TV with built-in streaming apps.' },
+  { name: 'Headphones', cat: 'Electronics', price: 3499, seller: 1, img: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400&h=400&fit=crop&auto=format&q=70', desc: 'Over-ear headphones with active noise cancellation and deep bass.' },
+  { name: 'Smart Watch', cat: 'Electronics', price: 4999, seller: 2, img: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400&h=400&fit=crop&auto=format&q=70', desc: 'Water-resistant smart watch that tracks heart rate, sleep and workouts.' },
+  // Furniture
+  { name: 'Sofa', cat: 'Furniture', price: 18999, seller: 3, img: 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=400&h=400&fit=crop&auto=format&q=70', desc: '3-seater fabric sofa with plush cushions for the living room.' },
+  { name: 'Dining Table', cat: 'Furniture', price: 22999, seller: 4, img: 'https://images.unsplash.com/photo-1617806118233-18e1de247200?w=400&h=400&fit=crop&auto=format&q=70', desc: '6-seater solid wood dining table with matching chairs.' },
+  { name: 'Office Chair', cat: 'Furniture', price: 2600, seller: 0, img: 'https://images.unsplash.com/photo-1580480055273-228ff5388ef8?w=400&h=400&fit=crop&auto=format&q=70', desc: 'Ergonomic office chair with lumbar support.' },
+  { name: 'Study Table', cat: 'Furniture', price: 3200, seller: 1, img: 'https://images.unsplash.com/photo-1611269154421-4e27233ac5c7?w=400&h=400&fit=crop&auto=format&q=70', desc: 'Compact study table made from solid wood.' },
+  { name: 'Wardrobe', cat: 'Furniture', price: 15999, seller: 2, img: 'https://images.unsplash.com/photo-1600585152220-90363fe7e115?w=400&h=400&fit=crop&auto=format&q=70', desc: '3-door wardrobe with mirror and ample storage space.' },
+  // Home
+  { name: 'Wall Clock', cat: 'Home', price: 899, seller: 3, img: 'https://images.unsplash.com/photo-1563861826100-9cb868fdbe1c?w=400&h=400&fit=crop&auto=format&q=70', desc: 'A beautifully crafted handmade wooden wall clock with a smooth, silent movement.' },
+  { name: 'Fan', cat: 'Home', price: 2199, seller: 4, img: 'https://images.unsplash.com/photo-1592078615290-033ee584e267?w=400&h=400&fit=crop&auto=format&q=70', desc: 'High-speed ceiling fan with energy-efficient BLDC motor.' },
+  { name: 'Refrigerator', cat: 'Home', price: 26999, seller: 0, img: 'https://images.unsplash.com/photo-1571175443880-49e1d25b2bc5?w=400&h=400&fit=crop&auto=format&q=70', desc: '260L frost-free double-door refrigerator with a 3-star rating.' },
+  { name: 'Washing Machine', cat: 'Home', price: 21999, seller: 1, img: 'https://images.unsplash.com/photo-1626806787461-102c1bfaaea1?w=400&h=400&fit=crop&auto=format&q=70', desc: 'Fully automatic 7kg front-load washing machine.' },
+  { name: 'Microwave', cat: 'Home', price: 5499, seller: 2, img: 'https://images.unsplash.com/photo-1585659722983-3a675dabf23d?w=400&h=400&fit=crop&auto=format&q=70', desc: '20L solo microwave oven, compact and easy to use.' },
+  // Sports
+  { name: 'Cricket Bat', cat: 'Sports', price: 3999, seller: 3, img: 'https://images.unsplash.com/photo-1531415074968-036ba1b575da?w=400&h=400&fit=crop&auto=format&q=70', desc: 'English willow cricket bat, tournament grade.' },
+  { name: 'Football', cat: 'Sports', price: 1299, seller: 4, img: 'https://images.unsplash.com/photo-1614632537197-38a17061c2bd?w=400&h=400&fit=crop&auto=format&q=70', desc: 'Official size-5 match football with durable synthetic leather.' },
+  { name: 'Mountain Bicycle', cat: 'Sports', price: 12999, seller: 0, img: 'https://images.unsplash.com/photo-1485965120184-e220f721d03e?w=400&h=400&fit=crop&auto=format&q=70', desc: 'Lightweight 21-speed mountain bicycle with front suspension and all-terrain tyres.' },
+  { name: 'Dumbbells', cat: 'Sports', price: 2499, seller: 1, img: 'https://images.unsplash.com/photo-1517344884509-a0c97ec11bcc?w=400&h=400&fit=crop&auto=format&q=70', desc: 'Adjustable rubber-coated dumbbell pair, 2x10kg.' },
+  // Fashion
+  { name: 'Running Shoes', cat: 'Fashion', price: 2200, seller: 2, img: 'https://images.unsplash.com/photo-1513104890138-7c749659a591?w=400&h=400&fit=crop&auto=format&q=70', desc: 'Lightweight running shoes built for speed and comfort.' },
+  { name: 'Jacket', cat: 'Fashion', price: 1799, seller: 3, img: 'https://images.unsplash.com/photo-1551028719-00167b16eac5?w=400&h=400&fit=crop&auto=format&q=70', desc: 'Water-resistant windbreaker jacket for all-season wear.' },
+  { name: 'Backpack', cat: 'Fashion', price: 1499, seller: 4, img: 'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=400&h=400&fit=crop&auto=format&q=70', desc: '35L travel backpack with a padded laptop compartment.' },
+  // Books
+  { name: 'Programming Books', cat: 'Books', price: 999, seller: 0, img: 'https://images.unsplash.com/photo-1532012197267-da84d127e765?w=400&h=400&fit=crop&auto=format&q=70', desc: 'Bundle of best-selling programming and software engineering books.' },
+  { name: 'Novels', cat: 'Books', price: 599, seller: 1, img: 'https://images.unsplash.com/photo-1544947950-fa07a98d237f?w=400&h=400&fit=crop&auto=format&q=70', desc: 'Curated collection of best-selling fiction novels.' },
+  // Kitchen
+  { name: 'Mixer Grinder', cat: 'Kitchen', price: 2999, seller: 2, img: 'https://images.unsplash.com/photo-1570222094114-d054a817e56b?w=400&h=400&fit=crop&auto=format&q=70', desc: '750W mixer grinder with 3 stainless steel jars.' },
+  { name: 'Air Fryer', cat: 'Kitchen', price: 5999, seller: 3, img: 'https://images.unsplash.com/photo-1585237017125-24baf8d7406f?w=400&h=400&fit=crop&auto=format&q=70', desc: '4.5L digital air fryer for healthier, oil-free cooking.' },
+  // Gaming
+  { name: 'PlayStation', cat: 'Gaming', price: 49999, seller: 4, img: 'https://images.unsplash.com/photo-1606813907291-d86efa9b94db?w=400&h=400&fit=crop&auto=format&q=70', desc: 'Next-gen gaming console with a DualSense controller included.' },
+  { name: 'Xbox Controller', cat: 'Gaming', price: 4999, seller: 0, img: 'https://images.unsplash.com/photo-1621259182978-fbf93132d53d?w=400&h=400&fit=crop&auto=format&q=70', desc: 'Wireless controller with textured grip and low-latency connection.' },
 ];
 
 export const allProducts = productDefs.map((p, i) => {
@@ -243,6 +301,8 @@ export const allProducts = productDefs.map((p, i) => {
     image: p.img,
     rating: 4.3 + (i % 6) / 10,
     reviewCount: 18 + i * 7,
+    stock: 3 + (i % 20),
+    website: `https://www.amazon.in/s?k=${encodeURIComponent(p.name)}`,
     sellerId: seller.id,
     seller: { id: seller.id, name: seller.name, username: seller.username, profileImage: seller.profileImage, rating: 4.5 + (i % 4) / 10 },
     reviews: [

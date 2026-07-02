@@ -46,7 +46,7 @@ export async function initializeDemoUsers() {
     isVerified: true,
     isActive: true,
     profileImage: 'https://api.dicebear.com/7.x/avataaars/svg?seed=demo',
-    coverImage: 'https://images.unsplash.com/photo-1517457373614-b7152f800fd1?w=1200&h=400&fit=crop',
+    coverImage: 'https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?w=1200&h=400&fit=crop',
     lastSeen: new Date(),
     createdAt: new Date(),
     updatedAt: new Date(),
@@ -104,4 +104,8 @@ export function revokeDemoRefreshToken(token: string) {
 
 export function getAllDemoUsers(): DemoUser[] {
   return Array.from(demoUsers.values());
+}
+
+export function addDemoUser(user: DemoUser) {
+  demoUsers.set(user.email.toLowerCase(), user);
 }

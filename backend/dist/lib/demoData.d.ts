@@ -29,4 +29,5 @@ export declare function getDemoRefreshToken(token: string): {
 } | undefined;
 export declare function revokeDemoRefreshToken(token: string): void;
 export declare function getAllDemoUsers(): DemoUser[];
+export declare function addDemoUser(user: DemoUser): void;
 //# sourceMappingURL=demoData.d.ts.map

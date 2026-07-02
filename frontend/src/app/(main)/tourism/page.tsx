@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
-import { Search, Star, MapPin, Compass, Loader2, Navigation, Trash2 } from 'lucide-react'
+import { Search, Star, MapPin, Compass, Loader2, Navigation, Trash2, Heart } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { tourismApi } from '@/lib/api'
@@ -57,6 +57,24 @@ export default function TourismPage() {
   const [destinations, setDestinations] = useState<TourismDestination[]>(SAMPLE_DESTINATIONS)
   const [loading, setLoading] = useState(true)
   const [destinationToDelete, setDestinationToDelete] = useState<TourismDestination | null>(null)
+  const [favorites, setFavorites] = useState<string[]>(() => {
+    if (typeof window === 'undefined') return []
+    try {
+      return JSON.parse(window.localStorage.getItem('tourismFavorites') || '[]')
+    } catch {
+      return []
+    }
+  })
+
+  const toggleFavorite = (e: React.MouseEvent, destId?: string) => {
+    e.preventDefault()
+    e.stopPropagation()
+    if (!destId) return
+    const next = favorites.includes(destId) ? favorites.filter((f) => f !== destId) : [...favorites, destId]
+    setFavorites(next)
+    window.localStorage.setItem('tourismFavorites', JSON.stringify(next))
+    toast.success(favorites.includes(destId) ? 'Removed from favorites' : 'Added to favorites')
+  }
 
   useEffect(() => {
     tourismApi.getAll()
@@ -203,7 +221,7 @@ export default function TourismPage() {
           </motion.div>
         ) : (
           <motion.div variants={containerVariants} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filtered.slice(0, 6).map((dest: TourismDestination) => {
+            {filtered.slice(0, 30).map((dest: TourismDestination) => {
               const images = parseImages(dest.images)
               const mainImage = images[0] || dest.image || '/placeholder-tourism.jpg'
               return (
@@ -221,8 +239,16 @@ export default function TourismPage() {
                           alt={dest.name}
                           className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                         />
-                        <div className="absolute top-3 right-3 px-3 py-2 rounded-xl bg-emerald-500/90 text-white text-xs font-bold shadow-lg flex items-center gap-1.5">
-                          {dest.type || dest.category || 'Nature'}
+                        <div className="absolute top-3 right-3 flex items-center gap-2">
+                          <div className="px-3 py-2 rounded-xl bg-emerald-500/90 text-white text-xs font-bold shadow-lg flex items-center gap-1.5">
+                            {dest.type || dest.category || 'Nature'}
+                          </div>
+                          <button
+                            onClick={(e) => toggleFavorite(e, dest.id)}
+                            className="p-2 rounded-xl bg-white/90 backdrop-blur-md hover:bg-white transition-all shadow-lg"
+                          >
+                            <Heart className={`w-4 h-4 ${dest.id && favorites.includes(dest.id) ? 'fill-red-500 text-red-500' : 'text-gray-600'}`} />
+                          </button>
                         </div>
                         <div className="absolute bottom-3 left-3 flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white/95 backdrop-blur-md text-emerald-600 text-xs font-bold shadow-lg">
                           <Star className="w-3.5 h-3.5 fill-emerald-500 text-emerald-500" />

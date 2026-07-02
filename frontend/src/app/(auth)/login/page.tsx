@@ -12,7 +12,7 @@ import { signInWithEmailAndPassword, signInWithPopup } from 'firebase/auth'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { toast } from 'sonner'
-import { Loader2, Mail, Lock, Eye, EyeOff } from 'lucide-react'
+import { Loader2, Mail, Lock, Eye, EyeOff, Sparkles, KeyRound } from 'lucide-react'
 
 const loginSchema = z.object({
   email: z.string().email('Please enter a valid email address'),
@@ -167,12 +167,29 @@ export default function LoginPage() {
           <p className="text-sm text-slate-300">
             Sign in to continue to Hometown Hub
           </p>
-          {process.env.NEXT_PUBLIC_DEMO_MODE === 'true' && (
-            <p className="text-xs text-purple-300/90 mt-2 bg-white/5 rounded-lg px-3 py-2 border border-purple-500/20">
-              Demo: demo@hometownhub.com / Demo@12345
-            </p>
-          )}
         </div>
+
+        {process.env.NEXT_PUBLIC_DEMO_MODE === 'true' && (
+          <div className="relative z-10 mb-6 rounded-2xl border-2 border-purple-500/30 bg-gradient-to-br from-purple-500/15 via-indigo-500/10 to-purple-500/15 backdrop-blur-xl p-5 sm:p-6 shadow-[0_8px_32px_rgba(139,92,246,0.15)]">
+            <p className="flex items-center gap-2 text-sm font-extrabold uppercase tracking-widest text-purple-300 mb-4">
+              <Sparkles className="h-4 w-4 shrink-0" /> Demo Login
+            </p>
+            <div className="flex flex-col gap-3">
+              <div className="flex flex-wrap items-baseline gap-x-2.5 gap-y-1 rounded-xl bg-black/25 border border-white/10 px-4 py-3.5">
+                <span className="flex items-center gap-1.5 text-sm font-bold text-purple-300 shrink-0">
+                  <Mail className="h-4 w-4" /> Gmail:
+                </span>
+                <span className="text-base sm:text-lg font-extrabold text-white whitespace-nowrap tracking-tight">demo@hometownhub.com</span>
+              </div>
+              <div className="flex flex-wrap items-baseline gap-x-2.5 gap-y-1 rounded-xl bg-black/25 border border-white/10 px-4 py-3.5">
+                <span className="flex items-center gap-1.5 text-sm font-bold text-purple-300 shrink-0">
+                  <KeyRound className="h-4 w-4" /> Password:
+                </span>
+                <span className="text-base sm:text-lg font-extrabold text-white whitespace-nowrap tracking-tight">Demo@12345</span>
+              </div>
+            </div>
+          </div>
+        )}
 
         <form onSubmit={handleSubmit} className="space-y-5 relative z-10">
           <div className="space-y-1">

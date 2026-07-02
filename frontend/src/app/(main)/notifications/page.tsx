@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Loader2, Bell, Check, Trash2, Users, Calendar, Briefcase, ShoppingBag, Sparkles } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
 import { PortalBackground } from '@/components/ui/PortalBackground'
+import type { Notification } from '@/types'
 
 export default function NotificationsPage() {
   const { notifications: storeNotifications, setNotifications, markAllRead: storeMarkAllRead, removeNotification, clearAll } = useNotificationStore()
@@ -87,7 +88,7 @@ export default function NotificationsPage() {
           </div>
         ) : (
           <div className="space-y-3">
-            {notifications.map((notification: any) => {
+            {notifications.map((notification: Notification) => {
               const bodyLower = notification.body?.toLowerCase() || ''
               let IconClass = Bell
               let iconColor = 'text-cyan-300'

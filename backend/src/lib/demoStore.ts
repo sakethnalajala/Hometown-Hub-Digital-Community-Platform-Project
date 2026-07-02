@@ -343,6 +343,8 @@ export const productStore = {
       image: images[0],
       rating: 0,
       reviewCount: 0,
+      stock: Number(data.stock) || 10,
+      website: data.website || undefined,
       sellerId: userId,
       seller: { ...authorOf(userId), rating: 5 },
       reviews: [],

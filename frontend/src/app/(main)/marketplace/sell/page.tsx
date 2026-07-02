@@ -14,7 +14,7 @@ import { isValidImageUrl } from '@/lib/images'
 
 const categories = ['Electronics', 'Fashion', 'Home', 'Food', 'Art', 'Books', 'Sports', 'Health', 'Kids', 'Garden']
 
-const PLACEHOLDER_IMAGE = 'https://images.unsplash.com/photo-1505740106531-4243f8c4f8fd?w=400&h=400&fit=crop'
+const PLACEHOLDER_IMAGE = 'https://images.unsplash.com/photo-1449824913935-59a10b8d2000?w=400&h=400&fit=crop'
 
 export default function SellItemPage() {
   const router = useRouter()

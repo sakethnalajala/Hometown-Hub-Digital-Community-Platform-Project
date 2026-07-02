@@ -13,6 +13,9 @@ import { toast } from 'sonner'
 import { PortalBackground } from '@/components/ui/PortalBackground'
 import { GradientButton } from '@/components/ui/GradientButton'
 import { EventRegistrationModal } from '@/components/ui/EventRegistrationModal'
+import { InvitationCardModal } from '@/components/ui/InvitationCard'
+import { saveInvitation, getInvitationByEventId, type EventInvitation } from '@/lib/invitations'
+import type { Event } from '@/types'
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -25,8 +28,10 @@ const itemVariants = {
 
 export default function EventsPage() {
   const queryClient = useQueryClient()
-  const [selectedEvent, setSelectedEvent] = useState<any | null>(null)
+  const [selectedEvent, setSelectedEvent] = useState<Event | null>(null)
   const [registrationOpen, setRegistrationOpen] = useState(false)
+  const [invitation, setInvitation] = useState<EventInvitation | null>(null)
+  const [invitationOpen, setInvitationOpen] = useState(false)
   const [registeredEventIds, setRegisteredEventIds] = useState<string[]>(() => {
     if (typeof window === 'undefined') return []
     try {
@@ -52,23 +57,42 @@ export default function EventsPage() {
     })
   }
 
-  const handleRegister = (e: React.MouseEvent, event: any) => {
+  const handleRegister = (e: React.MouseEvent, event: Event) => {
     e.preventDefault()
     e.stopPropagation()
+    if (registeredEventIds.includes(event.id)) {
+      const existing = getInvitationByEventId(event.id)
+      if (existing) {
+        setInvitation(existing)
+        setInvitationOpen(true)
+        return
+      }
+    }
     setSelectedEvent(event)
     setRegistrationOpen(true)
   }
 
-  const handleRegistrationSubmit = async () => {
+  const handleRegistrationSubmit = async (payload: { fullName: string; email: string; phone: string; notes: string }) => {
     if (!selectedEvent) return
     try {
       await eventsApi.rsvp(selectedEvent.id, 'GOING')
-      saveRegisteredEvent(selectedEvent.id)
-      toast.success(`You're registered for ${selectedEvent.title}!`)
       queryClient.invalidateQueries({ queryKey: ['events'], exact: false })
     } catch {
-      toast.success(`You're registered for ${selectedEvent.title}!`)
+      // demo mode / API unavailable — still confirm the RSVP locally
     }
+    saveRegisteredEvent(selectedEvent.id)
+    const newInvitation = saveInvitation({
+      eventId: selectedEvent.id,
+      eventTitle: selectedEvent.title,
+      fullName: payload.fullName,
+      email: payload.email,
+      phone: payload.phone,
+      dateTime: selectedEvent.date,
+      venue: selectedEvent.isOnline ? 'Online Event' : (selectedEvent.location || 'To be announced'),
+    })
+    toast.success(`You're registered for ${selectedEvent.title}!`)
+    setInvitation(newInvitation)
+    setInvitationOpen(true)
   }
 
   useEffect(() => {
@@ -162,7 +186,7 @@ export default function EventsPage() {
           </motion.div>
         ) : (
           <motion.div variants={containerVariants} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {events.slice(0, 5).map((event: any) => (
+            {events.slice(0, 30).map((event: Event) => (
               <motion.div key={event.id} variants={itemVariants}>
                 <Link href={`/events/${event.id}`}>
                   <motion.div
@@ -210,7 +234,7 @@ export default function EventsPage() {
                           className="bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white rounded-xl font-bold shadow-lg"
                         >
                           <Ticket className="w-4 h-4 mr-1.5" />
-                          {registeredEventIds.includes(event.id) ? 'Registered' : 'Register'}
+                          {registeredEventIds.includes(event.id) ? 'View Invitation' : 'Register'}
                         </Button>
                       </div>
                     </div>
@@ -226,6 +250,11 @@ export default function EventsPage() {
         onOpenChange={setRegistrationOpen}
         event={selectedEvent}
         onSubmit={handleRegistrationSubmit}
+      />
+      <InvitationCardModal
+        open={invitationOpen}
+        onOpenChange={setInvitationOpen}
+        invitation={invitation}
       />
     </PortalBackground>
   )

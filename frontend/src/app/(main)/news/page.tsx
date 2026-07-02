@@ -3,12 +3,13 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
-import { Newspaper, Search, Clock, Eye, TrendingUp, Loader2, Zap } from 'lucide-react'
+import { Newspaper, Search, Clock, Eye, TrendingUp, Loader2, Zap, MapPin, ArrowRight } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { newsApi } from '@/lib/api'
 import { ImageWithFallback } from '@/components/ui/ImageWithFallback'
 import { toast } from 'sonner'
 import { PortalBackground } from '@/components/ui/PortalBackground'
+import type { NewsArticle } from '@/types'
 
 const categories = ['All', 'Politics', 'Education', 'Technology', 'Healthcare', 'Environment', 'Transportation', 'Business', 'Sports', 'Culture']
 
@@ -21,7 +22,7 @@ const itemVariants = { hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0, 
 export default function NewsPage() {
   const [search, setSearch] = useState('')
   const [activeCategory, setActiveCategory] = useState('All')
-  const [news, setNews] = useState<any[]>([])
+  const [news, setNews] = useState<NewsArticle[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -162,9 +163,17 @@ export default function NewsPage() {
                     <div className="absolute bottom-0 left-0 right-0 p-8">
                       <h2 className="text-3xl md:text-4xl font-black text-white mb-3 leading-tight">{featured.title}</h2>
                       <p className="text-gray-200 text-base line-clamp-2 mb-4">{featured.content || featured.summary || ''}</p>
-                      <div className="flex items-center gap-6 text-sm text-gray-300">
-                        <span className="flex items-center gap-2"><Clock className="w-4 h-4" /> {new Date(featured.publishedAt || featured.createdAt).toLocaleDateString()}</span>
+                      <div className="flex items-center gap-6 text-sm text-gray-300 flex-wrap">
+                        {(featured.publishedAt || featured.createdAt) && (
+                          <span className="flex items-center gap-2"><Clock className="w-4 h-4" /> {new Date(featured.publishedAt || featured.createdAt!).toLocaleDateString()}</span>
+                        )}
                         <span className="flex items-center gap-2"><Eye className="w-4 h-4" /> {featured.views || 0} views</span>
+                        {featured.location && (
+                          <span className="flex items-center gap-2"><MapPin className="w-4 h-4" /> {featured.location}</span>
+                        )}
+                        <span className="flex items-center gap-2 text-red-300 font-bold">
+                          Read More <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
+                        </span>
                       </div>
                     </div>
                   </motion.div>
@@ -174,7 +183,7 @@ export default function NewsPage() {
 
             {/* Grid */}
             <motion.div variants={containerVariants} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {rest.slice(0, 6).map((article: any) => (
+              {rest.slice(0, 30).map((article: NewsArticle) => (
                 <motion.div key={article.id} variants={itemVariants}>
                   <Link href={`/news/${article.id}`}>
                     <motion.div
@@ -196,13 +205,23 @@ export default function NewsPage() {
                         <h3 className="text-lg font-bold text-white mb-2 line-clamp-2 group-hover:text-red-300 transition-colors">
                           {article.title}
                         </h3>
-                        <p className="text-sm text-gray-300 line-clamp-2 mb-4 flex-1">
+                        <p className="text-sm text-gray-300 line-clamp-2 mb-3 flex-1">
                           {article.content || article.summary || ''}
                         </p>
+                        {article.location && (
+                          <span className="flex items-center gap-1.5 text-xs text-red-300 font-medium mb-3">
+                            <MapPin className="w-3.5 h-3.5" /> {article.location}
+                          </span>
+                        )}
                         <div className="flex items-center justify-between text-xs text-gray-400 pt-4 border-t border-white/10">
-                          <span className="flex items-center gap-1.5"><Clock className="w-3.5 h-3.5" /> {new Date(article.publishedAt || article.createdAt).toLocaleDateString()}</span>
+                          {(article.publishedAt || article.createdAt) && (
+                            <span className="flex items-center gap-1.5"><Clock className="w-3.5 h-3.5" /> {new Date(article.publishedAt || article.createdAt!).toLocaleDateString()}</span>
+                          )}
                           <span className="flex items-center gap-1.5"><Eye className="w-3.5 h-3.5" /> {article.views || 0}</span>
                         </div>
+                        <span className="mt-4 flex items-center justify-center gap-1.5 rounded-xl bg-red-500/15 border border-red-400/30 text-red-300 font-bold text-sm py-2.5 group-hover:bg-red-500/25 transition-colors">
+                          Read More <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
+                        </span>
                       </div>
                     </motion.div>
                   </Link>

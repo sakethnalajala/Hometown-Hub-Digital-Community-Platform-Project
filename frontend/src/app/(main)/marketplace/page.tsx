@@ -3,9 +3,12 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
-import { ShoppingBag, Search, Filter, Heart, ShoppingCart, Tag, Loader2, Store, Trash2 } from 'lucide-react'
+import { ShoppingBag, Search, Filter, Heart, ShoppingCart, Tag, Loader2, Store, Trash2, Pencil, Save } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
+import { Textarea } from '@/components/ui/textarea'
+import { Label } from '@/components/ui/label'
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { marketplaceApi } from '@/lib/api'
 import { ImageWithFallback } from '@/components/ui/ImageWithFallback'
 import { toast } from 'sonner'
@@ -23,23 +26,58 @@ const SAMPLE_PRODUCTS = [
   { id: 'sample-product-5', name: 'Brown Bread', description: 'Whole wheat bread baked fresh every morning.', price: 50, seller: { name: 'Morning Bakery' }, location: 'Pune', rating: 4.5, category: 'Grocery', stock: 7, image: 'https://images.unsplash.com/photo-1509440159596-0249088772ff?w=800&h=600&fit=crop&auto=format&q=70', website: 'https://www.amazon.in/s?k=brown+bread' },
   { id: 'sample-product-6', name: 'Wireless Earbuds', description: 'Noise-cancelling earbuds with crystal-clear audio.', price: 1600, seller: { name: 'ElectroHub' }, location: 'Mumbai', rating: 4.8, category: 'Electronics', stock: 5, image: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=800&h=600&fit=crop&auto=format&q=70', website: 'https://www.amazon.in/s?k=wireless+earbuds' },
   { id: 'sample-product-7', name: 'Cotton Kurta', description: 'Breathable cotton kurta perfect for everyday wear.', price: 900, seller: { name: 'Style Street' }, location: 'Jaipur', rating: 4.4, category: 'Clothing', stock: 9, image: 'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=800&h=600&fit=crop&auto=format&q=70', website: 'https://www.amazon.in/s?k=cotton+kurta' },
-  { id: 'sample-product-8', name: 'Wooden Study Table', description: 'Compact study table made from solid wood.', price: 3200, seller: { name: 'Urban Home' }, location: 'Bengaluru', rating: 4.7, category: 'Furniture', stock: 3, image: 'https://images.unsplash.com/photo-1519947486511-46149fa0e254?w=800&h=600&fit=crop&auto=format&q=70', website: 'https://www.amazon.in/s?k=wooden+study+table' },
+  { id: 'sample-product-8', name: 'Wooden Study Table', description: 'Compact study table made from solid wood.', price: 3200, seller: { name: 'Urban Home' }, location: 'Bengaluru', rating: 4.7, category: 'Furniture', stock: 3, image: 'https://images.unsplash.com/photo-1611269154421-4e27233ac5c7?w=800&h=600&fit=crop&auto=format&q=70', website: 'https://www.amazon.in/s?k=wooden+study+table' },
   { id: 'sample-product-9', name: 'Cooking Oil', description: 'Refined cooking oil ideal for everyday Indian cooking.', price: 140, seller: { name: 'Daily Needs' }, location: 'Kolkata', rating: 4.6, category: 'Kitchen', stock: 0, image: 'https://images.unsplash.com/photo-1473093295043-cdd812d0e601?w=800&h=600&fit=crop&auto=format&q=70', website: 'https://www.amazon.in/s?k=cooking+oil' },
   { id: 'sample-product-10', name: 'Ceramic Dinner Set', description: 'Elegant 16-piece dinnerware set for modern dining.', price: 1200, seller: { name: 'Home Nest' }, location: 'Hyderabad', rating: 4.8, category: 'Home Decor', stock: 4, image: 'https://images.unsplash.com/photo-1513694203232-719a280e022f?w=800&h=600&fit=crop&auto=format&q=70', website: 'https://www.amazon.in/s?k=ceramic+dinner+set' },
   { id: 'sample-product-11', name: 'Yoga Mat', description: 'Eco-friendly yoga mat with strong grip and cushioning.', price: 650, seller: { name: 'Fit Circle' }, location: 'Pune', rating: 4.8, category: 'Fitness', stock: 6, image: 'https://images.unsplash.com/photo-1518611012118-696072aa579a?w=800&h=600&fit=crop&auto=format&q=70', website: 'https://www.amazon.in/s?k=yoga+mat' },
   { id: 'sample-product-12', name: 'Portable Blender', description: 'Rechargeable juicer blender for smoothies on the go.', price: 1100, seller: { name: 'Kitchen Hub' }, location: 'Chennai', rating: 4.7, category: 'Kitchen', stock: 2, image: 'https://images.unsplash.com/photo-1577563908411-5077b6dc7624?w=800&h=600&fit=crop&auto=format&q=70', website: 'https://www.amazon.in/s?k=portable+blender' },
   { id: 'sample-product-13', name: 'Bluetooth Speaker', description: 'Portable speaker with deep bass and long battery life.', price: 1800, seller: { name: 'SoundWorks' }, location: 'Delhi', rating: 4.9, category: 'Electronics', stock: 8, image: 'https://images.unsplash.com/photo-1546435770-a3e426bf472b?w=800&h=600&fit=crop&auto=format&q=70', website: 'https://www.amazon.in/s?k=bluetooth+speaker' },
-  { id: 'sample-product-14', name: 'Office Chair', description: 'Ergonomic office chair with lumbar support.', price: 2600, seller: { name: 'WorkNest' }, location: 'Ahmedabad', rating: 4.6, category: 'Furniture', stock: 4, image: 'https://images.unsplash.com/photo-1519947486511-46149fa0e254?w=800&h=600&fit=crop&auto=format&q=70', website: 'https://www.amazon.in/s?k=office+chair' },
+  { id: 'sample-product-14', name: 'Office Chair', description: 'Ergonomic office chair with lumbar support.', price: 2600, seller: { name: 'WorkNest' }, location: 'Ahmedabad', rating: 4.6, category: 'Furniture', stock: 4, image: 'https://images.unsplash.com/photo-1580480055273-228ff5388ef8?w=800&h=600&fit=crop&auto=format&q=70', website: 'https://www.amazon.in/s?k=office+chair' },
   { id: 'sample-product-15', name: 'Herbal Tea Set', description: 'Soothing tea set with chamomile and green tea blends.', price: 320, seller: { name: 'Wellness Lane' }, location: 'Mumbai', rating: 4.8, category: 'Grocery', stock: 11, image: 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=800&h=600&fit=crop&auto=format&q=70', website: 'https://www.amazon.in/s?k=herbal+tea+set' },
   { id: 'sample-product-16', name: 'Wireless Charger', description: 'Fast wireless charger compatible with modern phones.', price: 899, seller: { name: 'GadgetMart' }, location: 'Bengaluru', rating: 4.5, category: 'Electronics', stock: 15, image: 'https://images.unsplash.com/photo-1512496015851-a90fb38ba796?w=800&h=600&fit=crop&auto=format&q=70', website: 'https://www.amazon.in/s?k=wireless+charger' },
-  { id: 'sample-product-17', name: 'Hardcover Notebook', description: 'Premium notebook with cream paper and stitched binding.', price: 120, seller: { name: 'PaperHouse' }, location: 'Kolkata', rating: 4.7, category: 'Books', stock: 40, image: 'https://images.unsplash.com/photo-1512446810554-6cef1a70f7d9?w=800&h=600&fit=crop&auto=format&q=70', website: 'https://www.amazon.in/s?k=hardcover+notebook' },
-  { id: 'sample-product-18', name: 'Kids Puzzle Toy', description: 'Creative wooden puzzle toy for children aged 4 and above.', price: 450, seller: { name: 'PlayBox' }, location: 'Chennai', rating: 4.6, category: 'Sports', stock: 20, image: 'https://images.unsplash.com/photo-1581092795360-5d0b1d1a7f1b?w=800&h=600&fit=crop&auto=format&q=70', website: 'https://www.amazon.in/s?k=kids+puzzle' },
+  { id: 'sample-product-17', name: 'Hardcover Notebook', description: 'Premium notebook with cream paper and stitched binding.', price: 120, seller: { name: 'PaperHouse' }, location: 'Kolkata', rating: 4.7, category: 'Books', stock: 40, image: 'https://images.unsplash.com/photo-1517842645767-c639042777db?w=800&h=600&fit=crop&auto=format&q=70', website: 'https://www.amazon.in/s?k=hardcover+notebook' },
+  { id: 'sample-product-18', name: 'Kids Puzzle Toy', description: 'Creative wooden puzzle toy for children aged 4 and above.', price: 450, seller: { name: 'PlayBox' }, location: 'Chennai', rating: 4.6, category: 'Sports', stock: 20, image: 'https://images.unsplash.com/photo-1587654780291-39c9404d746b?w=800&h=600&fit=crop&auto=format&q=70', website: 'https://www.amazon.in/s?k=kids+puzzle' },
   { id: 'sample-product-19', name: 'Mobile Phone (Refurb)', description: 'Certified refurbished smartphone with a bright display.', price: 8999, seller: { name: 'PhoneHub' }, location: 'Mumbai', rating: 4.3, category: 'Mobile Phones', stock: 6, image: 'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=800&h=600&fit=crop&auto=format&q=70', website: 'https://www.amazon.in/s?k=mobile+phone' },
-  { id: 'sample-product-20', name: 'Stainless Steel Cookware Set', description: 'Complete cookware set for modern kitchens.', price: 2999, seller: { name: 'CookPro' }, location: 'Delhi', rating: 4.8, category: 'Kitchen', stock: 7, image: 'https://images.unsplash.com/photo-1541542684-20a6c5e9a6b9?w=800&h=600&fit=crop&auto=format&q=70', website: 'https://www.amazon.in/s?k=cookware+set' },
-  { id: 'sample-product-21', name: 'Gaming Keyboard', description: 'RGB mechanical keyboard with customizable macros.', price: 4500, seller: { name: 'GameForge' }, location: 'Bengaluru', rating: 4.7, category: 'Gaming', stock: 8, image: 'https://images.unsplash.com/photo-1606813909270-6ddc9ea04ee0?w=800&h=600&fit=crop&auto=format&q=70', website: 'https://www.amazon.in/s?k=gaming+keyboard' },
+  { id: 'sample-product-20', name: 'Stainless Steel Cookware Set', description: 'Complete cookware set for modern kitchens.', price: 2999, seller: { name: 'CookPro' }, location: 'Delhi', rating: 4.8, category: 'Kitchen', stock: 7, image: 'https://images.unsplash.com/photo-1587829741301-dc798b83add3?w=800&h=600&fit=crop&auto=format&q=70', website: 'https://www.amazon.in/s?k=cookware+set' },
+  { id: 'sample-product-21', name: 'Gaming Keyboard', description: 'RGB mechanical keyboard with customizable macros.', price: 4500, seller: { name: 'GameForge' }, location: 'Bengaluru', rating: 4.7, category: 'Gaming', stock: 8, image: 'https://images.unsplash.com/photo-1595246140625-573b715d11dc?w=800&h=600&fit=crop&auto=format&q=70', website: 'https://www.amazon.in/s?k=gaming+keyboard' },
   { id: 'sample-product-22', name: 'Laptop Sleeve', description: 'Premium neoprene sleeve for 13-15 inch laptops.', price: 799, seller: { name: 'BagCraft' }, location: 'Pune', rating: 4.6, category: 'Laptops', stock: 12, image: 'https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=800&h=600&fit=crop&auto=format&q=70', website: 'https://www.amazon.in/s?k=laptop+sleeve' },
   { id: 'sample-product-23', name: 'Running Shoes', description: 'Lightweight running shoes built for speed and comfort.', price: 2200, seller: { name: 'StridePro' }, location: 'Kochi', rating: 4.7, category: 'Fitness', stock: 9, image: 'https://images.unsplash.com/photo-1513104890138-7c749659a591?w=800&h=600&fit=crop&auto=format&q=70', website: 'https://www.amazon.in/s?k=running+shoes' },
   { id: 'sample-product-24', name: 'Smartwatch', description: 'Water-resistant smartwatch with health tracking.', price: 4999, seller: { name: 'WearTech' }, location: 'Chennai', rating: 4.5, category: 'Mobile Phones', stock: 11, image: 'https://images.unsplash.com/photo-1516574187841-cb9cc2ca948b?w=800&h=600&fit=crop&auto=format&q=70', website: 'https://www.amazon.in/s?k=smartwatch' },
+  // Electronics
+  { id: 'sample-product-25', name: 'Laptop', description: '15.6" full-HD laptop with a fast SSD, ideal for work and study.', price: 48999, seller: { name: 'CompuWorld' }, location: 'Bengaluru', rating: 4.6, category: 'Electronics', stock: 6, image: 'https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=800&h=600&fit=crop&auto=format&q=70', website: 'https://www.amazon.in/s?k=laptop' },
+  { id: 'sample-product-26', name: 'Gaming PC', description: 'High-performance desktop tower built for demanding modern games.', price: 89999, seller: { name: 'GameForge' }, location: 'Bengaluru', rating: 4.8, category: 'Electronics', stock: 3, image: 'https://images.unsplash.com/photo-1591405351990-4726e331f141?w=800&h=600&fit=crop&auto=format&q=70', website: 'https://www.amazon.in/s?k=gaming+pc' },
+  { id: 'sample-product-27', name: 'Smartphone', description: 'Latest-gen smartphone with a triple-camera setup and AMOLED display.', price: 24999, seller: { name: 'PhoneHub' }, location: 'Mumbai', rating: 4.7, category: 'Electronics', stock: 14, image: 'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=800&h=600&fit=crop&auto=format&q=70', website: 'https://www.amazon.in/s?k=smartphone' },
+  { id: 'sample-product-28', name: 'Tablet', description: '10.5" tablet with stylus support, great for note-taking and media.', price: 19999, seller: { name: 'GadgetMart' }, location: 'Bengaluru', rating: 4.5, category: 'Electronics', stock: 9, image: 'https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?w=800&h=600&fit=crop&auto=format&q=70', website: 'https://www.amazon.in/s?k=tablet' },
+  { id: 'sample-product-29', name: 'DSLR Camera', description: '24MP DSLR camera with an 18-55mm kit lens, perfect for beginners.', price: 39999, seller: { name: 'PixelPro Studios' }, location: 'Delhi', rating: 4.8, category: 'Electronics', stock: 4, image: 'https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=800&h=600&fit=crop&auto=format&q=70', website: 'https://www.amazon.in/s?k=dslr+camera' },
+  { id: 'sample-product-30', name: 'Smart TV', description: '43" 4K smart LED TV with built-in streaming apps.', price: 27999, seller: { name: 'ElectroHub' }, location: 'Mumbai', rating: 4.6, category: 'Electronics', stock: 5, image: 'https://images.unsplash.com/photo-1593359677879-a4bb92f829d1?w=800&h=600&fit=crop&auto=format&q=70', website: 'https://www.amazon.in/s?k=smart+tv' },
+  { id: 'sample-product-31', name: 'Headphones', description: 'Over-ear headphones with active noise cancellation and deep bass.', price: 3499, seller: { name: 'SoundWorks' }, location: 'Delhi', rating: 4.7, category: 'Electronics', stock: 17, image: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=800&h=600&fit=crop&auto=format&q=70', website: 'https://www.amazon.in/s?k=headphones' },
+  // Furniture
+  { id: 'sample-product-32', name: 'Sofa', description: '3-seater fabric sofa with plush cushions for the living room.', price: 18999, seller: { name: 'Urban Home' }, location: 'Bengaluru', rating: 4.6, category: 'Furniture', stock: 5, image: 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=800&h=600&fit=crop&auto=format&q=70', website: 'https://www.amazon.in/s?k=sofa' },
+  { id: 'sample-product-33', name: 'Dining Table', description: '6-seater solid wood dining table with matching chairs.', price: 22999, seller: { name: 'WoodCraft Living' }, location: 'Pune', rating: 4.7, category: 'Furniture', stock: 3, image: 'https://images.unsplash.com/photo-1617806118233-18e1de247200?w=800&h=600&fit=crop&auto=format&q=70', website: 'https://www.amazon.in/s?k=dining+table' },
+  { id: 'sample-product-34', name: 'Wardrobe', description: '3-door wardrobe with mirror and ample storage space.', price: 15999, seller: { name: 'Urban Home' }, location: 'Bengaluru', rating: 4.5, category: 'Furniture', stock: 4, image: 'https://images.unsplash.com/photo-1600585152220-90363fe7e115?w=800&h=600&fit=crop&auto=format&q=70', website: 'https://www.amazon.in/s?k=wardrobe' },
+  // Home
+  { id: 'sample-product-35', name: 'Wall Clock', description: 'Minimalist wooden wall clock with silent sweep movement.', price: 899, seller: { name: 'Home Nest' }, location: 'Hyderabad', rating: 4.6, category: 'Home', stock: 22, image: 'https://images.unsplash.com/photo-1563861826100-9cb868fdbe1c?w=800&h=600&fit=crop&auto=format&q=70', website: 'https://www.amazon.in/s?k=wooden+wall+clock' },
+  { id: 'sample-product-36', name: 'Fan', description: 'High-speed ceiling fan with energy-efficient BLDC motor.', price: 2199, seller: { name: 'CoolBreeze Appliances' }, location: 'Chennai', rating: 4.5, category: 'Home', stock: 13, image: 'https://images.unsplash.com/photo-1592078615290-033ee584e267?w=800&h=600&fit=crop&auto=format&q=70', website: 'https://www.amazon.in/s?k=ceiling+fan' },
+  { id: 'sample-product-37', name: 'Refrigerator', description: '260L frost-free double-door refrigerator with a 3-star rating.', price: 26999, seller: { name: 'CoolBreeze Appliances' }, location: 'Chennai', rating: 4.7, category: 'Home', stock: 4, image: 'https://images.unsplash.com/photo-1571175443880-49e1d25b2bc5?w=800&h=600&fit=crop&auto=format&q=70', website: 'https://www.amazon.in/s?k=refrigerator' },
+  { id: 'sample-product-38', name: 'Washing Machine', description: 'Fully automatic 7kg front-load washing machine.', price: 21999, seller: { name: 'CoolBreeze Appliances' }, location: 'Chennai', rating: 4.6, category: 'Home', stock: 6, image: 'https://images.unsplash.com/photo-1626806787461-102c1bfaaea1?w=800&h=600&fit=crop&auto=format&q=70', website: 'https://www.amazon.in/s?k=washing+machine' },
+  { id: 'sample-product-39', name: 'Microwave', description: '20L solo microwave oven, compact and easy to use.', price: 5499, seller: { name: 'Daily Needs' }, location: 'Kolkata', rating: 4.4, category: 'Home', stock: 10, image: 'https://images.unsplash.com/photo-1585659722983-3a675dabf23d?w=800&h=600&fit=crop&auto=format&q=70', website: 'https://www.amazon.in/s?k=microwave+oven' },
+  // Sports
+  { id: 'sample-product-40', name: 'Cricket Bat', description: 'English willow cricket bat, tournament grade.', price: 3999, seller: { name: 'PlayField Sports' }, location: 'Mumbai', rating: 4.7, category: 'Sports', stock: 8, image: 'https://images.unsplash.com/photo-1531415074968-036ba1b575da?w=800&h=600&fit=crop&auto=format&q=70', website: 'https://www.amazon.in/s?k=cricket+bat' },
+  { id: 'sample-product-41', name: 'Football', description: 'Official size-5 match football with durable synthetic leather.', price: 1299, seller: { name: 'PlayField Sports' }, location: 'Mumbai', rating: 4.6, category: 'Sports', stock: 25, image: 'https://images.unsplash.com/photo-1614632537197-38a17061c2bd?w=800&h=600&fit=crop&auto=format&q=70', website: 'https://www.amazon.in/s?k=football' },
+  { id: 'sample-product-42', name: 'Bicycle', description: '21-speed mountain bike with front suspension.', price: 12999, seller: { name: 'StridePro' }, location: 'Kochi', rating: 4.7, category: 'Sports', stock: 5, image: 'https://images.unsplash.com/photo-1485965120184-e220f721d03e?w=800&h=600&fit=crop&auto=format&q=70', website: 'https://www.amazon.in/s?k=bicycle' },
+  { id: 'sample-product-43', name: 'Dumbbells', description: 'Adjustable rubber-coated dumbbell pair, 2x10kg.', price: 2499, seller: { name: 'Fit Circle' }, location: 'Pune', rating: 4.8, category: 'Sports', stock: 12, image: 'https://images.unsplash.com/photo-1517344884509-a0c97ec11bcc?w=800&h=600&fit=crop&auto=format&q=70', website: 'https://www.amazon.in/s?k=dumbbells' },
+  // Fashion
+  { id: 'sample-product-44', name: 'Jacket', description: 'Water-resistant windbreaker jacket for all-season wear.', price: 1799, seller: { name: 'Style Street' }, location: 'Jaipur', rating: 4.5, category: 'Fashion', stock: 16, image: 'https://images.unsplash.com/photo-1551028719-00167b16eac5?w=800&h=600&fit=crop&auto=format&q=70', website: 'https://www.amazon.in/s?k=jacket' },
+  { id: 'sample-product-45', name: 'Backpack', description: '35L travel backpack with a padded laptop compartment.', price: 1499, seller: { name: 'BagCraft' }, location: 'Pune', rating: 4.6, category: 'Fashion', stock: 20, image: 'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=800&h=600&fit=crop&auto=format&q=70', website: 'https://www.amazon.in/s?k=backpack' },
+  // Books
+  { id: 'sample-product-46', name: 'Programming Books', description: 'Bundle of best-selling programming and software engineering books.', price: 999, seller: { name: 'PaperHouse' }, location: 'Kolkata', rating: 4.8, category: 'Books', stock: 18, image: 'https://images.unsplash.com/photo-1532012197267-da84d127e765?w=800&h=600&fit=crop&auto=format&q=70', website: 'https://www.amazon.in/s?k=programming+books' },
+  { id: 'sample-product-47', name: 'Novels', description: 'Curated collection of best-selling fiction novels.', price: 599, seller: { name: 'PaperHouse' }, location: 'Kolkata', rating: 4.7, category: 'Books', stock: 30, image: 'https://images.unsplash.com/photo-1544947950-fa07a98d237f?w=800&h=600&fit=crop&auto=format&q=70', website: 'https://www.amazon.in/s?k=novels' },
+  // Kitchen
+  { id: 'sample-product-48', name: 'Mixer Grinder', description: '750W mixer grinder with 3 stainless steel jars.', price: 2999, seller: { name: 'Kitchen Hub' }, location: 'Chennai', rating: 4.6, category: 'Kitchen', stock: 14, image: 'https://images.unsplash.com/photo-1570222094114-d054a817e56b?w=800&h=600&fit=crop&auto=format&q=70', website: 'https://www.amazon.in/s?k=mixer+grinder' },
+  { id: 'sample-product-49', name: 'Air Fryer', description: '4.5L digital air fryer for healthier, oil-free cooking.', price: 5999, seller: { name: 'CookPro' }, location: 'Delhi', rating: 4.8, category: 'Kitchen', stock: 9, image: 'https://images.unsplash.com/photo-1585237017125-24baf8d7406f?w=800&h=600&fit=crop&auto=format&q=70', website: 'https://www.amazon.in/s?k=air+fryer' },
+  // Gaming
+  { id: 'sample-product-50', name: 'PlayStation', description: 'Next-gen gaming console with a DualSense controller included.', price: 49999, seller: { name: 'GameForge' }, location: 'Bengaluru', rating: 4.9, category: 'Gaming', stock: 3, image: 'https://images.unsplash.com/photo-1606813907291-d86efa9b94db?w=800&h=600&fit=crop&auto=format&q=70', website: 'https://www.amazon.in/s?k=playstation' },
+  { id: 'sample-product-51', name: 'Xbox Controller', description: 'Wireless controller with textured grip and low-latency connection.', price: 4999, seller: { name: 'GameForge' }, location: 'Bengaluru', rating: 4.7, category: 'Gaming', stock: 11, image: 'https://images.unsplash.com/photo-1621259182978-fbf93132d53d?w=800&h=600&fit=crop&auto=format&q=70', website: 'https://www.amazon.in/s?k=xbox+controller' },
 ]
 
 
@@ -51,7 +89,7 @@ function parseImages(images: unknown): string[] {
   return []
 }
 
-const categories = ['All', 'Electronics', 'Furniture', 'Clothing', 'Grocery', 'Kitchen', 'Health & Wellness', 'Fitness', 'Accessories', 'Books', 'Mobile Phones', 'Laptops', 'Gaming', 'Toys', 'Home Decor']
+const categories = ['All', 'Electronics', 'Furniture', 'Home', 'Clothing', 'Fashion', 'Grocery', 'Kitchen', 'Health & Wellness', 'Fitness', 'Sports', 'Accessories', 'Books', 'Mobile Phones', 'Laptops', 'Gaming', 'Toys', 'Home Decor']
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -83,9 +121,11 @@ export default function MarketplacePage() {
   const [listings, setListings] = useState<MarketplaceItem[]>(SAMPLE_PRODUCTS)
   const [loading, setLoading] = useState(true)
   const [itemToDelete, setItemToDelete] = useState<MarketplaceItem | null>(null)
+  const [itemToEdit, setItemToEdit] = useState<MarketplaceItem | null>(null)
+  const [editForm, setEditForm] = useState({ name: '', description: '', price: '', stock: '', category: '' })
 
   useEffect(() => {
-    marketplaceApi.getAll()
+    marketplaceApi.getAll({ limit: 60 })
       .then(res => {
         setListings(res.data || [])
         setLoading(false)
@@ -114,6 +154,32 @@ export default function MarketplacePage() {
     e.preventDefault()
     e.stopPropagation()
     setItemToDelete(item)
+  }
+
+  const handleEdit = (e: React.MouseEvent, item: MarketplaceItem) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setItemToEdit(item)
+    setEditForm({
+      name: item.name || item.title || '',
+      description: item.description || '',
+      price: String(item.price ?? ''),
+      stock: String(item.stock ?? ''),
+      category: item.category || '',
+    })
+  }
+
+  const handleSaveEdit = () => {
+    if (!itemToEdit) return
+    setListings((current) =>
+      current.map((l) =>
+        l.id === itemToEdit.id
+          ? { ...l, name: editForm.name, description: editForm.description, price: Number(editForm.price) || 0, stock: Number(editForm.stock) || 0, category: editForm.category }
+          : l
+      )
+    )
+    toast.success(`${editForm.name} updated successfully`)
+    setItemToEdit(null)
   }
 
   const confirmDelete = () => {
@@ -262,7 +328,7 @@ export default function MarketplacePage() {
           </motion.div>
         ) : (
           <motion.div variants={containerVariants} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {filtered.slice(0, 24).map((item: MarketplaceItem) => {
+            {filtered.slice(0, 60).map((item: MarketplaceItem) => {
               const images = parseImages(item.images)
               const mainImage = images[0] || item.image || '/placeholder.jpg'
               return (
@@ -318,17 +384,22 @@ export default function MarketplacePage() {
                           <span className="text-slate-400">{item.location}</span>
                         </div>
 
-                        <div className="flex flex-col gap-3 mt-auto pt-4 border-t border-white/10 sm:flex-row sm:items-center sm:justify-between">
+                        <div className="flex flex-col gap-3 mt-auto pt-4 border-t border-white/10">
                           <span className="text-xl font-black text-cyan-300">
                             ₹{item.price || '0'}
                           </span>
-                          <div className="flex flex-col sm:flex-row sm:items-center gap-2 w-full">
-                            <Button size="sm" onClick={(e) => handleBuyNow(e, item)} className="w-full sm:w-auto bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 text-white rounded-xl font-bold shadow-lg">
-                              <ShoppingCart className="w-4 h-4 mr-1.5" /> Buy Now
+                          <div className="flex flex-col gap-2.5 w-full">
+                            <Button onClick={(e) => handleBuyNow(e, item)} className="h-11 w-full bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 text-white rounded-xl font-bold shadow-lg shadow-blue-600/25">
+                              <ShoppingCart className="w-4 h-4 mr-1.5 shrink-0" /> Buy Now
                             </Button>
-                            <Button size="sm" variant="destructive" onClick={(e) => handleDelete(e, item)} className="w-full sm:w-auto rounded-xl font-bold shadow-lg border border-white/10 bg-white/10 hover:bg-white/20 text-white">
-                              <Trash2 className="w-4 h-4 mr-1.5" /> Delete
-                            </Button>
+                            <div className="grid grid-cols-2 gap-2.5">
+                              <Button onClick={(e) => handleEdit(e, item)} className="h-11 w-full bg-gradient-to-r from-orange-500 to-amber-600 hover:from-orange-600 hover:to-amber-700 text-white rounded-xl font-bold shadow-lg shadow-orange-600/25">
+                                <Pencil className="w-4 h-4 mr-1.5 shrink-0" /> Edit
+                              </Button>
+                              <Button onClick={(e) => handleDelete(e, item)} className="h-11 w-full bg-red-600 hover:bg-red-700 text-white rounded-xl font-bold shadow-lg shadow-red-600/25">
+                                <Trash2 className="w-4 h-4 mr-1.5 shrink-0" /> Delete
+                              </Button>
+                            </div>
                           </div>
                         </div>
                       </div>
@@ -349,6 +420,45 @@ export default function MarketplacePage() {
         confirmVariant="destructive"
         onConfirm={confirmDelete}
       />
+      <Dialog open={Boolean(itemToEdit)} onOpenChange={(open) => !open && setItemToEdit(null)}>
+        <DialogContent className="sm:max-w-lg bg-slate-950/95 border border-white/10 text-white">
+          <DialogHeader>
+            <DialogTitle>Edit Listing</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label className="text-white">Name</Label>
+              <Input value={editForm.name} onChange={(e) => setEditForm({ ...editForm, name: e.target.value })} className="bg-white/5 border-white/10 text-white" />
+            </div>
+            <div className="space-y-2">
+              <Label className="text-white">Description</Label>
+              <Textarea rows={3} value={editForm.description} onChange={(e) => setEditForm({ ...editForm, description: e.target.value })} className="bg-white/5 border-white/10 text-white" />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label className="text-white">Price (₹)</Label>
+                <Input type="number" value={editForm.price} onChange={(e) => setEditForm({ ...editForm, price: e.target.value })} className="bg-white/5 border-white/10 text-white" />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-white">Stock</Label>
+                <Input type="number" value={editForm.stock} onChange={(e) => setEditForm({ ...editForm, stock: e.target.value })} className="bg-white/5 border-white/10 text-white" />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label className="text-white">Category</Label>
+              <Input value={editForm.category} onChange={(e) => setEditForm({ ...editForm, category: e.target.value })} className="bg-white/5 border-white/10 text-white" />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setItemToEdit(null)} className="border-white/10 bg-white/5 text-white hover:bg-white/10">
+              Cancel
+            </Button>
+            <Button onClick={handleSaveEdit} className="bg-gradient-to-r from-cyan-500 to-blue-500 text-white">
+              <Save className="w-4 h-4 mr-2" /> Save Changes
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </PortalBackground>
   )
 }

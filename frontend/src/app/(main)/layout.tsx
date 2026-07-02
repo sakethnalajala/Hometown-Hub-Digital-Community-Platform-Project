@@ -7,7 +7,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
   return (
     <AuthGuard>
       <FloatingParticles />
-      <div className="flex min-h-screen bg-background relative z-10">
+      <div className="app-canvas flex min-h-screen bg-background relative z-10">
         <Sidebar />
         <div className="flex-1 md:pl-64 flex flex-col min-h-screen">
           <Topbar />

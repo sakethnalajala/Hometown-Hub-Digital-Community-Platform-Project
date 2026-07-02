@@ -256,6 +256,7 @@ export interface NewsArticle {
   content?: string;
   image?: string;
   imageUrl?: string;
+  location?: string;
   author?: { name?: string } | string;
   source?: string;
   url?: string;
@@ -312,11 +313,17 @@ export interface TourismSpot {
   type?: string;
   description?: string;
   image?: string;
+  images?: string[];
   rating?: number;
+  reviewCount?: number;
+  reviews?: Array<{ id?: string; rating?: number; comment?: string; author?: string; createdAt?: string }>;
   location?: string;
   distance?: string;
   bestTime?: string;
   entryFee?: string;
+  openingTime?: string;
+  nearbyHotels?: string[];
+  mapUrl?: string;
   createdAt?: string;
 }
 

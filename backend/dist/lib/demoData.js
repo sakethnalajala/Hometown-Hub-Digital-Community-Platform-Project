@@ -10,6 +10,7 @@ exports.addDemoRefreshToken = addDemoRefreshToken;
 exports.getDemoRefreshToken = getDemoRefreshToken;
 exports.revokeDemoRefreshToken = revokeDemoRefreshToken;
 exports.getAllDemoUsers = getAllDemoUsers;
+exports.addDemoUser = addDemoUser;
 // Demo data for development/testing without MongoDB
 const bcryptjs_1 = __importDefault(require("bcryptjs"));
 // In-memory demo database
@@ -34,7 +35,7 @@ async function initializeDemoUsers() {
         isVerified: true,
         isActive: true,
         profileImage: 'https://api.dicebear.com/7.x/avataaars/svg?seed=demo',
-        coverImage: 'https://images.unsplash.com/photo-1517457373614-b7152f800fd1?w=1200&h=400&fit=crop',
+        coverImage: 'https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?w=1200&h=400&fit=crop',
         lastSeen: new Date(),
         createdAt: new Date(),
         updatedAt: new Date(),
@@ -84,5 +85,8 @@ function revokeDemoRefreshToken(token) {
 }
 function getAllDemoUsers() {
     return Array.from(demoUsers.values());
+}
+function addDemoUser(user) {
+    demoUsers.set(user.email.toLowerCase(), user);
 }
 //# sourceMappingURL=demoData.js.map

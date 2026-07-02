@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
-import { ArrowLeft, Bookmark, Clock, Eye, Share2, ThumbsUp, Loader2 } from 'lucide-react'
+import { ArrowLeft, Bookmark, Clock, Eye, Share2, ThumbsUp, Loader2, MapPin } from 'lucide-react'
 import { newsApi, bookmarksApi } from '@/lib/api'
 import { ImageWithFallback } from '@/components/ui/ImageWithFallback'
 import { Button } from '@/components/ui/button'
@@ -93,8 +93,13 @@ export default function NewsDetailPage() {
       <div className="flex items-center justify-between flex-wrap gap-4 text-sm text-gray-400">
         <div className="flex items-center gap-4">
           <span>{(typeof article.author === 'string' ? article.author : article.author?.name) || 'Hometown Hub'}</span>
-          <span className="flex items-center gap-1"><Clock className="w-3.5 h-3.5" /> {new Date(String(article.createdAt || Date.now())).toLocaleDateString()}</span>
+          {article.createdAt && (
+            <span className="flex items-center gap-1"><Clock className="w-3.5 h-3.5" /> {new Date(article.createdAt).toLocaleDateString()}</span>
+          )}
           <span className="flex items-center gap-1"><Eye className="w-3.5 h-3.5" /> {(article.views || 0).toLocaleString()}</span>
+          {article.location && (
+            <span className="flex items-center gap-1"><MapPin className="w-3.5 h-3.5" /> {article.location}</span>
+          )}
         </div>
         <div className="flex gap-2">
           <Button variant="outline" size="sm" onClick={handleLike} className="border-white/10">

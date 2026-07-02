@@ -87,6 +87,9 @@ function ParticleContainer({ theme }: ParticleContainerProps) {
   const [particles, setParticles] = useState<ParticleConfig[]>([])
 
   useEffect(() => {
+    // Math.random() must not run during the shared server/client render pass
+    // (see comment above), so this deliberately defers to an effect.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setParticles(
       [...Array(15)].map((_, i) => ({
         background: theme.meshColors[i % theme.meshColors.length],

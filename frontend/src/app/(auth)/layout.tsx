@@ -10,7 +10,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
         <AnimatedBackground />
       </div>
 
-      <div className="z-10 w-full max-w-md p-6">
+      <div className="z-10 w-full max-w-lg p-6">
         <div className="flex justify-center mb-8">
           <Link href="/" className="flex items-center gap-3">
             <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-purple-600/15 text-purple-300 shadow-[0_0_30px_rgba(99,102,241,0.18)]">

@@ -16,9 +16,11 @@ import { isDemoMode } from '../lib/db';
 import {
   getDemoUserByEmail,
   getDemoUserById,
+  addDemoUser,
   addDemoRefreshToken,
   getDemoRefreshToken,
   revokeDemoRefreshToken,
+  type DemoUser,
 } from '../lib/demoData';
 
 export const authRouter = Router();
@@ -109,10 +111,58 @@ authRouter.post('/register', validate(registerSchema), async (req: Request, res:
       return;
     }
 
+    // Demo mode: any other email/password creates a real (in-memory) account
+    // that can immediately log back in with the same credentials.
     if (isDemoMode()) {
-      res.status(403).json({
-        success: false,
-        message: 'Registration disabled in demo mode. Sign up with demo@hometownhub.com / Demo@12345 or use Sign In.',
+      const normalizedEmail = email.toLowerCase();
+      if (getDemoUserByEmail(normalizedEmail)) {
+        res.status(409).json({ success: false, message: 'Email already in use' });
+        return;
+      }
+
+      const passwordHash = await bcryptjs.hash(password, 12);
+      const newUser: DemoUser = {
+        id: `user-${crypto.randomBytes(8).toString('hex')}`,
+        email: normalizedEmail,
+        passwordHash,
+        name,
+        username: username || normalizedEmail.split('@')[0],
+        profileImage: `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(normalizedEmail)}`,
+        bio: '',
+        hometown: hometown || '',
+        currentCity: currentCity || '',
+        interests: [],
+        role: 'USER',
+        isVerified: true,
+        isActive: true,
+        lastSeen: new Date(),
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+      addDemoUser(newUser);
+
+      const accessToken = signAccessToken({ userId: newUser.id, email: newUser.email, role: newUser.role });
+      const refreshToken = signRefreshToken({ userId: newUser.id, email: newUser.email, role: newUser.role });
+      addDemoRefreshToken(refreshToken, newUser.id, new Date(Date.now() + 7 * 24 * 60 * 60 * 1000));
+
+      res.status(201).json({
+        success: true,
+        message: 'Account created successfully',
+        data: {
+          user: {
+            id: newUser.id,
+            name: newUser.name,
+            username: newUser.username,
+            email: newUser.email,
+            role: newUser.role,
+            profileImage: newUser.profileImage,
+            hometown: newUser.hometown,
+            currentCity: newUser.currentCity,
+            bio: newUser.bio,
+          },
+          accessToken,
+          refreshToken,
+        },
       });
       return;
     }

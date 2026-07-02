@@ -134,10 +134,55 @@ exports.authRouter.post('/register', (0, validate_middleware_1.validate)(schemas
             });
             return;
         }
+        // Demo mode: any other email/password creates a real (in-memory) account
+        // that can immediately log back in with the same credentials.
         if ((0, db_1.isDemoMode)()) {
-            res.status(403).json({
-                success: false,
-                message: 'Registration disabled in demo mode. Sign up with demo@hometownhub.com / Demo@12345 or use Sign In.',
+            const normalizedEmail = email.toLowerCase();
+            if ((0, demoData_1.getDemoUserByEmail)(normalizedEmail)) {
+                res.status(409).json({ success: false, message: 'Email already in use' });
+                return;
+            }
+            const passwordHash = await bcryptjs_1.default.hash(password, 12);
+            const newUser = {
+                id: `user-${crypto_1.default.randomBytes(8).toString('hex')}`,
+                email: normalizedEmail,
+                passwordHash,
+                name,
+                username: username || normalizedEmail.split('@')[0],
+                profileImage: `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(normalizedEmail)}`,
+                bio: '',
+                hometown: hometown || '',
+                currentCity: currentCity || '',
+                interests: [],
+                role: 'USER',
+                isVerified: true,
+                isActive: true,
+                lastSeen: new Date(),
+                createdAt: new Date(),
+                updatedAt: new Date(),
+            };
+            (0, demoData_1.addDemoUser)(newUser);
+            const accessToken = (0, jwt_1.signAccessToken)({ userId: newUser.id, email: newUser.email, role: newUser.role });
+            const refreshToken = (0, jwt_1.signRefreshToken)({ userId: newUser.id, email: newUser.email, role: newUser.role });
+            (0, demoData_1.addDemoRefreshToken)(refreshToken, newUser.id, new Date(Date.now() + 7 * 24 * 60 * 60 * 1000));
+            res.status(201).json({
+                success: true,
+                message: 'Account created successfully',
+                data: {
+                    user: {
+                        id: newUser.id,
+                        name: newUser.name,
+                        username: newUser.username,
+                        email: newUser.email,
+                        role: newUser.role,
+                        profileImage: newUser.profileImage,
+                        hometown: newUser.hometown,
+                        currentCity: newUser.currentCity,
+                        bio: newUser.bio,
+                    },
+                    accessToken,
+                    refreshToken,
+                },
             });
             return;
         }

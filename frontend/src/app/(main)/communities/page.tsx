@@ -12,7 +12,6 @@ import { PortalBackground } from '@/components/ui/PortalBackground'
 import { ImageWithFallback } from '@/components/ui/ImageWithFallback'
 import { toast } from 'sonner'
 import { triggerAppNotification, openExternalLink } from '@/lib/appHelpers'
-import { useAuthStore } from '@/store/authStore'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import type { Community } from '@/types'
 
@@ -48,7 +47,6 @@ const SAMPLE_COMMUNITIES = [
 export default function CommunitiesPage() {
   const [searchQuery, setSearchQuery] = useState('')
   const [communityToDelete, setCommunityToDelete] = useState<CommunityCard | null>(null)
-  const { user } = useAuthStore()
 
   const queryClient = useQueryClient()
   const { data, isLoading, isError } = useQuery({
@@ -274,7 +272,6 @@ export default function CommunitiesPage() {
           >
             {visibleCommunities.map((community: CommunityCard, index: number) => {
               const color = colors[index % colors.length]
-              const isOwner = community.owner || community.createdBy?.id === user?.id
               const isJoined = community.joined || community.membershipStatus === 'APPROVED'
               return (
                 <motion.div key={community.id || community.slug} variants={itemVariants}>
@@ -316,36 +313,34 @@ export default function CommunitiesPage() {
                         </p>
 
                         {/* Footer Stats */}
-                        <div className="flex items-center justify-between mt-auto pt-4 border-t border-white/10">
-                          <div className="flex items-center gap-4 text-sm">
-                            <span className="flex items-center gap-1.5 text-purple-300 font-medium">
-                              <Users className="w-4 h-4" />
-                              {(community.memberCount || community.members || community._count?.members || 0).toLocaleString()}
-                            </span>
-                            <span className="flex items-center gap-1.5 text-indigo-300 font-medium">
-                              <MapPin className="w-4 h-4" />
-                              {community.city || 'Citywide'}
-                            </span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            {isJoined ? (
-                              <Button size="sm" variant="outline" onClick={(e) => handleLeave(e, community)} className="border-white/20 text-white hover:bg-white/10 rounded-xl font-semibold mr-2">
-                                <LogOut className="w-4 h-4 mr-1.5" /> Leave
-                              </Button>
-                            ) : (
-                              <Button size="sm" onClick={(e) => handleJoin(e, community)} className="bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-600 hover:to-indigo-600 text-white rounded-xl font-semibold shadow-lg mr-2">
-                                <MapIcon className="w-4 h-4 mr-1.5" /> Join
-                              </Button>
-                            )}
-                            <Button size="sm" variant="secondary" onClick={(e) => { e.preventDefault(); window.location.href = `/communities/${community.slug}` }} className="rounded-xl font-semibold mr-2">
-                              View
+                        <div className="flex items-center gap-4 text-sm mt-auto pt-4 border-t border-white/10">
+                          <span className="flex items-center gap-1.5 text-purple-300 font-medium">
+                            <Users className="w-4 h-4" />
+                            {(community.memberCount || community.members || community._count?.members || 0).toLocaleString()}
+                          </span>
+                          <span className="flex items-center gap-1.5 text-indigo-300 font-medium">
+                            <MapPin className="w-4 h-4" />
+                            {community.city || 'Citywide'}
+                          </span>
+                        </div>
+
+                        {/* Actions */}
+                        <div className="grid grid-cols-3 gap-2.5 mt-4">
+                          {isJoined ? (
+                            <Button onClick={(e) => handleLeave(e, community)} className="h-11 w-full border border-white/20 bg-white/5 text-white hover:bg-white/10 rounded-xl font-bold shadow-lg">
+                              <LogOut className="w-4 h-4 mr-1.5 shrink-0" /> Leave
                             </Button>
-                            {isOwner && (
-                              <Button size="sm" variant="destructive" onClick={(e) => handleDelete(e, community)} className="rounded-xl font-semibold">
-                                <Trash2 className="w-4 h-4 mr-1.5" /> Delete
-                              </Button>
-                            )}
-                          </div>
+                          ) : (
+                            <Button onClick={(e) => handleJoin(e, community)} className="h-11 w-full bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 text-white rounded-xl font-bold shadow-lg shadow-emerald-600/25">
+                              <MapIcon className="w-4 h-4 mr-1.5 shrink-0" /> Join
+                            </Button>
+                          )}
+                          <Button onClick={(e) => { e.preventDefault(); window.location.href = `/communities/${community.slug}` }} className="h-11 w-full bg-gradient-to-r from-blue-500 to-sky-600 hover:from-blue-600 hover:to-sky-700 text-white rounded-xl font-bold shadow-lg shadow-blue-600/25">
+                            View
+                          </Button>
+                          <Button onClick={(e) => handleDelete(e, community)} className="h-11 w-full bg-red-600 hover:bg-red-700 text-white rounded-xl font-bold shadow-lg shadow-red-600/25">
+                            <Trash2 className="w-4 h-4 mr-1.5 shrink-0" /> Delete
+                          </Button>
                         </div>
                       </div>
                     </motion.div>

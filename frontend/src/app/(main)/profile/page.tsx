@@ -11,10 +11,55 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Loader2, MapPin, Camera, Save, X } from 'lucide-react'
+import { Loader2, MapPin, Camera, Save, X, Ticket } from 'lucide-react'
 import { toast } from 'sonner'
 import { format } from 'date-fns'
 import { ImageWithFallback } from '@/components/ui/ImageWithFallback'
+import { InvitationCardModal } from '@/components/ui/InvitationCard'
+import { getInvitations, type EventInvitation } from '@/lib/invitations'
+import type { Post, Community } from '@/types'
+
+function UserInvitationsTab() {
+  const [invitations, setInvitations] = useState<EventInvitation[]>([])
+  const [selected, setSelected] = useState<EventInvitation | null>(null)
+  const [open, setOpen] = useState(false)
+
+  useEffect(() => {
+    // localStorage is unavailable during SSR; deferring to an effect keeps the
+    // initial client render matching the server (empty list) and avoids a
+    // hydration mismatch.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setInvitations(getInvitations())
+  }, [])
+
+  if (!invitations.length) {
+    return (
+      <div className="text-center py-12 bg-muted/30 rounded-xl border border-dashed">
+        <Ticket className="w-8 h-8 mx-auto mb-2 text-muted-foreground" />
+        <p className="text-muted-foreground">No event invitations yet</p>
+      </div>
+    )
+  }
+
+  return (
+    <div className="space-y-3">
+      {invitations.map((inv) => (
+        <button
+          key={inv.ticketNumber}
+          onClick={() => { setSelected(inv); setOpen(true) }}
+          className="w-full text-left flex items-center justify-between gap-4 p-4 rounded-xl border border-border/50 bg-muted/20 hover:bg-muted/40 transition-colors"
+        >
+          <div className="min-w-0">
+            <p className="font-semibold truncate">{inv.eventTitle}</p>
+            <p className="text-xs text-muted-foreground font-mono">{inv.ticketNumber}</p>
+          </div>
+          <Ticket className="w-5 h-5 text-primary shrink-0" />
+        </button>
+      ))}
+      <InvitationCardModal open={open} onOpenChange={setOpen} invitation={selected} />
+    </div>
+  )
+}
 
 function UserPostsTab({ userId }: { userId?: string }) {
   const { data, isLoading } = useQuery({
@@ -27,7 +72,7 @@ function UserPostsTab({ userId }: { userId?: string }) {
   if (!posts.length) return <div className="text-center py-12 bg-muted/30 rounded-xl border border-dashed"><p className="text-muted-foreground">No posts yet</p></div>
   return (
     <div className="space-y-4">
-      {posts.map((post: any) => (
+      {posts.map((post: Post) => (
         <div key={post.id} className="glass-card p-4">
           <p className="text-sm">{post.content}</p>
           <p className="text-xs text-muted-foreground mt-2">{post.likeCount} likes · {post.commentCount} comments</p>
@@ -48,7 +93,7 @@ function UserCommunitiesTab({ userId }: { userId?: string }) {
   if (!communities.length) return <div className="text-center py-12 bg-muted/30 rounded-xl border border-dashed"><p className="text-muted-foreground">No communities joined yet</p></div>
   return (
     <div className="grid gap-3">
-      {communities.map((c: any) => (
+      {communities.map((c: Community) => (
         <Link key={c.id} href={`/communities/${c.slug}`}>
           <div className="glass-card p-4 hover:border-primary/30 transition-all flex items-center justify-between">
             <div>
@@ -130,13 +175,15 @@ export default function ProfilePage() {
 
   return (
     <div className="max-w-4xl mx-auto space-y-6 pb-20">
-      <div className="relative h-48 md:h-64 rounded-xl overflow-hidden bg-slate-950/95 group border border-white/10 shadow-2xl">
-        {profile?.coverImage ? (
-          <ImageWithFallback src={profile.coverImage} alt="Cover" className="w-full h-full object-cover" />
-        ) : (
-          <div className="w-full h-full bg-gradient-to-r from-primary/30 to-secondary/30" />
-        )}
-        {/* Cover edit button could go here */}
+      <div className="relative h-52 sm:h-64 md:h-80 rounded-2xl overflow-hidden bg-slate-950/95 group border border-white/10 shadow-2xl">
+        <ImageWithFallback
+          src={profile?.coverImage}
+          fallbackSrc="https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?w=1600&h=600&fit=crop&auto=format&q=70"
+          alt="Cover"
+          className="w-full h-full object-cover"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-r from-purple-900/30 via-transparent to-indigo-900/30" />
       </div>
 
       <div className="relative px-4 sm:px-6 -mt-16 sm:-mt-24 mb-8 flex flex-col sm:flex-row gap-4 sm:items-end">
@@ -236,14 +283,19 @@ export default function ProfilePage() {
             <TabsList className="w-full justify-start border-b rounded-none h-auto p-0 bg-transparent mb-6">
               <TabsTrigger value="posts" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent py-3">Posts</TabsTrigger>
               <TabsTrigger value="communities" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent py-3">Communities</TabsTrigger>
+              <TabsTrigger value="invitations" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent py-3">Event Invitations</TabsTrigger>
             </TabsList>
-            
+
             <TabsContent value="posts" className="mt-0">
               <UserPostsTab userId={profile?.id || user?.id} />
             </TabsContent>
-            
+
             <TabsContent value="communities" className="mt-0">
               <UserCommunitiesTab userId={profile?.id || user?.id} />
+            </TabsContent>
+
+            <TabsContent value="invitations" className="mt-0">
+              <UserInvitationsTab />
             </TabsContent>
           </Tabs>
         </div>
