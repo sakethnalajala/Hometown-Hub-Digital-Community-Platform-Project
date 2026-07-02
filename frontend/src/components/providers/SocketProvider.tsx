@@ -35,11 +35,14 @@ export function SocketProvider({ children }: { children: React.ReactNode }) {
         : process.env.NEXT_PUBLIC_SOCKET_URL || 'https://hometown-hub-backend-un1i.onrender.com'
 
     const newSocket = io(socketUrl, {
-      // Must match the server's engine.io path exactly, including the
-      // trailing slash (server default is '/socket.io/'); a mismatch here
-      // makes every handshake request fall through Express's catch-all
-      // 404 handler instead of reaching socket.io's own listener.
-      path: '/socket.io/',
+      // Next.js's trailingSlash:false 308-redirects any request ending in
+      // "/" to the bare path — fine for polling (fetch follows redirects)
+      // but WebSocket upgrades can't follow redirects and just fail. The
+      // engine.io client normally forces a trailing slash by default
+      // (addTrailingSlash), so disable that and use the bare path, which
+      // both the Next.js rewrite and the backend's engine.io server accept.
+      path: '/socket.io',
+      addTrailingSlash: false,
       auth: { token: accessToken },
       transports: ['polling', 'websocket'],
       reconnection: true,

@@ -33,7 +33,7 @@ export function AnimatedBackground() {
   }, [])
 
   return (
-    <div className="absolute inset-0 overflow-hidden bg-[hsl(var(--bg-base))]">
+    <div className="absolute inset-0 overflow-hidden bg-[hsl(var(--bg-base))] pointer-events-none">
       {/* Animated Gradient Background */}
       <div 
         className="absolute inset-0 opacity-50"
