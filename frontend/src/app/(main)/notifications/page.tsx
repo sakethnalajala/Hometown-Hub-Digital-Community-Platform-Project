@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { useQuery } from '@tanstack/react-query'
 import { notificationsApi } from '@/lib/api'
 import { useNotificationStore } from '@/store/notificationStore'
@@ -11,7 +12,8 @@ import { PortalBackground } from '@/components/ui/PortalBackground'
 import type { Notification } from '@/types'
 
 export default function NotificationsPage() {
-  const { notifications: storeNotifications, setNotifications, markAllRead: storeMarkAllRead, removeNotification, clearAll } = useNotificationStore()
+  const router = useRouter()
+  const { notifications: storeNotifications, setNotifications, markAllRead: storeMarkAllRead, markRead, removeNotification, clearAll } = useNotificationStore()
   const [hydrated] = useState(true)
 
   const { data, isLoading, isError } = useQuery({
@@ -112,8 +114,17 @@ export default function NotificationsPage() {
                 bgWrapper = 'bg-rose-400/10'
               }
 
+              const handleOpen = () => {
+                markRead(notification.id)
+                if (notification.actionUrl) router.push(notification.actionUrl)
+              }
+
               return (
-                <div key={notification.id} className={`rounded-2xl border p-4 shadow-lg transition-all ${!notification.isRead ? 'border-cyan-400/30 bg-white/10' : 'border-white/10 bg-white/5 hover:bg-white/10'}`}>
+                <div
+                  key={notification.id}
+                  onClick={notification.actionUrl ? handleOpen : undefined}
+                  className={`rounded-2xl border p-4 shadow-lg transition-all ${notification.actionUrl ? 'cursor-pointer' : ''} ${!notification.isRead ? 'border-cyan-400/30 bg-white/10' : 'border-white/10 bg-white/5 hover:bg-white/10'}`}
+                >
                   <div className="flex items-start gap-4">
                     <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-full ${bgWrapper}`}>
                       <IconClass className={`h-6 w-6 ${iconColor}`} />
@@ -125,9 +136,14 @@ export default function NotificationsPage() {
                           <p className={`text-sm font-semibold ${!notification.isRead ? 'text-white' : 'text-slate-200'}`}>
                             {notification.title}
                           </p>
-                          <p className="mt-1 text-sm text-slate-300">{notification.body}</p>
+                          <p className="mt-1 text-sm text-slate-300 whitespace-pre-line">{notification.body}</p>
                         </div>
-                        <Button variant="ghost" size="icon" onClick={() => removeNotification(notification.id)} className="text-slate-300 hover:bg-white/10 hover:text-white">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={(e) => { e.stopPropagation(); removeNotification(notification.id) }}
+                          className="text-slate-300 hover:bg-white/10 hover:text-white shrink-0"
+                        >
                           <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>

@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from 'react'
 import { useParams } from 'next/navigation'
 import { useQuery, useMutation } from '@tanstack/react-query'
 import { jobsApi, bookmarksApi } from '@/lib/api'
@@ -11,10 +12,13 @@ import { MapPin, Clock, DollarSign, ArrowLeft, ExternalLink, BookmarkPlus } from
 import { toast } from 'sonner'
 import Link from 'next/link'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { ApplicationModal, type JobApplicationPayload } from '@/components/ui/ApplicationModal'
+import { triggerAppNotification, openExternalLink, downloadTextAsPdf } from '@/lib/appHelpers'
 
 export default function JobDetailPage() {
   const params = useParams()
   const id = params.id as string
+  const [applicationOpen, setApplicationOpen] = useState(false)
 
   const { data, isLoading, isError } = useQuery({
     queryKey: ['job', id],
@@ -23,14 +27,27 @@ export default function JobDetailPage() {
 
   const applyMutation = useMutation({
     mutationFn: () => jobsApi.apply(id),
-    onSuccess: () => toast.success('Application submitted! The employer will contact you soon.'),
-    onError: () => toast.error('Application failed. Please try again.'),
   })
 
   const saveMutation = useMutation({
     mutationFn: () => bookmarksApi.toggle('jobs', id),
     onSuccess: (res) => toast.success(res.data?.saved ? 'Job saved!' : 'Removed from saved'),
   })
+
+  const handleApplicationSubmit = async (payload: JobApplicationPayload) => {
+    const jobTitle = payload.jobTitle || 'Job'
+    const company = payload.company || 'the company'
+    const confirmation = `Application Confirmation\nApplicant: ${payload.fullName}\nEmail: ${payload.email}\nPhone: ${payload.phone}\nCollege: ${payload.college}\nCourse: ${payload.course}\nJob: ${jobTitle}`
+    const notificationBody = `You successfully applied for:\n${jobTitle}\n${company}\n\nStatus: Application Sent\nDate: ${new Date().toLocaleDateString('en-IN', { year: 'numeric', month: 'long', day: 'numeric' })}`
+    triggerAppNotification('Application Submitted Successfully', notificationBody, `/jobs/${id}`)
+    downloadTextAsPdf(`${jobTitle.replace(/\s+/g, '-').toLowerCase()}-application.pdf`, confirmation)
+    try {
+      await applyMutation.mutateAsync()
+    } catch {
+      // ignore if the API is not available in demo mode
+    }
+    openExternalLink(data?.data?.website || 'https://www.google.com')
+  }
 
   if (isLoading) return <SkeletonCard className="h-96" />
   if (isError || !data?.data) {
@@ -120,13 +137,18 @@ export default function JobDetailPage() {
 
           <Button
             className="w-full bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white rounded-xl py-7 text-lg font-bold shadow-lg shadow-blue-500/25 transition-all hover:scale-[1.02]"
-            disabled={applyMutation.isPending}
-            onClick={() => applyMutation.mutate()}
+            onClick={() => setApplicationOpen(true)}
           >
             Apply Now <ExternalLink className="w-5 h-5 ml-2" />
           </Button>
         </div>
       </PageSection>
+      <ApplicationModal
+        open={applicationOpen}
+        onOpenChange={setApplicationOpen}
+        job={job}
+        onSubmit={handleApplicationSubmit}
+      />
     </PageWrapper>
   )
 }

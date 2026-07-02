@@ -35,7 +35,8 @@ export default function JobApplicationPage({ params }: { params: { id: string } 
     // generate PDF confirmation
     const confirmation = `Application Confirmation\nApplicant: ${form.fullName}\nEmail: ${form.email}\nPhone: ${form.phone}\nCollege: ${form.college}\nCourse: ${form.course}\nJob: ${job?.title}`
     downloadTextAsPdf(`${(job?.title || 'application').replace(/\s+/g, '-')}-confirmation.pdf`, confirmation)
-    triggerAppNotification('Application submitted', `${job?.title} application received.`)
+    const notificationBody = `You successfully applied for:\n${job?.title}\n${job?.company}\n\nStatus: Application Sent\nDate: ${new Date().toLocaleDateString('en-IN', { year: 'numeric', month: 'long', day: 'numeric' })}`
+    triggerAppNotification('Application Submitted Successfully', notificationBody, `/jobs/${params.id}`)
     try { await jobsApi.apply(params.id) } catch { /* ignore */ }
     // redirect to company careers page if available
     const companyUrl = job?.website || job?.companyWebsite || 'https://www.google.com'

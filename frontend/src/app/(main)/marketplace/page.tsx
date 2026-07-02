@@ -3,18 +3,14 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
-import { ShoppingBag, Search, Filter, Heart, ShoppingCart, Tag, Loader2, Store, Trash2, Pencil, Save } from 'lucide-react'
+import { ShoppingBag, Search, Filter, Heart, ShoppingCart, Tag, Loader2, Store } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
-import { Textarea } from '@/components/ui/textarea'
-import { Label } from '@/components/ui/label'
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { marketplaceApi } from '@/lib/api'
 import { ImageWithFallback } from '@/components/ui/ImageWithFallback'
 import { toast } from 'sonner'
 import { PortalBackground } from '@/components/ui/PortalBackground'
 import { GradientButton } from '@/components/ui/GradientButton'
-import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { triggerAppNotification, openExternalLink } from '@/lib/appHelpers'
 import type { MarketplaceItem } from '@/types'
 
@@ -109,20 +105,8 @@ export default function MarketplacePage() {
       return []
     }
   })
-  const [removedProductIds, setRemovedProductIds] = useState<string[]>(() => {
-    if (typeof window === 'undefined') return []
-    try {
-      const stored = window.localStorage.getItem('marketplaceRemovedIds')
-      return stored ? JSON.parse(stored) : []
-    } catch {
-      return []
-    }
-  })
   const [listings, setListings] = useState<MarketplaceItem[]>(SAMPLE_PRODUCTS)
   const [loading, setLoading] = useState(true)
-  const [itemToDelete, setItemToDelete] = useState<MarketplaceItem | null>(null)
-  const [itemToEdit, setItemToEdit] = useState<MarketplaceItem | null>(null)
-  const [editForm, setEditForm] = useState({ name: '', description: '', price: '', stock: '', category: '' })
 
   useEffect(() => {
     marketplaceApi.getAll({ limit: 60 })
@@ -150,53 +134,7 @@ export default function MarketplacePage() {
     openExternalLink(marketplaceUrl)
   }
 
-  const handleDelete = (e: React.MouseEvent, item: MarketplaceItem) => {
-    e.preventDefault()
-    e.stopPropagation()
-    setItemToDelete(item)
-  }
-
-  const handleEdit = (e: React.MouseEvent, item: MarketplaceItem) => {
-    e.preventDefault()
-    e.stopPropagation()
-    setItemToEdit(item)
-    setEditForm({
-      name: item.name || item.title || '',
-      description: item.description || '',
-      price: String(item.price ?? ''),
-      stock: String(item.stock ?? ''),
-      category: item.category || '',
-    })
-  }
-
-  const handleSaveEdit = () => {
-    if (!itemToEdit) return
-    setListings((current) =>
-      current.map((l) =>
-        l.id === itemToEdit.id
-          ? { ...l, name: editForm.name, description: editForm.description, price: Number(editForm.price) || 0, stock: Number(editForm.stock) || 0, category: editForm.category }
-          : l
-      )
-    )
-    toast.success(`${editForm.name} updated successfully`)
-    setItemToEdit(null)
-  }
-
-  const confirmDelete = () => {
-    if (!itemToDelete) return
-    setRemovedProductIds((current) => {
-      const updated = itemToDelete.id ? Array.from(new Set([...current, itemToDelete.id])) : current
-      if (typeof window !== 'undefined') {
-        window.localStorage.setItem('marketplaceRemovedIds', JSON.stringify(updated))
-      }
-      return updated
-    })
-    triggerAppNotification('Product deleted', `${itemToDelete.name || itemToDelete.title} was removed.`)
-    setItemToDelete(null)
-  }
-
   const filtered = listings
-    .filter((l) => !l.id || !removedProductIds.includes(l.id))
     .filter((l) => {
       const matchCat = activeCategory === 'All' || l.category === activeCategory
       const matchSearch = !search || (l.name || l.title || '').toLowerCase().includes(search.toLowerCase())
@@ -392,14 +330,6 @@ export default function MarketplacePage() {
                             <Button onClick={(e) => handleBuyNow(e, item)} className="h-11 w-full bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 text-white rounded-xl font-bold shadow-lg shadow-blue-600/25">
                               <ShoppingCart className="w-4 h-4 mr-1.5 shrink-0" /> Buy Now
                             </Button>
-                            <div className="grid grid-cols-2 gap-2.5">
-                              <Button onClick={(e) => handleEdit(e, item)} className="h-11 w-full bg-gradient-to-r from-orange-500 to-amber-600 hover:from-orange-600 hover:to-amber-700 text-white rounded-xl font-bold shadow-lg shadow-orange-600/25">
-                                <Pencil className="w-4 h-4 mr-1.5 shrink-0" /> Edit
-                              </Button>
-                              <Button onClick={(e) => handleDelete(e, item)} className="h-11 w-full bg-red-600 hover:bg-red-700 text-white rounded-xl font-bold shadow-lg shadow-red-600/25">
-                                <Trash2 className="w-4 h-4 mr-1.5 shrink-0" /> Delete
-                              </Button>
-                            </div>
                           </div>
                         </div>
                       </div>
@@ -411,54 +341,6 @@ export default function MarketplacePage() {
           </motion.div>
         )}
       </motion.div>
-      <ConfirmDialog
-        open={Boolean(itemToDelete)}
-        onOpenChange={(open) => !open && setItemToDelete(null)}
-        title="Delete listing"
-        description={`Delete ${itemToDelete?.name || itemToDelete?.title || 'this listing'}? This action cannot be undone.`}
-        confirmLabel="Delete"
-        confirmVariant="destructive"
-        onConfirm={confirmDelete}
-      />
-      <Dialog open={Boolean(itemToEdit)} onOpenChange={(open) => !open && setItemToEdit(null)}>
-        <DialogContent className="sm:max-w-lg bg-slate-950/95 border border-white/10 text-white">
-          <DialogHeader>
-            <DialogTitle>Edit Listing</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label className="text-white">Name</Label>
-              <Input value={editForm.name} onChange={(e) => setEditForm({ ...editForm, name: e.target.value })} className="bg-white/5 border-white/10 text-white" />
-            </div>
-            <div className="space-y-2">
-              <Label className="text-white">Description</Label>
-              <Textarea rows={3} value={editForm.description} onChange={(e) => setEditForm({ ...editForm, description: e.target.value })} className="bg-white/5 border-white/10 text-white" />
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label className="text-white">Price (₹)</Label>
-                <Input type="number" value={editForm.price} onChange={(e) => setEditForm({ ...editForm, price: e.target.value })} className="bg-white/5 border-white/10 text-white" />
-              </div>
-              <div className="space-y-2">
-                <Label className="text-white">Stock</Label>
-                <Input type="number" value={editForm.stock} onChange={(e) => setEditForm({ ...editForm, stock: e.target.value })} className="bg-white/5 border-white/10 text-white" />
-              </div>
-            </div>
-            <div className="space-y-2">
-              <Label className="text-white">Category</Label>
-              <Input value={editForm.category} onChange={(e) => setEditForm({ ...editForm, category: e.target.value })} className="bg-white/5 border-white/10 text-white" />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setItemToEdit(null)} className="border-white/10 bg-white/5 text-white hover:bg-white/10">
-              Cancel
-            </Button>
-            <Button onClick={handleSaveEdit} className="bg-gradient-to-r from-cyan-500 to-blue-500 text-white">
-              <Save className="w-4 h-4 mr-2" /> Save Changes
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </PortalBackground>
   )
 }

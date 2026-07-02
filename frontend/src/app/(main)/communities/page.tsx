@@ -3,7 +3,7 @@
 import { useMemo, useState } from 'react'
 import { motion } from 'framer-motion'
 import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query'
-import { Search, Filter, Users, MapPin, Plus, Loader2, Sparkles, Trash2, LogOut, MapIcon } from 'lucide-react'
+import { Search, Filter, Users, MapPin, Plus, Loader2, Sparkles, LogOut, MapIcon, CheckCircle2 } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import Link from 'next/link'
@@ -44,9 +44,28 @@ const SAMPLE_COMMUNITIES = [
   { id: 'sample-community-15', name: 'Lagos Makers', description: 'Community-driven projects, maker space events and hardware workshops.', city: 'Lagos', category: 'Technology', members: 84, image: 'https://images.unsplash.com/photo-1509395176047-4a66953fd231?w=800&h=400&fit=crop&auto=format&q=70', owner: false, joined: false },
 ]
 
+const JOINED_STORAGE_KEY = 'hometown-hub-joined-communities'
+
 export default function CommunitiesPage() {
   const [searchQuery, setSearchQuery] = useState('')
-  const [communityToDelete, setCommunityToDelete] = useState<CommunityCard | null>(null)
+  const [communityToExit, setCommunityToExit] = useState<CommunityCard | null>(null)
+  const [joinedIds, setJoinedIds] = useState<string[]>(() => {
+    if (typeof window === 'undefined') return []
+    try {
+      const stored = window.localStorage.getItem(JOINED_STORAGE_KEY)
+      if (stored) return JSON.parse(stored)
+    } catch {
+      // fall through to defaults
+    }
+    return SAMPLE_COMMUNITIES.filter((c) => c.joined).map((c) => c.id)
+  })
+
+  const persistJoinedIds = (ids: string[]) => {
+    setJoinedIds(ids)
+    if (typeof window !== 'undefined') {
+      window.localStorage.setItem(JOINED_STORAGE_KEY, JSON.stringify(ids))
+    }
+  }
 
   const queryClient = useQueryClient()
   const { data, isLoading, isError } = useQuery({
@@ -56,18 +75,15 @@ export default function CommunitiesPage() {
 
   const communities = useMemo(() => data?.data || [], [data?.data])
 
-  // Keep a modifiable local copy of sample communities so join/leave/delete work consistently
-  const [localSamples, setLocalSamples] = useState(() => SAMPLE_COMMUNITIES)
-
   const visibleCommunities = useMemo<CommunityCard[]>(() => {
     const apiCommunities: CommunityCard[] = communities.length > 0 ? communities : []
-    const filteredSamples = localSamples.filter((community) => {
+    const filteredSamples = SAMPLE_COMMUNITIES.filter((community) => {
       if (!searchQuery) return true
       return `${community.name} ${community.description} ${community.city} ${community.category}`.toLowerCase().includes(searchQuery.toLowerCase())
     })
     // Merge API communities first, then samples; allow up to 15 visible cards
     return [...apiCommunities, ...filteredSamples].slice(0, 15)
-  }, [communities, localSamples, searchQuery])
+  }, [communities, searchQuery])
 
   const joinMutation = useMutation({
     mutationFn: (communityId: string) => communitiesApi.join(communityId),
@@ -79,59 +95,39 @@ export default function CommunitiesPage() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['communities'], exact: false }),
   })
 
-  const deleteMutation = useMutation({
-    mutationFn: (communityId: string) => communitiesApi.deleteCommunity(communityId),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['communities'], exact: false }),
-  })
-
   const handleJoin = async (e: React.MouseEvent, community: CommunityCard) => {
     e.preventDefault()
     e.stopPropagation()
-    if (community.id?.startsWith('sample-')) {
-      setLocalSamples((current) => current.map((c) => c.id === community.id ? { ...c, joined: true } : c))
-    }
+    if (!community.id) return
+    persistJoinedIds(Array.from(new Set([...joinedIds, community.id])))
     try {
-      if (community.id && !community.id.startsWith('sample-')) await joinMutation.mutateAsync(community.id)
+      if (!community.id.startsWith('sample-')) await joinMutation.mutateAsync(community.id)
       triggerAppNotification('Community joined', `You joined ${community.name}.`)
+      toast.success(`You joined ${community.name}!`)
       openExternalLink(`https://www.google.com/maps/search/${encodeURIComponent(community.city || community.name || '')}`)
     } catch {
       triggerAppNotification('Community joined', `You joined ${community.name}.`)
+      toast.success(`You joined ${community.name}!`)
     }
   }
 
-  const handleLeave = async (e: React.MouseEvent, community: CommunityCard) => {
+  const handleExitClick = (e: React.MouseEvent, community: CommunityCard) => {
     e.preventDefault()
     e.stopPropagation()
-    if (community.id?.startsWith('sample-')) {
-      setLocalSamples((current) => current.map((c) => c.id === community.id ? { ...c, joined: false } : c))
-    }
+    setCommunityToExit(community)
+  }
+
+  const confirmExitCommunity = async () => {
+    if (!communityToExit?.id) return
+    persistJoinedIds(joinedIds.filter((id) => id !== communityToExit.id))
     try {
-      if (community.id && !community.id.startsWith('sample-')) await leaveMutation.mutateAsync(community.id)
-      triggerAppNotification('Community left', `You left ${community.name}.`)
+      if (!communityToExit.id.startsWith('sample-')) await leaveMutation.mutateAsync(communityToExit.id)
     } catch {
-      triggerAppNotification('Community left', `You left ${community.name}.`)
+      // ignore remote errors in demo mode
     }
-  }
-
-  const handleDelete = (e: React.MouseEvent, community: CommunityCard) => {
-    e.preventDefault()
-    e.stopPropagation()
-    setCommunityToDelete(community)
-  }
-
-  const confirmDeleteCommunity = async () => {
-    if (!communityToDelete) return
-    if (communityToDelete.id?.startsWith('sample-')) {
-      setLocalSamples((current) => current.filter((c) => c.id !== communityToDelete.id))
-    } else if (communityToDelete.id) {
-      try {
-        await deleteMutation.mutateAsync(communityToDelete.id)
-      } catch {
-        // ignore remote errors in demo mode
-      }
-    }
-    triggerAppNotification('Community deleted', `${communityToDelete.name} was deleted.`)
-    setCommunityToDelete(null)
+    triggerAppNotification('Community left', `You left ${communityToExit.name}.`)
+    toast.success(`You left ${communityToExit.name}`)
+    setCommunityToExit(null)
   }
 
   const containerVariants = {
@@ -272,7 +268,7 @@ export default function CommunitiesPage() {
           >
             {visibleCommunities.map((community: CommunityCard, index: number) => {
               const color = colors[index % colors.length]
-              const isJoined = community.joined || community.membershipStatus === 'APPROVED'
+              const isJoined = Boolean(community.id && joinedIds.includes(community.id)) || community.membershipStatus === 'APPROVED'
               return (
                 <motion.div key={community.id || community.slug} variants={itemVariants}>
                   <div>
@@ -325,22 +321,26 @@ export default function CommunitiesPage() {
                         </div>
 
                         {/* Actions */}
-                        <div className="grid grid-cols-3 gap-2.5 mt-4">
-                          {isJoined ? (
-                            <Button onClick={(e) => handleLeave(e, community)} className="h-11 w-full border border-white/20 bg-white/5 text-white hover:bg-white/10 rounded-xl font-bold shadow-lg">
-                              <LogOut className="w-4 h-4 mr-1.5 shrink-0" /> Leave
+                        <div className="flex flex-col gap-2.5 mt-4">
+                          <div className="grid grid-cols-2 gap-2.5">
+                            {isJoined ? (
+                              <Button disabled className="h-11 w-full bg-emerald-600/15 text-emerald-300 border border-emerald-500/40 rounded-xl font-bold shadow-lg cursor-not-allowed opacity-90">
+                                <CheckCircle2 className="w-4 h-4 mr-1.5 shrink-0" /> Joined
+                              </Button>
+                            ) : (
+                              <Button onClick={(e) => handleJoin(e, community)} className="h-11 w-full bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 text-white rounded-xl font-bold shadow-lg shadow-emerald-600/25">
+                                <MapIcon className="w-4 h-4 mr-1.5 shrink-0" /> Join
+                              </Button>
+                            )}
+                            <Button onClick={(e) => { e.preventDefault(); window.location.href = `/communities/${community.slug}` }} className="h-11 w-full bg-gradient-to-r from-blue-500 to-sky-600 hover:from-blue-600 hover:to-sky-700 text-white rounded-xl font-bold shadow-lg shadow-blue-600/25">
+                              View
                             </Button>
-                          ) : (
-                            <Button onClick={(e) => handleJoin(e, community)} className="h-11 w-full bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 text-white rounded-xl font-bold shadow-lg shadow-emerald-600/25">
-                              <MapIcon className="w-4 h-4 mr-1.5 shrink-0" /> Join
+                          </div>
+                          {isJoined && (
+                            <Button onClick={(e) => handleExitClick(e, community)} className="h-11 w-full bg-red-600 hover:bg-red-700 text-white rounded-xl font-bold shadow-lg shadow-red-600/25">
+                              <LogOut className="w-4 h-4 mr-1.5 shrink-0" /> Exit Community
                             </Button>
                           )}
-                          <Button onClick={(e) => { e.preventDefault(); window.location.href = `/communities/${community.slug}` }} className="h-11 w-full bg-gradient-to-r from-blue-500 to-sky-600 hover:from-blue-600 hover:to-sky-700 text-white rounded-xl font-bold shadow-lg shadow-blue-600/25">
-                            View
-                          </Button>
-                          <Button onClick={(e) => handleDelete(e, community)} className="h-11 w-full bg-red-600 hover:bg-red-700 text-white rounded-xl font-bold shadow-lg shadow-red-600/25">
-                            <Trash2 className="w-4 h-4 mr-1.5 shrink-0" /> Delete
-                          </Button>
                         </div>
                       </div>
                     </motion.div>
@@ -361,13 +361,13 @@ export default function CommunitiesPage() {
         )}
       </motion.div>
       <ConfirmDialog
-        open={Boolean(communityToDelete)}
-        onOpenChange={(open) => !open && setCommunityToDelete(null)}
-        title="Delete community"
-        description={`Delete ${communityToDelete?.name || 'this community'}? This action cannot be undone.`}
-        confirmLabel="Delete"
+        open={Boolean(communityToExit)}
+        onOpenChange={(open) => !open && setCommunityToExit(null)}
+        title="Exit community"
+        description={`Are you sure you want to exit ${communityToExit?.name || 'this community'}?`}
+        confirmLabel="Exit Community"
         confirmVariant="destructive"
-        onConfirm={confirmDeleteCommunity}
+        onConfirm={confirmExitCommunity}
       />
     </PortalBackground>
   )

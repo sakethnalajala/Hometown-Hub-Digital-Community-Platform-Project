@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button'
 import { healthcareApi } from '@/lib/api'
 import { ImageWithFallback } from '@/components/ui/ImageWithFallback'
 import { toast } from 'sonner'
-import { triggerAppNotification, downloadTextAsPdf } from '@/lib/appHelpers'
+import { triggerAppNotification, downloadTextAsPdf, openExternalLink } from '@/lib/appHelpers'
 import { AppointmentModal, type AppointmentPayload } from '@/components/ui/AppointmentModal'
 import { PortalBackground } from '@/components/ui/PortalBackground'
 import type { Hospital, HealthScheme } from '@/types'
@@ -61,6 +61,8 @@ export default function HealthcarePage() {
     downloadTextAsPdf(`${appointmentId}.pdf`, confirmation)
     triggerAppNotification('Appointment booked', `Your appointment request was saved with ID ${appointmentId}.`)
     toast.success(`Appointment confirmed for ${selectedHospital?.name}`)
+    const mapQuery = [selectedHospital?.name, selectedHospital?.address].filter(Boolean).join(', ')
+    openExternalLink(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(mapQuery)}`)
     setBookingState(false)
   }
 

@@ -23,7 +23,7 @@ const SAMPLE_JOBS = [
   { id: 'sample-job-5', title: 'Operations Manager', company: 'LocalWorks', location: 'Mumbai', type: 'Contract', salary: '₹8 LPA', description: 'Coordinate field operations and drive execution quality.', category: 'Operations', website: 'https://jobs.netflix.com/' },
   { id: 'sample-job-6', title: 'AI Research Intern', company: 'NeuroLabs', location: 'Chennai', type: 'Internship', salary: '₹4 LPA', description: 'Support research and prototyping for next-wave AI products.', category: 'Research', website: 'https://careers.meta.com/' },
   { id: 'sample-job-7', title: 'Sales Executive', company: 'MarketMint', location: 'Kolkata', type: 'Full-time', salary: '₹7 LPA', description: 'Drive partnerships and expand outreach across local markets.', category: 'Sales', website: 'https://careers.salesforce.com/' },
-  { id: 'sample-job-8', title: 'HR Generalist', company: 'PeopleFirst', location: 'Ahmedabad', type: 'Full-time', salary: '₹9 LPA', description: 'Support hiring, onboarding, and employee experience programs.', category: 'HR', website: 'https://careers.microsoft.com/' },
+  { id: 'sample-job-8', title: 'HR Generalist', company: 'PeopleFirst', location: 'Ahmedabad', type: 'Full-time', salary: '₹9 LPA', description: 'Support hiring, onboarding, and employee experience programs.', category: 'HR', website: 'https://careers.ibm.com/' },
   { id: 'sample-job-9', title: 'Mobile Developer', company: 'AppForge', location: 'Jaipur', type: 'Full-time', salary: '₹13 LPA', description: 'Ship polished mobile products with a strong customer focus.', category: 'Engineering', website: 'https://careers.apple.com/' },
   { id: 'sample-job-10', title: 'Customer Success Lead', company: 'SupportHub', location: 'Bengaluru', type: 'Full-time', salary: '₹11 LPA', description: 'Guide clients and build lasting relationships with success programs.', category: 'Customer Success', website: 'https://careers.oracle.com/' },
 ]
@@ -86,11 +86,13 @@ export default function JobsPage() {
 
   const handleApplicationSubmit = async (payload: JobApplicationPayload) => {
     const jobTitle = payload.jobTitle || 'Job'
+    const company = payload.company || 'the company'
+    const jobId = selectedJob?.id || payload.jobId
     const confirmation = `Application Confirmation\nApplicant: ${payload.fullName}\nEmail: ${payload.email}\nPhone: ${payload.phone}\nCollege: ${payload.college}\nCourse: ${payload.course}\nJob: ${jobTitle}`
-    triggerAppNotification('Application submitted', `${jobTitle} application received.`)
+    const notificationBody = `You successfully applied for:\n${jobTitle}\n${company}\n\nStatus: Application Sent\nDate: ${new Date().toLocaleDateString('en-IN', { year: 'numeric', month: 'long', day: 'numeric' })}`
+    triggerAppNotification('Application Submitted Successfully', notificationBody, jobId ? `/jobs/${jobId}` : undefined)
     downloadTextAsPdf(`${jobTitle.replace(/\s+/g, '-').toLowerCase()}-application.pdf`, confirmation)
     try {
-      const jobId = selectedJob?.id || payload.jobId
       if (jobId) await jobsApi.apply(jobId)
     } catch {
       // ignore if the API is not available in demo mode

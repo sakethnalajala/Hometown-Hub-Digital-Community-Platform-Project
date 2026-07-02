@@ -3,22 +3,19 @@
 import { useState, useEffect, useMemo } from 'react'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
-import { Search, Star, MapPin, Compass, Loader2, Navigation, Trash2, Heart, Plus, Pencil, Calendar } from 'lucide-react'
+import { Search, Star, MapPin, Compass, Loader2, Navigation, Heart, Plus, Calendar } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { tourismApi } from '@/lib/api'
 import { ImageWithFallback } from '@/components/ui/ImageWithFallback'
 import { toast } from 'sonner'
 import { PortalBackground } from '@/components/ui/PortalBackground'
-import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { GradientButton } from '@/components/ui/GradientButton'
 import { DestinationFormModal, type DestinationFormValues } from '@/components/ui/DestinationFormModal'
 import { triggerAppNotification } from '@/lib/appHelpers'
 import {
   getLocalDestinations,
   addLocalDestination,
-  updateLocalDestination,
-  deleteLocalDestination,
   type LocalDestination,
 } from '@/lib/localDestinations'
 
@@ -64,21 +61,11 @@ export default function TourismPage() {
   const [destinations, setDestinations] = useState<TourismDestination[]>([])
   const [localDestinations, setLocalDestinations] = useState<LocalDestination[]>([])
   const [loading, setLoading] = useState(true)
-  const [destinationToDelete, setDestinationToDelete] = useState<TourismDestination | null>(null)
   const [formOpen, setFormOpen] = useState(false)
-  const [editingDestination, setEditingDestination] = useState<LocalDestination | null>(null)
   const [favorites, setFavorites] = useState<string[]>(() => {
     if (typeof window === 'undefined') return []
     try {
       return JSON.parse(window.localStorage.getItem('tourismFavorites') || '[]')
-    } catch {
-      return []
-    }
-  })
-  const [removedDestinationIds, setRemovedDestinationIds] = useState<string[]>(() => {
-    if (typeof window === 'undefined') return []
-    try {
-      return JSON.parse(window.localStorage.getItem('tourismRemovedIds') || '[]')
     } catch {
       return []
     }
@@ -111,86 +98,31 @@ export default function TourismPage() {
   }, [])
 
   // Local (user-created) destinations are shown first, followed by the catalog.
-  // Deleted catalog destinations are tombstoned via removedDestinationIds since
-  // they come from the read-only API and can't be removed from localStorage directly.
   const combined = useMemo<TourismDestination[]>(
-    () => [...localDestinations, ...destinations].filter((d) => !d.id || !removedDestinationIds.includes(d.id)),
-    [localDestinations, destinations, removedDestinationIds]
+    () => [...localDestinations, ...destinations],
+    [localDestinations, destinations]
   )
 
   const handleCreateClick = () => {
-    setEditingDestination(null)
-    setFormOpen(true)
-  }
-
-  const handleEditClick = (e: React.MouseEvent, dest: TourismDestination) => {
-    e.preventDefault()
-    e.stopPropagation()
-    const local = localDestinations.find((d) => d.id === dest.id)
-    if (!local) return
-    setEditingDestination(local)
     setFormOpen(true)
   }
 
   const handleFormSubmit = (values: DestinationFormValues) => {
     const image = values.image.trim() || placeholderImage(values.name)
-    if (editingDestination) {
-      updateLocalDestination(editingDestination.id, {
-        name: values.name,
-        category: values.category,
-        type: values.category,
-        location: values.location,
-        description: values.description,
-        bestSeason: values.bestSeason || 'Year-round',
-        bestTime: values.bestSeason || 'Year-round',
-        rating: values.rating,
-        image,
-      })
-      toast.success(`${values.name} updated successfully`)
-      triggerAppNotification('Destination updated', `${values.name} was updated.`)
-    } else {
-      addLocalDestination({
-        name: values.name,
-        category: values.category,
-        type: values.category,
-        location: values.location,
-        description: values.description,
-        bestSeason: values.bestSeason || 'Year-round',
-        bestTime: values.bestSeason || 'Year-round',
-        rating: values.rating,
-        image,
-      })
-      toast.success(`${values.name} added to Tourism!`)
-      triggerAppNotification('Destination created', `${values.name} was added to Tourism.`)
-    }
+    addLocalDestination({
+      name: values.name,
+      category: values.category,
+      type: values.category,
+      location: values.location,
+      description: values.description,
+      bestSeason: values.bestSeason || 'Year-round',
+      bestTime: values.bestSeason || 'Year-round',
+      rating: values.rating,
+      image,
+    })
+    toast.success(`${values.name} added to Tourism!`)
+    triggerAppNotification('Destination created', `${values.name} was added to Tourism.`)
     setLocalDestinations(getLocalDestinations())
-    setEditingDestination(null)
-  }
-
-  const handleDelete = (e: React.MouseEvent, destination: TourismDestination) => {
-    e.preventDefault()
-    e.stopPropagation()
-    setDestinationToDelete(destination)
-  }
-
-  const confirmDelete = () => {
-    if (!destinationToDelete?.id) return
-    const id = destinationToDelete.id
-    if (destinationToDelete.isLocal) {
-      deleteLocalDestination(id)
-      setLocalDestinations(getLocalDestinations())
-    } else {
-      setRemovedDestinationIds((current) => {
-        const updated = Array.from(new Set([...current, id]))
-        if (typeof window !== 'undefined') {
-          window.localStorage.setItem('tourismRemovedIds', JSON.stringify(updated))
-        }
-        return updated
-      })
-    }
-    triggerAppNotification('Destination deleted', `${destinationToDelete.name} was removed.`)
-    toast.success(`${destinationToDelete.name} deleted`)
-    setDestinationToDelete(null)
   }
 
   const filtered = combined.filter(d => {
@@ -386,34 +318,11 @@ export default function TourismPage() {
                             <span className="line-clamp-1">{dest.bestSeason || dest.bestTime || 'Year Round'}</span>
                           </div>
 
-                          <div className="flex flex-col gap-2.5 pt-4 border-t border-white/10">
+                          <div className="pt-4 border-t border-white/10">
                             {/* Navigation is handled by the wrapping Link; this button is the visible affordance */}
                             <Button className="h-10 w-full bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white rounded-xl font-bold shadow-lg">
                               Explore
                             </Button>
-                            {isLocal ? (
-                              <div className="grid grid-cols-2 gap-2.5">
-                                <Button
-                                  className="h-10 w-full bg-gradient-to-r from-orange-500 to-amber-600 hover:from-orange-600 hover:to-amber-700 text-white rounded-xl font-bold shadow-lg"
-                                  onClick={(e) => handleEditClick(e, dest)}
-                                >
-                                  <Pencil className="w-4 h-4 mr-1.5 shrink-0" /> Edit
-                                </Button>
-                                <Button
-                                  className="h-10 w-full bg-red-600 hover:bg-red-700 text-white rounded-xl font-bold shadow-lg"
-                                  onClick={(e) => handleDelete(e, dest)}
-                                >
-                                  <Trash2 className="w-4 h-4 mr-1.5 shrink-0" /> Delete
-                                </Button>
-                              </div>
-                            ) : (
-                              <Button
-                                className="h-10 w-full bg-red-600 hover:bg-red-700 text-white rounded-xl font-bold shadow-lg"
-                                onClick={(e) => handleDelete(e, dest)}
-                              >
-                                <Trash2 className="w-4 h-4 mr-1.5 shrink-0" /> Delete
-                              </Button>
-                            )}
                           </div>
                         </div>
                       </motion.div>
@@ -425,20 +334,10 @@ export default function TourismPage() {
           </>
         )}
       </motion.div>
-      <ConfirmDialog
-        open={Boolean(destinationToDelete)}
-        onOpenChange={(open) => !open && setDestinationToDelete(null)}
-        title="Delete destination"
-        description={`Delete ${destinationToDelete?.name || 'this destination'}? This action cannot be undone.`}
-        confirmLabel="Delete"
-        confirmVariant="destructive"
-        onConfirm={confirmDelete}
-      />
       <DestinationFormModal
         open={formOpen}
         onOpenChange={setFormOpen}
         onSubmit={handleFormSubmit}
-        editing={editingDestination}
       />
     </PortalBackground>
   )

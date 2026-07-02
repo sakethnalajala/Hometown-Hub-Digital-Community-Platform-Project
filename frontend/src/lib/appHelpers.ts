@@ -26,13 +26,14 @@ export function applyAppTheme(theme: AppTheme) {
   window.localStorage.setItem(THEME_STORAGE_KEY, theme)
 }
 
-export function triggerAppNotification(title: string, body: string) {
+export function triggerAppNotification(title: string, body: string, actionUrl?: string) {
   const notification: Notification = {
     id: crypto.randomUUID(),
     type: 'SYSTEM',
     title,
     body,
     isRead: false,
+    actionUrl,
     receiverId: 'current-user',
     createdAt: new Date().toISOString(),
   }

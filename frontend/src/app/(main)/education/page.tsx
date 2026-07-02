@@ -1,15 +1,14 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import { motion } from 'framer-motion'
 import {
   GraduationCap, BrainCircuit, Code2, Cloud, ShieldCheck, BarChart3, Sparkles,
-  ArrowUpRight, Trash2, BookOpen, Database, Cpu, Palette, Rocket, Microscope, type LucideIcon,
+  ArrowUpRight, BookOpen, Database, Cpu, Palette, Rocket, Microscope, type LucideIcon,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { ImageWithFallback } from '@/components/ui/ImageWithFallback'
 import { PortalBackground } from '@/components/ui/PortalBackground'
-import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { triggerAppNotification, openExternalLink } from '@/lib/appHelpers'
 
 interface EduItem {
@@ -154,26 +153,12 @@ const containerVariants = {
 const itemVariants = { hidden: { opacity: 0, y: 24 }, show: { opacity: 1, y: 0, transition: { duration: 0.45 } } }
 
 export default function EducationPage() {
-  const [educationItems, setEducationItems] = useState(INITIAL_EDUCATION_ITEMS)
-  const [itemToDelete, setItemToDelete] = useState<EduItem | null>(null)
+  const visibleItems = useMemo(() => INITIAL_EDUCATION_ITEMS, [])
 
   const openResource = (item: EduItem) => {
     triggerAppNotification('Course opened', `${item.title} opened successfully.`)
     openExternalLink(item.url)
   }
-
-  const deleteResource = (item: EduItem) => {
-    setItemToDelete(item)
-  }
-
-  const confirmDelete = () => {
-    if (!itemToDelete) return
-    setEducationItems((current) => current.filter((resource) => resource.title !== itemToDelete.title))
-    triggerAppNotification('Course deleted', `${itemToDelete.title} was removed from the education hub.`)
-    setItemToDelete(null)
-  }
-
-  const visibleItems = useMemo(() => educationItems, [educationItems])
 
   return (
     <PortalBackground portal="education">
@@ -259,32 +244,18 @@ export default function EducationPage() {
                     <span className="rounded-full bg-white/10 px-2 py-1">{item.duration}</span>
                     <span className="rounded-full bg-white/10 px-2 py-1">{item.difficulty}</span>
                   </div>
-                  <div className="flex gap-2">
-                    <Button
-                      onClick={() => openResource(item)}
-                      className="flex-1 bg-gradient-to-r from-teal-500 to-sky-500 hover:from-teal-600 hover:to-sky-600 text-white rounded-xl font-bold shadow-lg"
-                    >
-                      Open Course <ArrowUpRight className="w-4 h-4 ml-1.5" />
-                    </Button>
-                    <Button variant="destructive" onClick={() => deleteResource(item)} className="rounded-xl">
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  </div>
+                  <Button
+                    onClick={() => openResource(item)}
+                    className="w-full bg-gradient-to-r from-teal-500 to-sky-500 hover:from-teal-600 hover:to-sky-600 text-white rounded-xl font-bold shadow-lg"
+                  >
+                    Visit Website <ArrowUpRight className="w-4 h-4 ml-1.5" />
+                  </Button>
                 </div>
               </motion.div>
             )
           })}
         </motion.div>
       </motion.div>
-      <ConfirmDialog
-        open={Boolean(itemToDelete)}
-        onOpenChange={(open) => !open && setItemToDelete(null)}
-        title="Delete course"
-        description={`Delete ${itemToDelete?.title || 'this course'}? This action cannot be undone.`}
-        confirmLabel="Delete"
-        confirmVariant="destructive"
-        onConfirm={confirmDelete}
-      />
     </PortalBackground>
   )
 }
