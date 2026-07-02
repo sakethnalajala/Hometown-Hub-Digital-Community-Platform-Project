@@ -217,7 +217,7 @@ export const PORTAL_THEMES: Record<string, PortalTheme> = {
 /** Ordered list of the navigable portals for grids / nav. */
 export const PORTAL_ORDER = [
   'communities', 'jobs', 'events', 'tourism', 'news', 'education',
-  'marketplace', 'government', 'healthcare', 'agriculture', 'business',
+  'marketplace', 'government', 'healthcare',
 ] as const
 
 export const PORTAL_LIST: PortalTheme[] = PORTAL_ORDER.map((k) => PORTAL_THEMES[k])
